@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# Usage: git-init
+echo "Choose user for this repo:"
+# PLACEHOLDER_USER_CHOICES
+read -p "Enter choice [1-#PLACEHOLDER_USER_COUNT#]: " choice
+
+case "$choice" in
+# PLACEHOLDER_USER_CASES
+    *)
+        echo "Invalid choice."
+        exit 1
+        ;;
+esac
+
+# Initialize repo if not already
+if [ ! -d .git ]; then
+    git init
+    echo "Git repository initialized."
+fi
+
+echo "Git user set: $(git config user.name) <$(git config user.email)>"

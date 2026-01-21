@@ -1,0 +1,19 @@
+# Sandbox directory for testing
+.sandbox/
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+

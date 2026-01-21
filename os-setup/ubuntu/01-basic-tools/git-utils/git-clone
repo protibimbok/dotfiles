@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+# Usage: git-clone me:user/repo [extra git clone args]
+
+if [ -z "$1" ]; then
+    echo "Usage: git-clone me:user/repo [extra git clone args]"
+    exit 1
+fi
+
+repo="$1"
+shift
+
+# Parse account alias
+account="${repo%%:*}"      # me:user/repo -> me
+path="${repo#*:}"          # me:user/repo -> user/repo
+
+# Map alias to SSH host
+declare -A host_map
+# PLACEHOLDER_HOST_MAPPINGS
+
+host="${host_map[$account]}"
+if [ -z "$host" ]; then
+    echo "Unknown account alias '$account'. Please add it to host_map."
+    exit 1
+fi
+
+git clone "git@$host:$path" "$@"

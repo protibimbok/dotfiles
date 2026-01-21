@@ -1,0 +1,47 @@
+server {
+    listen ::PORT::;
+    listen [::]:::PORT::;
+    server_name ::SERVER_NAME::;
+
+    root ::ROOT_DIR::;
+    index index.php index.html;
+
+    access_log /var/log/nginx/::SITE_NAME::.access.log;
+    error_log  /var/log/nginx/::SITE_NAME::.error.log;
+
+    # WordPress permalinks support
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    # PHP processing
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php::PHP_VERSION::-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    # Deny access to hidden files
+    location ~ /\.ht {
+        deny all;
+    }
+
+    # Deny access to wp-config.php
+    location = /wp-config.php {
+        deny all;
+    }
+
+    # Cache static files
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires max;
+        log_not_found off;
+        access_log off;
+    }
+
+    # Deny access to uploads PHP files
+    location ~* /(?:uploads|files)/.*\.php$ {
+        deny all;
+    }
+}
+

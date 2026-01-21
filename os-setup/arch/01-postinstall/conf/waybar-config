@@ -1,0 +1,80 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 34,
+    "modules-left": ["hyprland/workspaces"],
+    "modules-center": ["clock"],
+    "modules-right": ["cpu", "memory", "battery", "hyprland/language", "pulseaudio", "bluetooth", "network"],
+
+    "hyprland/workspaces": {
+        "format": "{id}"
+    },
+    "clock": {
+        "format": "  {:%d, %I:%M:%p}",
+        "tooltip-format": "{:%Y-%m-%d}"
+    },
+    "cpu": {
+        "interval": 2,
+        "format": " {icon} {usage}%",
+        "format-icons": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"],
+        "tooltip": true,
+        "tooltip-format": "CPU: {usage}%\n{avg_frequency} GHz"
+    },
+    "memory": {
+        "interval": 2,
+        "format": "{icon} {percentage}%",
+        "format-icons": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"],
+        "tooltip": true,
+        "tooltip-format": "RAM: {used:0.1f}G / {total:0.1f}G"
+    },
+    "battery": {
+        "interval": 10,
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "{icon} {capacity}%",
+        "format-charging": "󰂄 {capacity}%",
+        "format-plugged": "󰚥 {capacity}%",
+        "format-full": "󰁹 Full",
+        "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+        "tooltip": true,
+        "tooltip-format": "{timeTo}\n{power:.1f}W"
+    },
+    "hyprland/language": {
+        "format": " {}"
+    },
+    "bluetooth": {
+        "format": "󰂯",
+        "format-disabled": "󰂲",
+        "format-connected": "󰂱 {num_connections}",
+        "format-connected-battery": "󰂱 {device_battery_percentage}%",
+        "tooltip-format": "{controller_alias}\n{status}",
+        "tooltip-format-connected": "{controller_alias}\n{status}\n\n{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}",
+        "tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_battery_percentage}%",
+        "on-click": "kitty --title 'Bluetooth' bluetuith"
+    },
+    "network": {
+        "interval": 5,
+        "format-wifi": "{icon}",
+        "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+        "format-ethernet": "󰈀",
+        "format-linked": "󰈁",
+        "format-disconnected": "󰤮",
+        "format-disabled": "󰤭",
+        "tooltip": true,
+        "tooltip-format-wifi": "{essid} ({signalStrength}%)\n{ifname}: {ipaddr}/{cidr}\n {bandwidthUpBits}  {bandwidthDownBits}",
+        "tooltip-format-ethernet": "{ifname}: {ipaddr}/{cidr}\n {bandwidthUpBits}  {bandwidthDownBits}",
+        "tooltip-format-disconnected": "Disconnected",
+        "on-click": "kitty --title 'WiFi' nmtui-connect"
+    },
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰝟 ",
+        "format-icons": {
+            "default": ["󰕿", "󰖀", "󰕾"]
+        },
+        "on-click": "pavucontrol"
+    }
+}

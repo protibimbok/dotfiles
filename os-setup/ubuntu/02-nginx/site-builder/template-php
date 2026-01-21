@@ -1,0 +1,24 @@
+server {
+    listen ::PORT::;
+    listen [::]:::PORT::;
+    server_name ::SERVER_NAME::;
+
+    root ::ROOT_DIR::;
+    index index.php;
+
+    access_log /var/log/nginx/::SITE_NAME::.access.log;
+    error_log  /var/log/nginx/::SITE_NAME::.error.log;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php::PHP_VERSION::-fpm.sock;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}

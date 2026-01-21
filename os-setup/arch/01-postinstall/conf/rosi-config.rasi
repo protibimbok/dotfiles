@@ -1,0 +1,152 @@
+configuration {
+    modi:                       "drun,run,window";
+    show-icons:                 true;
+    display-drun:               " Apps";
+    display-run:                " Run";
+    display-window:             " Windows";
+    drun-display-format:        "{name}";
+    window-format:              "{w} · {c} · {t}";
+    font:                       "JetBrainsMono Nerd Font 14";
+}
+
+/* --- Global Properties --- */
+* {
+    background:                  #1e1e2e; /* Dark Base */
+    background-alt:              #313244; /* Slightly lighter */
+    foreground:                  #cdd6f4; /* Text */
+    selected:                    #89b4fa; /* Blue Accent */
+    active:                      #a6e3a1; /* Green */
+    urgent:                      #f38ba8; /* Red */
+}
+
+/* --- Main Window --- */
+window {
+    transparency:                "real";
+    location:                    center;
+    anchor:                      center;
+    fullscreen:                  false;
+    width:                       700px;
+    x-offset:                    0px;
+    y-offset:                    0px;
+
+    enabled:                     true;
+    margin:                      0px;
+    padding:                     0px;
+    border:                      2px solid;
+    border-radius:               12px;
+    border-color:                @selected;
+    background-color:            @background;
+    cursor:                      "default";
+}
+
+/* --- Main Box --- */
+mainbox {
+    enabled:                     true;
+    spacing:                     0px;
+    margin:                      0px;
+    padding:                     0px;
+    border:                      0px solid;
+    border-radius:               0px 0px 0px 0px;
+    border-color:                @selected;
+    background-color:            transparent;
+    children:                    [ "inputbar", "listview" ];
+}
+
+/* --- Input Bar (Search) --- */
+inputbar {
+    enabled:                     true;
+    spacing:                     10px;
+    margin:                      0px;
+    padding:                     20px;
+    border:                      0px solid;
+    border-radius:               0px;
+    border-color:                @selected;
+    background-color:            @background-alt;
+    text-color:                  @foreground;
+    children:                    [ "prompt", "entry" ];
+}
+
+prompt {
+    enabled:                     true;
+    background-color:            inherit;
+    text-color:                  inherit;
+}
+
+entry {
+    enabled:                     true;
+    background-color:            inherit;
+    text-color:                  inherit;
+    cursor:                      text;
+    placeholder:                 "Search...";
+    placeholder-color:           inherit;
+}
+
+/* --- List View --- */
+listview {
+    enabled:                     true;
+    columns:                     1;
+    lines:                       8;
+    cycle:                       true;
+    dynamic:                     true;
+    scrollbar:                   false;
+    layout:                      vertical;
+    reverse:                     false;
+    fixed-height:                true;
+    fixed-columns:               true;
+    
+    spacing:                     5px;
+    margin:                      0px;
+    padding:                     10px;
+    border:                      0px solid;
+    border-radius:               0px;
+    border-color:                @selected;
+    background-color:            transparent;
+    text-color:                  @foreground;
+    cursor:                      "default";
+}
+
+/* --- Elements (Rows) --- */
+element {
+    enabled:                     true;
+    spacing:                     10px;
+    margin:                      0px;
+    padding:                     10px;
+    border:                      0px solid;
+    border-radius:               8px;
+    border-color:                @selected;
+    background-color:            transparent;
+    text-color:                  @foreground;
+    cursor:                      pointer;
+}
+
+/* Force Normal and Alternate rows to be transparent/identical */
+element normal.normal,
+element alternate.normal {
+    background-color:            transparent;
+    text-color:                  @foreground;
+}
+
+/* Selected rows (Blue background, Dark text) */
+element selected.normal,
+element selected.active {
+    background-color:            @selected;
+    text-color:                  @background;
+}
+
+/* Icons */
+element-icon {
+    background-color:            transparent;
+    text-color:                  inherit;
+    size:                        32px;
+    cursor:                      inherit;
+}
+
+element-text {
+    background-color:            transparent;
+    text-color:                  inherit;
+    highlight:                   inherit;
+    cursor:                      inherit;
+    vertical-align:              0.5;
+    horizontal-align:            0.0;
+}
+

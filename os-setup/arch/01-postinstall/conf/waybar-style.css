@@ -1,0 +1,132 @@
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "JetBrainsMono Nerd Font";
+    font-weight: bold;
+    font-size: 14px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: rgba(30, 30, 46, 0.8); /* Semi-transparent for blur */
+    color: #ffffff;
+    transition-property: background-color;
+    transition-duration: .5s;
+}
+
+/* --- WORKSPACES (Left) --- */
+#workspaces {
+    background: rgba(49, 50, 68, 0.6);
+    border-radius: 0;
+    padding: 0 8px;
+    margin: 4px 4px 4px 8px;
+}
+
+/* Hide inactive buttons by shrinking them */
+#workspaces button {
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+    min-height: 0;
+    font-size: 0;
+}
+
+/* Show active button */
+#workspaces button.active {
+    font-size: 14px;
+    color: #89b4fa;
+    padding: 0 10px;
+    margin: 0 2px;
+}
+
+/* --- CLOCK (Center) --- */
+#clock {
+    background: rgba(49, 50, 68, 0.6);
+    color: #fab387;
+    border-radius: 0;
+    padding: 0 15px;
+    margin: 4px 0;
+}
+
+/* --- MODULES (Right) --- */
+#cpu, #memory, #battery, #language, #bluetooth, #network, #pulseaudio {
+    background: rgba(49, 50, 68, 0.6);
+    color: #cba6f7;
+    padding: 0 10px;
+    margin: 4px 4px 4px 0;
+    border-radius: 0;
+}
+
+#cpu {
+    color: #f38ba8;
+    margin-left: 4px;
+}
+
+#memory {
+    color: #fab387;
+}
+
+#battery {
+    color: #a6e3a1;
+}
+
+#battery.charging {
+    color: #94e2d5;
+}
+
+#battery.plugged {
+    color: #89dceb;
+}
+
+#battery.warning:not(.charging) {
+    color: #f9e2af;
+}
+
+#battery.critical:not(.charging) {
+    background: rgba(243, 139, 168, 0.8);
+    color: #1e1e2e;
+    animation: blink 0.5s linear infinite alternate;
+}
+
+@keyframes blink {
+    to {
+        background: rgba(235, 160, 172, 0.8);
+    }
+}
+
+#bluetooth {
+    color: #89b4fa;
+}
+
+#bluetooth.disabled {
+    color: #6c7086;
+}
+
+#bluetooth.connected {
+    color: #a6e3a1;
+}
+
+#network {
+    color: #a6e3a1;
+}
+
+#network.disconnected {
+    color: #f38ba8;
+}
+
+#network.disabled {
+    color: #6c7086;
+}
+
+#network.linked {
+    color: #f9e2af;
+}
+
+#pulseaudio {
+    color: #89b4fa;
+    margin-right: 8px;
+}
+
+#pulseaudio.muted {
+    color: #6c7086;
+}

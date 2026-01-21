@@ -1,0 +1,24 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name db.localhost;
+
+    root /usr/share/webapps/phpmyadmin;
+    index index.php;
+
+    access_log /var/log/nginx/phpmyadmin.access.log;
+    error_log  /var/log/nginx/phpmyadmin.error.log;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        include fastcgi.conf;
+        fastcgi_pass unix:/run/php-fpm/php-fpm.sock;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}

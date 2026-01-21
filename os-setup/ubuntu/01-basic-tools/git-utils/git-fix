@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Usage: git-remote-fix [remote-name]
+# Default remote-name: origin
+
+remote="${1:-origin}"
+
+# Ensure we are in a git repo
+if [ ! -d .git ]; then
+    echo "Error: Current directory is not a git repository."
+    exit 1
+fi
+
+# Get current remote URL
+remote_url=$(git remote get-url "$remote" 2>/dev/null)
+if [ -z "$remote_url" ]; then
+    echo "Error: No remote '$remote' found."
+    exit 1
+fi
+
+# Only handle HTTPS GitHub URLs
+if [[ "$remote_url" =~ ^https://github.com/([^/]+)/([^/]+)(\.git)?$ ]]; then
+    user="${BASH_REMATCH[1]}"
+    repo="${BASH_REMATCH[2]}"
+else
+    echo "Remote '$remote' is not a standard HTTPS GitHub URL:"
+    echo "  $remote_url"
+    echo "Cannot automatically fix this remote."
+    exit 1
+fi
+
+# Ask which SSH alias to use
+echo "Choose account for SSH remote:"
+# PLACEHOLDER_ACCOUNT_CHOICES
+read -p "Enter choice [1-#PLACEHOLDER_ACCOUNT_COUNT#]: " choice
+
+case "$choice" in
+# PLACEHOLDER_ACCOUNT_CASES
+    *)
+        echo "Invalid choice."
+        exit 1
+        ;;
+esac
+
+# Build SSH URL (avoid double .git)
+if [[ "$repo" == *.git ]]; then
+    ssh_url="git@hub.$host_alias:$user/$repo"
+else
+    ssh_url="git@hub.$host_alias:$user/$repo.git"
+fi
+
+# Update remote
+git remote set-url "$remote" "$ssh_url"
+
+echo "Remote '$remote' updated to $ssh_url"
