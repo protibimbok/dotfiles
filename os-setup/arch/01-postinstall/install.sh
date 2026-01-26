@@ -43,11 +43,8 @@ install_pacman_packages \
     rofi-wayland \
     neovim \
     waybar \
-    sddm \
-    qt5-graphicaleffects \
-    qt5-quickcontrols2 \
-    qt5-svg \
     hyprlock \
+    hyprpolkitagent \
     networkmanager \
     bluez \
     bluez-utils \
@@ -59,7 +56,6 @@ ensure_yay
 
 log "Installing AUR packages..."
 yay -S --needed --noconfirm \
-    sddm-sugar-candy-git \
     zen-browser-bin \
     libinput-gestures \
     bluetuith
