@@ -33,22 +33,21 @@ log "Requesting sudo access..."
 sudo -v
 
 # Keep sudo alive in background
-(
-    while true; do
-        sudo -n true
-        sleep 50
-    done
-) &
+# Use sudo -v to refresh timeout (not -n which only validates)
+while true; do
+    sleep 55
+    sudo -v
+done 2>/dev/null &
 SUDO_KEEPALIVE_PID=$!
 trap "kill $SUDO_KEEPALIVE_PID 2>/dev/null" EXIT
 
 # Run installation
 log "=== Phase 1: Package Installation ==="
-"$SCRIPT_DIR/install.sh"
+bash "$SCRIPT_DIR/install.sh"
 
 # Run configuration
 log "=== Phase 2: Configuration ==="
-"$SCRIPT_DIR/configure.sh"
+bash "$SCRIPT_DIR/configure.sh"
 
 log "=== Arch post-install setup complete ==="
 log "Please log out and back in for all changes to take effect."

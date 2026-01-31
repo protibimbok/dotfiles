@@ -28,11 +28,6 @@ copy_config() {
     log "Copied: $dest"
 }
 
-update_sddm_theme() {
-    local theme_conf="$1"
-    local theme_name="$2"
-    sudo python3 "$SCRIPT_DIR/scripts/update_sddm_theme.py" "$theme_conf" "$theme_name"
-}
 
 log "Applying config files..."
 copy_config "$CONF_DIR/hyprland.conf" "$HOME/.config/hypr/hyprland.conf"
@@ -42,8 +37,6 @@ copy_config "$CONF_DIR/waybar-config" "$HOME/.config/waybar/config"
 copy_config "$CONF_DIR/waybar-style.css" "$HOME/.config/waybar/style.css"
 copy_config "$CONF_DIR/libinput-gestures.conf" "$HOME/.config/libinput-gestures.conf"
 
-log "Configuring SDDM theme..."
-update_sddm_theme "/etc/sddm.conf.d/theme.conf" "sugar-candy"
 
 log "Setting up libinput-gestures..."
 # Add user to input group for gesture access
@@ -51,10 +44,12 @@ sudo usermod -aG input "$USER"
 # Enable autostart
 libinput-gestures-setup autostart || true
 
-log "Enabling SDDM..."
-sudo systemctl enable sddm
 
 log "Enabling Bluetooth..."
 sudo systemctl enable --now bluetooth
+
+log "Configuring Blueman..."
+# Enable blueman's OBEX service for file transfers
+systemctl --user enable blueman-mechanism || true
 
 log "Configuration complete."
