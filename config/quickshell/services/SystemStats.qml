@@ -110,7 +110,7 @@ Singleton {
 
     Process {
         id: perfProc
-        command: ["bash", "-c", "if command -v powerprofilesctl >/dev/null 2>&1; then powerprofilesctl get 2>/dev/null; elif [ -r /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]; then cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor; else echo none; fi"]
+        command: ["bash", "-c", "if command -v busctl >/dev/null 2>&1 && busctl --system get-property net.hadess.PowerProfiles /net/hadess/PowerProfiles net.hadess.PowerProfiles ActiveProfile >/dev/null 2>&1; then busctl --system get-property net.hadess.PowerProfiles /net/hadess/PowerProfiles net.hadess.PowerProfiles ActiveProfile 2>/dev/null | awk -F'\"' '{print $2}'; elif command -v powerprofilesctl >/dev/null 2>&1; then powerprofilesctl get 2>/dev/null; elif [ -r /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]; then cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor; else echo none; fi"]
         stdout: StdioCollector {
             onStreamFinished: {
                 let first = text.trim().split("\n")[0] || "";
@@ -262,21 +262,19 @@ Singleton {
     }
 
     function setPerfMode(mode: string) {
-        perfModeProc.modeStr = mode;
+        let profile = "balanced";
+        if (mode === "powersave")
+            profile = "power-saver";
+        else if (mode === "performance")
+            profile = "performance";
+        perfModeProc.command = ["bash", "-c",
+            "if command -v busctl >/dev/null 2>&1 && busctl --system get-property net.hadess.PowerProfiles /net/hadess/PowerProfiles net.hadess.PowerProfiles ActiveProfile >/dev/null 2>&1; then busctl --system set-property net.hadess.PowerProfiles /net/hadess/PowerProfiles net.hadess.PowerProfiles ActiveProfile s " + profile + "; elif command -v powerprofilesctl >/dev/null 2>&1; then powerprofilesctl set " + profile + "; fi"];
         perfModeProc.running = true;
     }
 
     Process {
         id: perfModeProc
-        property string modeStr: "balanced"
-        command: ["bash", "-c",
-            "if command -v powerprofilesctl >/dev/null 2>&1; then " +
-            "case '" + modeStr + "' in powersave) powerprofilesctl set power-saver ;; " +
-            "performance) powerprofilesctl set performance ;; *) powerprofilesctl set balanced ;; esac; " +
-            "else " +
-            "GOV=schedutil; case '" + modeStr + "' in powersave) GOV=powersave ;; performance) GOV=performance ;; esac; " +
-            "pkexec env GOV=\"$GOV\" bash -c 'for c in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo \"$GOV\" > \"$c\"; done'; " +
-            "fi"]
+        command: ["true"]
         onExited: perfProc.running = true
     }
 

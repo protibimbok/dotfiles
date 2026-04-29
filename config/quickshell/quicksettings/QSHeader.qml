@@ -95,9 +95,10 @@ RowLayout {
                     Behavior on color { ColorAnimation { duration: 150 } }
                 }
 
-                HoverHandler { id: profHov; cursorShape: Qt.PointingHandCursor }
-                TapHandler {
-                    onTapped: SystemStats.setPerfMode(modelData.mode)
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: SystemStats.setPerfMode(modelData.mode)
                 }
             }
         }
