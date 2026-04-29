@@ -1,0 +1,110 @@
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Effects
+import Quickshell.Io
+import qs.theme
+
+Item {
+    id: root
+    signal close()
+
+    Rectangle {
+        anchors.fill: parent
+        color: "#000000"
+        opacity: 0.55
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        onClicked: root.close()
+    }
+
+    Item {
+        anchors.centerIn: parent
+        width: 380
+        height: 200
+
+        MouseArea { anchors.fill: parent }
+
+        GridLayout {
+            anchors.fill: parent
+            columns: 2
+            rows: 2
+            columnSpacing: 16
+            rowSpacing: 16
+
+            Repeater {
+                model: [
+                    { label: "Lock",     icon: "\uf023", color: "accent",    cmd: ["loginctl", "lock-session"] },
+                    { label: "Logout",   icon: "\uf2f5", color: "yellow",    cmd: ["loginctl", "terminate-user", ""] },
+                    { label: "Reboot",   icon: "\uf021", color: "cyan",      cmd: ["systemctl", "reboot"] },
+                    { label: "Shutdown", icon: "\uf011", color: "red",       cmd: ["systemctl", "poweroff"] }
+                ]
+
+                Rectangle {
+                    required property var modelData
+                    required property int index
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    radius: 16
+                    color: btnHover.hovered
+                        ? Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.18)
+                        : Qt.rgba(Theme.colors.bg1.r, Theme.colors.bg1.g, Theme.colors.bg1.b, 0.85)
+
+                    Behavior on color { ColorAnimation { duration: 150 } }
+
+                    property color accentColor: {
+                        if (modelData.color === "accent") return Theme.colors.accent;
+                        if (modelData.color === "yellow") return Theme.colors.yellow;
+                        if (modelData.color === "cyan") return Theme.colors.cyan;
+                        return Theme.colors.red;
+                    }
+
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        autoPaddingEnabled: true
+                        shadowEnabled: true
+                        shadowBlur: 0.8
+                        shadowColor: "#40000000"
+                        shadowVerticalOffset: 4
+                    }
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 8
+
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: modelData.icon
+                            color: parent.parent.accentColor
+                            font.family: "JetBrainsMono Nerd Font"
+                            font.pixelSize: 28
+                        }
+
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: modelData.label
+                            color: Theme.colors.text
+                            font.family: "JetBrainsMono Nerd Font"
+                            font.pixelSize: 13
+                            font.bold: true
+                        }
+                    }
+
+                    HoverHandler { id: btnHover; cursorShape: Qt.PointingHandCursor }
+                    TapHandler {
+                        onTapped: {
+                            cmdProc.command = modelData.cmd;
+                            cmdProc.running = true;
+                            root.close();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Keys.onEscapePressed: root.close()
+
+    Process { id: cmdProc }
+}

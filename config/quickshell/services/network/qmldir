@@ -1,0 +1,4 @@
+module qs.services.network
+singleton Wifi 1.0 Wifi.qml
+singleton Bluetooth 1.0 Bluetooth.qml
+singleton Ethernet 1.0 Ethernet.qml

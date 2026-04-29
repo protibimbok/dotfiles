@@ -1,0 +1,7 @@
+module qs.services
+singleton Audio 1.0 Audio.qml
+singleton Brightness 1.0 Brightness.qml
+singleton Hyprland 1.0 Hyprland.qml
+singleton Mpris 1.0 Mpris.qml
+singleton Notifications 1.0 Notifications.qml
+singleton SystemStats 1.0 SystemStats.qml

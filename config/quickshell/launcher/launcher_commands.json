@@ -1,0 +1,9 @@
+[
+  {"name":"Update system","cmd":"kitty -e yay -Syu","icon":"system-software-update","comment":"Full system upgrade"},
+  {"name":"Reload shell","cmd":"quickshell reload","icon":"view-refresh","comment":"Hot-reload config"},
+  {"name":"Hyprland config","cmd":"kitty -e nvim ~/.config/hypr/hyprland.conf","icon":"text-editor","comment":"Edit Hyprland config"},
+  {"name":"Screenshot region","cmd":"grimblast copy area","icon":"applets-screenshooter","comment":"Select area"},
+  {"name":"Color picker","cmd":"hyprpicker -a","icon":"color-picker","comment":"Pick color from screen"},
+  {"name":"Force kill window","cmd":"hyprctl kill","icon":"process-stop","comment":"Click to kill"},
+  {"name":"Bluetooth devices","cmd":"blueman-manager","icon":"bluetooth","comment":"Open BT manager"}
+]

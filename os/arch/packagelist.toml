@@ -1,0 +1,7 @@
+[pacman]
+base-devel
+git
+hyprland
+gnome-keyring
+
+[aur]
