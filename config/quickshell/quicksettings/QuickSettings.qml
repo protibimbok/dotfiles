@@ -44,6 +44,10 @@ Item {
 
                     PanelDivider {}
 
+                    QSSystemStats {}
+
+                    PanelDivider {}
+
                     QSConnectivity {
                         shellRoot: root.shellRoot
                     }

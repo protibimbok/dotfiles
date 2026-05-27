@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Io
 import qs.theme
 import qs.tokens
 import qs.services
@@ -123,6 +124,42 @@ Item {
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.iconSm
                 Behavior on color { ColorAnimation { duration: Durations.fade } }
+            }
+        }
+
+        Item {
+            visible: _showSystem()
+            Layout.preferredWidth: langText.implicitWidth + 4
+            Layout.preferredHeight: Metrics.langIndicatorHeight
+            Layout.alignment: Qt.AlignVCenter
+
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -4
+                radius: Metrics.rowRadiusSm
+                color: Theme.colors.surface
+                opacity: langHover.hovered ? 0.5 : 0
+                Behavior on opacity { NumberAnimation { duration: Durations.hoverMedium } }
+            }
+
+            Text {
+                id: langText
+                anchors.centerIn: parent
+                text: SystemStats.inputLocale
+                color: Theme.pillTextMuted
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.body
+            }
+
+            HoverHandler { id: langHover; cursorShape: Qt.PointingHandCursor }
+            TapHandler {
+                onTapped: langToggle.running = true
+            }
+
+            Process {
+                id: langToggle
+                command: ["bash", "-c", "command -v fcitx5-remote >/dev/null 2>&1 && fcitx5-remote -t"]
+                onExited: SystemStats.refreshInputLocale()
             }
         }
     }

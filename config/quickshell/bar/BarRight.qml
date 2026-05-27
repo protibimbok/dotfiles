@@ -11,16 +11,6 @@ Row {
     spacing: Spacing.pillGapSm
 
     BarPill {
-        id: statsPill
-        width: sysWidgets.implicitWidth + horizontalPadding * 2
-
-        SysWidgets {
-            id: sysWidgets
-            anchors.centerIn: parent
-        }
-    }
-
-    BarPill {
         id: connectivityPill
         width: connectivityIcons.implicitWidth + horizontalPadding * 2
 
