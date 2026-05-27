@@ -19,6 +19,12 @@ Item {
         precision: SystemClock.Seconds
     }
 
+    function clockHour12() {
+        const formatted = Qt.formatDateTime(clock.date, "hh ap")
+        const space = formatted.lastIndexOf(" ")
+        return space >= 0 ? formatted.slice(0, space) : formatted
+    }
+
     HoverHandler {
         id: hoverArea
         cursorShape: Qt.PointingHandCursor
@@ -40,7 +46,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
 
             Text {
-                text: Qt.formatDateTime(clock.date, "hh")
+                text: root.clockHour12()
                 color: Theme.pillTextOnHighlight
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.body
