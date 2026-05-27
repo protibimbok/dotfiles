@@ -23,7 +23,7 @@ ColumnLayout {
                 anchors.fill: parent
                 radius: Metrics.rowRadius
                 color: volIconHov.hovered
-                    ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.15)
+                    ? Theme.primaryTint(0.15)
                     : "transparent"
                 Behavior on color { ColorAnimation { duration: 120 } }
             }
@@ -34,7 +34,7 @@ ColumnLayout {
                     : Audio.volume >= 70 ? "\uf028"
                     : Audio.volume >= 30 ? "\uf027"
                     : "\uf026"
-                color: Audio.muted ? Theme.colors.textMuted : Theme.colors.accent
+                color: Audio.muted ? Theme.colors.foregroundMuted : Theme.colors.primary
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.iconMd
                 Behavior on color { ColorAnimation { duration: 120 } }
@@ -55,7 +55,7 @@ ColumnLayout {
                 width: parent.width
                 height: 5
                 radius: 3
-                color: Theme.colors.bg2
+                color: Theme.colors.surfaceHigh
             }
 
             // Track fill
@@ -64,7 +64,7 @@ ColumnLayout {
                 width: parent.width * Math.max(0, Math.min(100, Audio.volume)) / 100
                 height: 5
                 radius: 3
-                color: Audio.muted ? Theme.colors.textMuted : Theme.colors.accent
+                color: Audio.muted ? Theme.colors.foregroundMuted : Theme.colors.primary
                 Behavior on width { NumberAnimation { duration: 80; easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
             }
@@ -76,8 +76,8 @@ ColumnLayout {
                 width: Metrics.iconApp
                 height: Metrics.iconApp
                 radius: Metrics.rowRadius
-                color: Theme.colors.accent
-                border.color: Theme.colors.bg
+                color: Theme.colors.primary
+                border.color: Theme.colors.background
                 border.width: 2
                 Behavior on x { NumberAnimation { duration: 80; easing.type: Easing.OutCubic } }
             }
@@ -95,7 +95,7 @@ ColumnLayout {
         Text {
             Layout.preferredWidth: 32
             text: Audio.volume + "%"
-            color: Theme.colors.textMuted
+            color: Theme.colors.foregroundMuted
             font.family: Typography.fontFamily
             font.pixelSize: Typography.bodySm
             horizontalAlignment: Text.AlignRight
@@ -118,7 +118,7 @@ ColumnLayout {
                 text: SystemStats.brightness >= 70 ? "\uf185"
                     : SystemStats.brightness >= 30 ? "\uf0eb"
                     : "\uf186"
-                color: Theme.colors.accent
+                color: Theme.colors.primary
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.iconMd
             }
@@ -133,7 +133,7 @@ ColumnLayout {
                 width: parent.width
                 height: 5
                 radius: 3
-                color: Theme.colors.bg2
+                color: Theme.colors.surfaceHigh
             }
 
             Rectangle {
@@ -141,7 +141,7 @@ ColumnLayout {
                 width: parent.width * Math.max(0, Math.min(100, SystemStats.brightness)) / 100
                 height: 5
                 radius: 3
-                color: Theme.colors.accent
+                color: Theme.colors.primary
                 Behavior on width { NumberAnimation { duration: 80; easing.type: Easing.OutCubic } }
             }
 
@@ -151,8 +151,8 @@ ColumnLayout {
                 width: Metrics.iconApp
                 height: Metrics.iconApp
                 radius: Metrics.rowRadius
-                color: Theme.colors.accent
-                border.color: Theme.colors.bg
+                color: Theme.colors.primary
+                border.color: Theme.colors.background
                 border.width: 2
                 Behavior on x { NumberAnimation { duration: 80; easing.type: Easing.OutCubic } }
             }
@@ -170,7 +170,7 @@ ColumnLayout {
         Text {
             Layout.preferredWidth: 32
             text: SystemStats.brightness + "%"
-            color: Theme.colors.textMuted
+            color: Theme.colors.foregroundMuted
             font.family: Typography.fontFamily
             font.pixelSize: Typography.bodySm
             horizontalAlignment: Text.AlignRight

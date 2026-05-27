@@ -62,7 +62,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Metrics.panelRadiusLarge
-        color: Theme.colors.bg
+        color: Theme.colors.background
         opacity: 0.92
 
         layer.enabled: true
@@ -72,7 +72,7 @@ Item {
         anchors.fill: parent
         radius: Metrics.panelRadiusLarge
         color: "transparent"
-        border.color: Theme.colors.border
+        border.color: Theme.colors.outline
         border.width: 1
         opacity: 0.3
     }
@@ -95,7 +95,7 @@ Item {
                 if (root._value >= 30) return "\uf0eb";
                 return "\uf186";
             }
-            color: Theme.colors.accent
+            color: Theme.colors.primary
             font.family: Typography.fontFamily
             font.pixelSize: Typography.iconLg
         }
@@ -104,13 +104,13 @@ Item {
             Layout.fillWidth: true
             height: Metrics.trackHeight + 1
             radius: Metrics.trackRadius
-            color: Theme.colors.bg2
+            color: Theme.colors.surfaceHigh
 
             Rectangle {
                 width: parent.width * Math.max(0, Math.min(100, root._value)) / 100
                 height: parent.height
                 radius: parent.radius
-                color: Theme.colors.accent
+                color: Theme.colors.primary
 
                 Behavior on width {
                     NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
@@ -120,7 +120,7 @@ Item {
 
         Text {
             text: root._value + "%"
-            color: Theme.colors.text
+            color: Theme.colors.foreground
             font.family: Typography.fontFamily
             font.pixelSize: Typography.title
             font.bold: true

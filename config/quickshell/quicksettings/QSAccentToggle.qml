@@ -15,9 +15,9 @@ Item {
         anchors.fill: parent
         radius: height / 2
         color: root.checked
-            ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.35)
-            : Theme.colors.bg1
-        border.color: Theme.colors.border
+            ? Theme.primaryTint(0.35)
+            : Theme.colors.surface
+        border.color: Theme.colors.outline
         border.width: 1
         Behavior on color { ColorAnimation { duration: 160 } }
 
@@ -27,7 +27,7 @@ Item {
             radius: width / 2
             anchors.verticalCenter: parent.verticalCenter
             x: root.checked ? parent.width - width - 3 : 3
-            color: Theme.colors.bg
+            color: Theme.colors.background
             Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
         }
 

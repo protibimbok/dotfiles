@@ -34,12 +34,12 @@ RowLayout {
             }
             color: {
                 if (!SystemStats.batteryPresent)
-                    return Theme.colors.textMuted;
+                    return Theme.colors.foregroundMuted;
                 if (SystemStats.batteryLevel < 20 && !SystemStats.batteryCharging)
-                    return Theme.colors.red;
+                    return Theme.colors.error;
                 if (SystemStats.batteryCharging)
-                    return Theme.colors.green;
-                return Theme.colors.text;
+                    return Theme.colors.success;
+                return Theme.colors.foreground;
             }
             font.family: Typography.fontFamily
             font.pixelSize: Typography.iconMd
@@ -49,7 +49,7 @@ RowLayout {
             text: SystemStats.batteryPresent
                 ? SystemStats.batteryLevel + "%"
                 : "AC"
-            color: Theme.colors.green
+            color: Theme.colors.success
             font.family: Typography.fontFamily
             font.pixelSize: Typography.body
             font.bold: true
@@ -79,10 +79,10 @@ RowLayout {
                 height: Metrics.iconPerfBtn
                 radius: Metrics.rowRadiusSm
                 color: active
-                    ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.22)
-                    : Theme.colors.bg1
+                    ? Theme.primaryTint(0.22)
+                    : Theme.colors.surface
                 border.width: active ? 1.5 : 1
-                border.color: active ? Theme.colors.accent : Theme.colors.border
+                border.color: active ? Theme.colors.primary : Theme.colors.outline
                 opacity: active ? 1.0 : 0.85
                 Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
                 Behavior on border.color { ColorAnimation { duration: Durations.hoverMedium } }
@@ -90,7 +90,7 @@ RowLayout {
                 Text {
                     anchors.centerIn: parent
                     text: modelData.icon
-                    color: active ? Theme.colors.accent : Theme.colors.textMuted
+                    color: active ? Theme.colors.primary : Theme.colors.foregroundMuted
                     font.family: Typography.fontFamily
                     font.pixelSize: Typography.header
                     Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }

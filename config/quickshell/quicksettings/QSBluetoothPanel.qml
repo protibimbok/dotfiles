@@ -34,7 +34,7 @@ ColumnLayout {
             Text {
                 anchors.centerIn: parent
                 text: "\uf053"
-                color: btBackHov.hovered ? Theme.colors.text : Theme.colors.textMuted
+                color: btBackHov.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.header
                 Behavior on color { ColorAnimation { duration: 120 } }
@@ -46,7 +46,7 @@ ColumnLayout {
 
         Text {
             text: "Bluetooth"
-            color: Theme.colors.text
+            color: Theme.colors.foreground
             font.family: Typography.fontFamily
             font.pixelSize: Typography.title
             font.bold: true
@@ -84,7 +84,7 @@ ColumnLayout {
     Text {
         Layout.bottomMargin: 4
         text: "Devices"
-        color: Theme.colors.textMuted
+        color: Theme.colors.foregroundMuted
         font.family: Typography.fontFamily
         font.pixelSize: Typography.caption
     }
@@ -94,7 +94,7 @@ ColumnLayout {
         Layout.fillHeight: true
         Layout.minimumHeight: 120
         radius: Metrics.listRadius
-        color: Theme.colors.bg1
+        color: Theme.colors.surface
         clip: true
 
         Flickable {
@@ -119,7 +119,7 @@ ColumnLayout {
                         height: Metrics.listRowHeight
                         radius: Metrics.rowRadius
                         color: btDelHov.hovered
-                            ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.12)
+                            ? Theme.primaryTint(0.12)
                             : "transparent"
 
                         RowLayout {
@@ -130,7 +130,7 @@ ColumnLayout {
                             Text {
                                 Layout.fillWidth: true
                                 text: Bluetooth.displayName(modelData.name, modelData.address)
-                                color: Theme.colors.text
+                                color: Theme.colors.foreground
                                 font.family: Typography.fontFamily
                                 font.pixelSize: Typography.bodySm
                                 elide: Text.ElideRight
@@ -141,7 +141,7 @@ ColumnLayout {
                                     Bluetooth.connectedAddresses;
                                     return Bluetooth.connectionStatusFor(modelData.address);
                                 }
-                                color: Theme.colors.textMuted
+                                color: Theme.colors.foregroundMuted
                                 font.family: Typography.fontFamily
                                 font.pixelSize: Typography.caption
                             }

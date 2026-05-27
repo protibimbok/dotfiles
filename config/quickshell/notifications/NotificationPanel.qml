@@ -104,7 +104,7 @@ Item {
 
                     Text {
                         text: "Notifications"
-                        color: Theme.colors.text
+                        color: Theme.colors.foreground
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.header
                         font.bold: true
@@ -115,13 +115,13 @@ Item {
                         width: unreadText.implicitWidth + 12
                         height: 20
                         radius: Metrics.rowRadius + 2
-                        color: Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.15)
+                        color: Theme.primaryTint(0.15)
 
                         Text {
                             id: unreadText
                             anchors.centerIn: parent
                             text: Notifications.unreadCount
-                            color: Theme.colors.accent
+                            color: Theme.colors.primary
                             font.family: Typography.fontFamily
                             font.pixelSize: Typography.bodySm
                         }
@@ -132,7 +132,7 @@ Item {
                     Text {
                         visible: Notifications.notifications.length > 0
                         text: "Clear"
-                        color: clearHover.hovered ? Theme.colors.text : Theme.colors.textMuted
+                        color: clearHover.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.body
                         Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
@@ -176,7 +176,7 @@ Item {
                             width: notifList.width
                             height: notifContent.implicitHeight + 20
                             radius: Metrics.listRadius
-                            color: Qt.rgba(Theme.colors.bg1.r, Theme.colors.bg1.g, Theme.colors.bg1.b, 0.6)
+                            color: Theme.surfaceTint(Theme.colors.surface, 0.6)
 
                             RowLayout {
                                 id: notifContent
@@ -202,7 +202,7 @@ Item {
 
                                     Text {
                                         text: notifItem.appName
-                                        color: Theme.colors.textMuted
+                                        color: Theme.colors.foregroundMuted
                                         font.family: Typography.fontFamily
                                         font.pixelSize: Typography.bodySm
                                         Layout.fillWidth: true
@@ -210,7 +210,7 @@ Item {
 
                                     Text {
                                         text: notifItem.summary
-                                        color: Theme.colors.text
+                                        color: Theme.colors.foreground
                                         font.family: Typography.fontFamily
                                         font.pixelSize: Typography.title
                                         Layout.fillWidth: true
@@ -220,7 +220,7 @@ Item {
                                     Text {
                                         visible: notifItem.body !== ""
                                         text: notifItem.body
-                                        color: Theme.colors.textMuted
+                                        color: Theme.colors.foregroundMuted
                                         font.family: Typography.fontFamily
                                         font.pixelSize: Typography.body
                                         Layout.fillWidth: true
@@ -231,7 +231,7 @@ Item {
 
                                     Text {
                                         text: notifItem.timeAgo
-                                        color: Theme.colors.textMuted
+                                        color: Theme.colors.foregroundMuted
                                         font.family: Typography.fontFamily
                                         font.pixelSize: Typography.label
                                         opacity: 0.7
@@ -241,7 +241,7 @@ Item {
                                 Text {
                                     Layout.alignment: Qt.AlignTop
                                     text: "\uf00d"
-                                    color: dismissHover.hovered ? Qt.rgba(Theme.colors.red.r, Theme.colors.red.g, Theme.colors.red.b, 0.7) : Theme.colors.textMuted
+                                    color: dismissHover.hovered ? Theme.errorTint(0.7) : Theme.colors.foregroundMuted
                                     font.family: Typography.fontFamily
                                     font.pixelSize: Typography.bodySm
                                     Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
@@ -256,7 +256,7 @@ Item {
                         anchors.centerIn: parent
                         visible: notifListModel.count === 0
                         text: "All clear"
-                        color: Theme.colors.textMuted
+                        color: Theme.colors.foregroundMuted
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.title
                     }
@@ -266,7 +266,7 @@ Item {
             Rectangle {
                 Layout.preferredWidth: 1
                 Layout.fillHeight: true
-                color: Theme.colors.border
+                color: Theme.colors.outline
                 opacity: 0.2
             }
 
@@ -304,7 +304,7 @@ Item {
 
             Text {
                 text: "\uf104"
-                color: prevHover.hovered ? Theme.colors.text : Theme.colors.textMuted
+                color: prevHover.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.title
                 Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
@@ -321,7 +321,7 @@ Item {
 
             Text {
                 text: Qt.locale().monthName(viewMonth, Locale.LongFormat) + " " + viewYear
-                color: Theme.colors.text
+                color: Theme.colors.foreground
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.body
                 font.bold: true
@@ -331,7 +331,7 @@ Item {
 
             Text {
                 text: "\uf105"
-                color: nextHover.hovered ? Theme.colors.text : Theme.colors.textMuted
+                color: nextHover.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.title
                 Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
@@ -356,7 +356,7 @@ Item {
                     width: parent.width / 7
                     text: modelData
                     horizontalAlignment: Text.AlignHCenter
-                    color: Theme.colors.textMuted
+                    color: Theme.colors.foregroundMuted
                     font.family: Typography.fontFamily
                     font.pixelSize: Typography.label
                 }
@@ -385,14 +385,14 @@ Item {
                     Rectangle {
                         anchors.centerIn: parent
                         width: 22; height: 22; radius: 11
-                        color: isToday ? Theme.colors.accent : "transparent"
+                        color: isToday ? Theme.colors.primary : "transparent"
                         visible: validDay
                     }
 
                     Text {
                         anchors.centerIn: parent
                         text: validDay ? dayNum : ""
-                        color: isToday ? Theme.colors.bg : Theme.colors.text
+                        color: isToday ? Theme.colors.background : Theme.colors.foreground
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.bodySm
                     }

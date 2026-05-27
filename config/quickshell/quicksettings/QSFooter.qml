@@ -20,9 +20,9 @@ RowLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: Metrics.footerBtnHeight
         radius: Metrics.panelRadius
-        color: wallHov.hovered ? Theme.colors.bg2 : Theme.colors.bg1
+        color: wallHov.hovered ? Theme.colors.surfaceHigh : Theme.colors.surface
         border.width: 1
-        border.color: Theme.colors.border
+        border.color: Theme.colors.outline
         opacity: 0.9
         Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
 
@@ -32,14 +32,14 @@ RowLayout {
 
             Text {
                 text: "\uf03e"
-                color: wallHov.hovered ? Theme.colors.text : Theme.colors.textMuted
+                color: wallHov.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.iconSm
             }
 
             Text {
                 text: "Wallpaper"
-                color: wallHov.hovered ? Theme.colors.text : Theme.colors.textMuted
+                color: wallHov.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.body
             }
@@ -62,9 +62,9 @@ RowLayout {
         Layout.preferredHeight: Metrics.footerBtnHeight
         Layout.preferredWidth: 153
         radius: height / 2
-        color: Theme.colors.bg1
+        color: Theme.colors.surface
         border.width: 1
-        border.color: Theme.colors.border
+        border.color: Theme.colors.outline
         opacity: 0.95
 
         RowLayout {
@@ -84,13 +84,13 @@ RowLayout {
                     anchors.fill: parent
                     radius: (actionPill.height - 8) / 2
                     color: lockHov.hovered
-                        ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.12)
+                        ? Theme.primaryTint(0.12)
                         : "transparent"
 
                     Text {
                         anchors.centerIn: parent
                         text: "\uf023"
-                        color: lockHov.hovered ? Theme.colors.text : Theme.colors.textMuted
+                        color: lockHov.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.iconMd
                     }
@@ -108,7 +108,7 @@ RowLayout {
                 id: divBar
                 Layout.preferredWidth: 1
                 Layout.fillHeight: true
-                color: Theme.colors.border
+                color: Theme.colors.outline
                 opacity: 0.55
             }
 
@@ -121,13 +121,13 @@ RowLayout {
                     anchors.fill: parent
                     radius: (actionPill.height - 8) / 2
                     color: rebootHov.hovered
-                        ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.12)
+                        ? Theme.primaryTint(0.12)
                         : "transparent"
 
                     Text {
                         anchors.centerIn: parent
                         text: "\uf021"
-                        color: rebootHov.hovered ? Theme.colors.text : Theme.colors.textMuted
+                        color: rebootHov.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.iconMd
                     }
@@ -145,7 +145,7 @@ RowLayout {
                 id: div2Bar
                 Layout.preferredWidth: 1
                 Layout.fillHeight: true
-                color: Theme.colors.border
+                color: Theme.colors.outline
                 opacity: 0.55
             }
 
@@ -158,13 +158,13 @@ RowLayout {
                     anchors.fill: parent
                     radius: (actionPill.height - 8) / 2
                     color: pwrHov.hovered
-                        ? Qt.rgba(Theme.colors.red.r, Theme.colors.red.g, Theme.colors.red.b, 0.18)
+                        ? Theme.errorTint(0.18)
                         : "transparent"
 
                     Text {
                         anchors.centerIn: parent
                         text: "\uf011"
-                        color: pwrHov.hovered ? Theme.colors.red : Theme.colors.textMuted
+                        color: pwrHov.hovered ? Theme.colors.error : Theme.colors.foregroundMuted
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.iconMd
                     }

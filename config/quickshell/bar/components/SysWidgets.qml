@@ -78,15 +78,15 @@ RowLayout {
             Rectangle {
                 anchors.fill: parent
                 radius: Metrics.rowRadius
-                color: Theme.colors.bg1
-                border.color: Theme.colors.border
+                color: Theme.colors.surface
+                border.color: Theme.colors.outline
                 border.width: 1
 
                 Text {
                     id: cpuTipText
                     anchors.centerIn: parent
                     text: "CPU: " + Math.round(SystemStats.cpuAverage * 100) + "% (" + SystemStats.cpuCores.length + " cores)"
-                    color: Theme.colors.text
+                    color: Theme.colors.foreground
                     font.family: Typography.fontFamily
                     font.pixelSize: Typography.bodySm
                 }
@@ -149,15 +149,15 @@ RowLayout {
             Rectangle {
                 anchors.fill: parent
                 radius: Metrics.rowRadius
-                color: Theme.colors.bg1
-                border.color: Theme.colors.border
+                color: Theme.colors.surface
+                border.color: Theme.colors.outline
                 border.width: 1
 
                 Text {
                     id: memTipText
                     anchors.centerIn: parent
                     text: "RAM: " + SystemStats.memUsedGb.toFixed(1) + " / " + SystemStats.memTotalGb.toFixed(1) + " GB (" + Math.round(SystemStats.memUsage * 100) + "%)"
-                    color: Theme.colors.text
+                    color: Theme.colors.foreground
                     font.family: Typography.fontFamily
                     font.pixelSize: Typography.bodySm
                 }
@@ -198,15 +198,15 @@ RowLayout {
             Rectangle {
                 anchors.fill: parent
                 radius: Metrics.rowRadius
-                color: Theme.colors.bg1
-                border.color: Theme.colors.border
+                color: Theme.colors.surface
+                border.color: Theme.colors.outline
                 border.width: 1
 
                 Text {
                     id: netTipText
                     anchors.centerIn: parent
                     text: "\u2193 " + SystemStats.netDown + "  \u2191 " + SystemStats.netUp
-                    color: Theme.colors.text
+                    color: Theme.colors.foreground
                     font.family: Typography.fontFamily
                     font.pixelSize: Typography.bodySm
                 }
@@ -224,7 +224,7 @@ RowLayout {
             anchors.fill: parent
             anchors.margins: -4
             radius: Metrics.rowRadiusSm
-            color: Theme.colors.bg1
+            color: Theme.colors.surface
             opacity: langHover.hovered ? 0.5 : 0
             Behavior on opacity { NumberAnimation { duration: Durations.hoverMedium } }
         }

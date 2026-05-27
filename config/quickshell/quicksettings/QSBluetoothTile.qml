@@ -14,8 +14,8 @@ Rectangle {
     Layout.preferredHeight: 64
     radius: Metrics.tileRadius
     color: Bluetooth.enabled
-        ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.15)
-        : Theme.colors.bg1
+        ? Theme.primaryTint(0.15)
+        : Theme.colors.surface
     Behavior on color { ColorAnimation { duration: Durations.colorTransition } }
 
     RowLayout {
@@ -35,7 +35,7 @@ Rectangle {
 
                 Text {
                     text: "\uf294"
-                    color: Bluetooth.enabled ? Theme.colors.accent : Theme.colors.textMuted
+                    color: Bluetooth.enabled ? Theme.colors.primary : Theme.colors.foregroundMuted
                     font.family: Typography.fontFamily
                     font.pixelSize: Typography.iconLg
                     Behavior on color { ColorAnimation { duration: Durations.colorTransition } }
@@ -47,7 +47,7 @@ Rectangle {
 
                     Text {
                         text: "Bluetooth"
-                        color: Theme.colors.text
+                        color: Theme.colors.foreground
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.body
                         font.bold: true
@@ -59,7 +59,7 @@ Rectangle {
                             : (Bluetooth.connected
                                 ? (Bluetooth.device || "Connected")
                                 : "On")
-                        color: Theme.colors.textMuted
+                        color: Theme.colors.foregroundMuted
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.label
                         elide: Text.ElideRight
@@ -74,7 +74,7 @@ Rectangle {
         Rectangle {
             width: 1
             height: Metrics.iconMuteBtn
-            color: Theme.colors.border
+            color: Theme.colors.outline
             opacity: 0.4
         }
 
@@ -85,7 +85,7 @@ Rectangle {
             Text {
                 anchors.centerIn: parent
                 text: "\uf054"
-                color: btChevHov.hovered ? Theme.colors.text : Theme.colors.textMuted
+                color: btChevHov.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.label
                 Behavior on color { ColorAnimation { duration: 120 } }

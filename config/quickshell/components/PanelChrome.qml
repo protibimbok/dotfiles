@@ -29,7 +29,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: root.radius
-        color: Theme.colors.bg
+        color: Theme.colors.background
         opacity: root.fillOpacity
     }
 
@@ -37,7 +37,7 @@ Item {
         anchors.fill: parent
         radius: root.radius
         color: "transparent"
-        border.color: Theme.colors.border
+        border.color: Theme.colors.outline
         border.width: 1
         opacity: root.borderOpacity
     }

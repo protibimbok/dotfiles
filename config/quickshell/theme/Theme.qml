@@ -7,30 +7,50 @@ import QtCore
 Singleton {
     id: root
 
-    // Solid bar-pill surfaces (opaque, from pywal — updated in _updatePillTokens)
-    property color pillBackground: colors.bg1
-    property color pillBackgroundHighlight: colors.surface
-    property color pillBackgroundHover: colors.bg2
-    property color pillBorder: colors.border
-    property color pillText: colors.text
-    property color pillTextMuted: colors.textMuted
-    property color pillAccent: colors.accent
-    property color pillAccentAlt: colors.accentAlt
-    property color pillGreen: colors.green
-    property color pillRed: colors.red
-    property color pillCyan: colors.cyan
-    property color pillTrack: colors.bg2
-    property color pillTextOnHighlight: colors.text
-    property color pillTextMutedOnHighlight: colors.textMuted
-    property color pillAccentOnHighlight: colors.accent
+    readonly property real minTextContrast: 4.5
+    readonly property real minMutedContrast: 4.2
+    readonly property real minAccentContrast: 3.0
+    readonly property real minBorderContrast: 1.5
+
+    // Bar pills — contrast-safe on elevated surfaces (updated in _updatePillTokens)
+    property color pillBackground: colors.surface
+    property color pillBackgroundHighlight: colors.surfaceHigh
+    property color pillBackgroundHover: colors.surfaceHighest
+    property color pillBorder: colors.outline
+    property color pillText: colors.foreground
+    property color pillTextMuted: colors.foregroundMuted
+    property color pillAccent: colors.primary
+    property color pillAccentAlt: colors.accent
+    property color pillGreen: colors.success
+    property color pillRed: colors.error
+    property color pillCyan: colors.info
+    property color pillTrack: colors.surfaceHigh
+    property color pillTextOnHighlight: colors.foreground
+    property color pillTextMutedOnHighlight: colors.foregroundMuted
+    property color pillAccentOnHighlight: colors.primary
 
     readonly property color surfaceContainer: colors.surface
-    readonly property color surfaceContainerHigh: colors.bg1
-    readonly property color surfaceContainerHighest: colors.bg2
-    readonly property color outlineVariant: colors.border
+    readonly property color surfaceContainerHigh: colors.surfaceHigh
+    readonly property color surfaceContainerHighest: colors.surfaceHighest
+    readonly property color outlineVariant: colors.outline
     readonly property color shadow: "#000000"
 
     property string currentWallpaper: ""
+    property string extractedForWallpaper: ""
+    property bool colorExtracting: false
+
+    // Ordered swatches for WallpaperPicker (contrast-safe Theme.colors)
+    readonly property var wallpaperPalette: [
+        { role: "background", color: colors.background, on: colors.foreground },
+        { role: "surface", color: colors.surface, on: colors.foreground },
+        { role: "foreground", color: colors.foreground, on: colors.background },
+        { role: "primary", color: colors.primary, on: colors.surface },
+        { role: "accent", color: colors.accent, on: colors.surface },
+        { role: "success", color: colors.success, on: colors.surface },
+        { role: "warning", color: colors.warning, on: colors.surface },
+        { role: "error", color: colors.error, on: colors.surface },
+        { role: "info", color: colors.info, on: colors.surface }
+    ]
 
     function _normalizeLocalPath(p: string): string {
         if (!p || p.length === 0)
@@ -66,19 +86,31 @@ Singleton {
     }
 
     property var colors: QtObject {
-        property color bg: "#1a1b26"
-        property color bg1: "#24283b"
-        property color bg2: "#414868"
-        property color surface: "#292e42"
-        property color border: "#3b4261"
-        property color text: "#c0caf5"
-        property color textMuted: "#565f89"
-        property color accent: "#7aa2f7"
-        property color accentAlt: "#bb9af7"
-        property color green: "#9ece6a"
-        property color yellow: "#e0af68"
-        property color red: "#f7768e"
-        property color cyan: "#7dcfff"
+        property color background: "#1a1b26"
+        property color surface: "#24283b"
+        property color surfaceHigh: "#414868"
+        property color surfaceHighest: "#565f89"
+        property color foreground: "#c0caf5"
+        property color foregroundMuted: "#565f89"
+        property color primary: "#7aa2f7"
+        property color accent: "#bb9af7"
+        property color outline: "#3b4261"
+        property color success: "#9ece6a"
+        property color warning: "#e0af68"
+        property color error: "#f7768e"
+        property color info: "#7dcfff"
+
+        readonly property color bg: background
+        readonly property color bg1: surface
+        readonly property color bg2: surfaceHigh
+        readonly property color text: foreground
+        readonly property color textMuted: foregroundMuted
+        readonly property color accentAlt: accent
+        readonly property color border: outline
+        readonly property color green: success
+        readonly property color yellow: warning
+        readonly property color red: error
+        readonly property color cyan: info
     }
 
     FileView {
@@ -91,53 +123,149 @@ Singleton {
 
     function _parseColors() {
         let t = colorFile.text();
-        if (t.length === 0) return;
+        if (t.length === 0) {
+            root.colorExtracting = false;
+            return;
+        }
         try {
             let data = JSON.parse(t);
-            let c = data.colors;
-            if (!c) return;
-            let bg0 = c.color0 || colors.bg;
-            let col8 = c.color8 || colors.bg1;
-            colors.bg = bg0;
-            colors.bg1 = _blend(bg0, col8, 0.5);
-            colors.bg2 = _blend(bg0, col8, 0.75);
-            colors.surface = _blend(bg0, col8, 0.3);
-            colors.border = _blend(col8, c.color7 || colors.text, 0.3);
-            colors.text = c.color7 || colors.text;
-            colors.textMuted = c.color8 || colors.textMuted;
-            colors.accent = c.color4 || colors.accent;
-            colors.accentAlt = c.color5 || colors.accentAlt;
-            colors.green = c.color2 || colors.green;
-            colors.yellow = c.color3 || colors.yellow;
-            colors.red = c.color1 || colors.red;
-            colors.cyan = c.color6 || colors.cyan;
-            root._updatePillTokens();
+            root._applyWalPalette(data);
         } catch (e) {
             console.warn("Theme: failed to parse wal colors:", e);
         }
+        root.colorExtracting = false;
     }
 
-    Component.onCompleted: root._updatePillTokens()
+    function _applyWalPalette(data: var) {
+        const spec = data.special || {};
+        const c = data.colors || {};
+        if (!c.color0 && !spec.background)
+            return;
+
+        const rawBg = spec.background || c.color0;
+        const rawFg = spec.foreground || c.color7 || c.color15;
+        const rawMuted = c.color8 || c.color7;
+        const dark = _luminance(_toColor(rawBg)) < 0.45;
+
+        const background = _toColor(rawBg);
+        const surface = _surfaceStep(background, rawMuted, rawFg, dark, 0.22);
+        const surfaceHigh = _surfaceStep(background, rawMuted, rawFg, dark, 0.42);
+        const surfaceHighest = _surfaceStep(background, rawMuted, rawFg, dark, 0.58);
+
+        const foreground = _textOn(surface, _toColor(rawFg), background);
+        const foregroundMuted = _textOnMuted(surface, _toColor(rawMuted), foreground, minMutedContrast);
+
+        const primary = _pickAccent(surface, [
+            c.color4, c.color5, c.color6, c.color3, c.color2, c.color1
+        ], foreground);
+        const accent = _pickAccent(surface, [
+            c.color5, c.color6, c.color4, c.color3
+        ], primary);
+
+        const outline = _outlineOn(surface, _mix(
+            surface,
+            _mix(surface, foreground, 0.35),
+            dark ? 0.55 : 0.45
+        ));
+
+        colors.background = background;
+        colors.surface = surface;
+        colors.surfaceHigh = surfaceHigh;
+        colors.surfaceHighest = surfaceHighest;
+        colors.foreground = foreground;
+        colors.foregroundMuted = foregroundMuted;
+        colors.primary = primary;
+        colors.accent = accent;
+        colors.outline = outline;
+        colors.success = _accentOn(surface, _toColor(c.color2), foreground);
+        colors.warning = _accentOn(surface, _toColor(c.color3), foreground);
+        colors.error = _accentOn(surface, _toColor(c.color1), foreground);
+        colors.info = _accentOn(surface, _toColor(c.color6), foreground);
+
+        const wall = data.wallpaper;
+        if (wall && String(wall).length > 0)
+            root.extractedForWallpaper = _normalizeLocalPath(String(wall));
+
+        root._updatePillTokens();
+    }
+
+    function extractColorsFromWallpaper(path: string) {
+        const p = _normalizeLocalPath(path);
+        if (!p || p.length === 0)
+            return;
+        colorExtracting = true;
+        walExtractProc.wallPath = p;
+        walExtractProc.running = true;
+    }
+
+    Component.onCompleted: {
+        if (colorFile.text().length > 0)
+            _parseColors();
+        else
+            _updatePillTokens();
+    }
 
     function _updatePillTokens() {
-        const bg = colors.bg;
-        const elevated = colors.bg1;
-        const raised = colors.bg2;
+        const bg = colors.background;
+        const elevated = colors.surface;
+        const raised = colors.surfaceHigh;
+        const peak = colors.surfaceHighest;
+
         pillBackground = elevated;
         pillBackgroundHighlight = raised;
-        pillBackgroundHover = _blend(elevated, raised, 0.45);
-        pillBorder = colors.border;
-        pillText = _textOn(elevated, colors.text, bg);
-        pillTextMuted = _textOnMuted(elevated, colors.textMuted, pillText, 4.2);
-        pillAccent = _accentOn(elevated, colors.accent, pillText);
-        pillAccentAlt = _accentOn(elevated, colors.accentAlt, pillText);
-        pillGreen = _accentOn(elevated, colors.green, pillText);
-        pillRed = _accentOn(elevated, colors.red, pillText);
-        pillCyan = _accentOn(elevated, colors.cyan, pillText);
+        pillBackgroundHover = _mix(elevated, peak, 0.45);
+        pillBorder = colors.outline;
+        pillText = _textOn(elevated, colors.foreground, bg);
+        pillTextMuted = _textOnMuted(elevated, colors.foregroundMuted, pillText, minMutedContrast);
+        pillAccent = _accentOn(elevated, colors.primary, pillText);
+        pillAccentAlt = _accentOn(elevated, colors.accent, pillText);
+        pillGreen = _accentOn(elevated, colors.success, pillText);
+        pillRed = _accentOn(elevated, colors.error, pillText);
+        pillCyan = _accentOn(elevated, colors.info, pillText);
         pillTrack = _mix(elevated, pillTextMuted, 0.28);
-        pillTextOnHighlight = _textOn(raised, colors.text, bg);
-        pillTextMutedOnHighlight = _textOnMuted(raised, colors.textMuted, pillTextOnHighlight, 4.2);
-        pillAccentOnHighlight = _accentOn(raised, colors.accent, pillTextOnHighlight);
+        pillTextOnHighlight = _textOn(raised, colors.foreground, bg);
+        pillTextMutedOnHighlight = _textOnMuted(raised, colors.foregroundMuted, pillTextOnHighlight, minMutedContrast);
+        pillAccentOnHighlight = _accentOn(raised, colors.primary, pillTextOnHighlight);
+    }
+
+    function _surfaceStep(bg: color, mutedRaw: var, fgRaw: var, dark: bool, t: real): color {
+        const muted = _toColor(mutedRaw);
+        const fg = _toColor(fgRaw);
+        let step = _mix(bg, muted, t);
+        if (dark) {
+            if (_luminance(step) <= _luminance(bg) + 0.02)
+                step = _mix(bg, fg, t * 0.12);
+        } else if (_luminance(step) >= _luminance(bg) - 0.02) {
+            step = _mix(bg, muted, t * 0.85);
+        }
+        return step;
+    }
+
+    function _pickAccent(bg: color, candidates: var, fallback: color): color {
+        for (let i = 0; i < candidates.length; i++) {
+            const c = _toColor(candidates[i]);
+            if (_contrast(bg, c) >= minAccentContrast)
+                return c;
+        }
+        return fallback;
+    }
+
+    function _outlineOn(bg: color, preferred: color): color {
+        if (_contrast(bg, preferred) >= minBorderContrast)
+            return preferred;
+        const fg = colors.foreground;
+        const alt = _mix(bg, fg, _luminance(bg) > 0.45 ? 0.22 : 0.35);
+        if (_contrast(bg, alt) >= minBorderContrast)
+            return alt;
+        return _luminance(bg) > 0.45 ? "#888888" : "#555555";
+    }
+
+    function _toColor(value: var): color {
+        if (value === undefined || value === null)
+            return colors.foreground;
+        if (typeof value === "string")
+            return value;
+        return value;
     }
 
     function _channel(c: real): real {
@@ -166,9 +294,9 @@ Singleton {
     }
 
     function _textOn(bg: color, preferred: color, fallback: color): color {
-        if (_contrast(bg, preferred) >= 4.5)
+        if (_contrast(bg, preferred) >= minTextContrast)
             return preferred;
-        if (_contrast(bg, fallback) >= 4.5)
+        if (_contrast(bg, fallback) >= minTextContrast)
             return fallback;
         return _luminance(bg) > 0.45 ? "#111111" : "#f4f4f4";
     }
@@ -182,32 +310,31 @@ Singleton {
     }
 
     function _accentOn(bg: color, accent: color, fallback: color): color {
-        if (_contrast(bg, accent) >= 3.0)
+        if (_contrast(bg, accent) >= minAccentContrast)
             return accent;
         return fallback;
     }
 
-    function _blend(a: string, b: string, t: real): string {
-        let ca = _hexToRgb(a), cb = _hexToRgb(b);
-        if (!ca || !cb) return a;
-        let r = Math.round(ca.r * (1 - t) + cb.r * t);
-        let g = Math.round(ca.g * (1 - t) + cb.g * t);
-        let bl = Math.round(ca.b * (1 - t) + cb.b * t);
-        return "#" + ((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1);
+    function primaryTint(opacity: real): color {
+        return Qt.rgba(colors.primary.r, colors.primary.g, colors.primary.b, opacity);
     }
 
-    function _hexToRgb(hex: string): var {
-        let h = hex.replace("#", "");
-        if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
-        if (h.length !== 6) return null;
-        return {
-            r: parseInt(h.substring(0, 2), 16),
-            g: parseInt(h.substring(2, 4), 16),
-            b: parseInt(h.substring(4, 6), 16)
-        };
+    function errorTint(opacity: real): color {
+        return Qt.rgba(colors.error.r, colors.error.g, colors.error.b, opacity);
     }
 
-    // Minimal env breaks `bash -c` (awww/wal not in PATH). Use argv + absolute tools.
+    function surfaceTint(surface: color, opacity: real): color {
+        return Qt.rgba(surface.r, surface.g, surface.b, opacity);
+    }
+
+    function outlineTint(opacity: real): color {
+        return Qt.rgba(colors.outline.r, colors.outline.g, colors.outline.b, opacity);
+    }
+
+    function foregroundMutedTint(opacity: real): color {
+        return Qt.rgba(colors.foregroundMuted.r, colors.foregroundMuted.g, colors.foregroundMuted.b, opacity);
+    }
+
     Process {
         id: awwwDaemonWarmProc
         command: ["/usr/bin/bash", "-c",
@@ -225,17 +352,17 @@ Singleton {
             "--transition-duration", "1.5",
             "--transition-fps", "60"
         ]
-        onExited: {
-            walAfterWallProc.wallPath = wallPath;
-            walAfterWallProc.running = true;
-        }
+        onExited: root.extractColorsFromWallpaper(wallPath)
     }
 
     Process {
-        id: walAfterWallProc
+        id: walExtractProc
         property string wallPath: ""
         command: ["/usr/bin/wal", "-i", wallPath, "-n", "-q"]
-        onExited: colorFile.reload()
+        onExited: {
+            colorFile.reload();
+            root._parseColors();
+        }
     }
 
     Process { id: mkdirProc; command: ["mkdir", "-p", root._cacheDir] }
@@ -248,7 +375,10 @@ Singleton {
 
     function applyWallpaper(path: string) {
         const p = _normalizeLocalPath(path);
+        if (!p || p.length === 0)
+            return;
         currentWallpaper = p;
+        colorExtracting = true;
         mkdirProc.running = true;
         saveWallProc.content = p;
         saveWallProc.running = true;

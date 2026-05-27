@@ -32,7 +32,7 @@ ColumnLayout {
             Text {
                 anchors.centerIn: parent
                 text: "\uf053"
-                color: wifiBackHov.hovered ? Theme.colors.text : Theme.colors.textMuted
+                color: wifiBackHov.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.header
                 Behavior on color { ColorAnimation { duration: 120 } }
@@ -44,7 +44,7 @@ ColumnLayout {
 
         Text {
             text: "Wifi"
-            color: Theme.colors.text
+            color: Theme.colors.foreground
             font.family: Typography.fontFamily
             font.pixelSize: Typography.title
             font.bold: true
@@ -82,7 +82,7 @@ ColumnLayout {
     Text {
         Layout.bottomMargin: 4
         text: "Tap a network to connect or disconnect; use the menu for Forget and settings"
-        color: Theme.colors.textMuted
+        color: Theme.colors.foregroundMuted
         font.family: Typography.fontFamily
         font.pixelSize: Typography.caption
         wrapMode: Text.WordWrap
@@ -109,7 +109,7 @@ ColumnLayout {
         Layout.fillHeight: true
         Layout.minimumHeight: 120
         radius: Metrics.listRadius
-        color: Theme.colors.bg1
+        color: Theme.colors.surface
         clip: true
 
         Flickable {
@@ -167,10 +167,10 @@ ColumnLayout {
                             color: {
                                 let h = netDelHov.hovered;
                                 let base = h
-                                    ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.12)
+                                    ? Theme.primaryTint(0.12)
                                     : "transparent";
                                 if (wifiNetRow.isThisActive || wifiNetRow.isRowConnecting)
-                                    return Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, h ? 0.18 : 0.08);
+                                    return Theme.primaryTint(h ? 0.18 : 0.08);
                                 return base;
                             }
 
@@ -191,7 +191,7 @@ ColumnLayout {
                                         Text {
                                             Layout.fillWidth: true
                                             text: modelData.ssid || "(hidden)"
-                                            color: Theme.colors.text
+                                            color: Theme.colors.foreground
                                             font.family: Typography.fontFamily
                                             font.pixelSize: Typography.bodySm
                                             elide: Text.ElideRight
@@ -207,8 +207,8 @@ ColumnLayout {
                                                 return modelData.signal + "%";
                                             }
                                             color: (wifiNetRow.isRowConnecting || wifiNetRow.isThisActive)
-                                                ? Theme.colors.accent
-                                                : Theme.colors.textMuted
+                                                ? Theme.colors.primary
+                                                : Theme.colors.foregroundMuted
                                             font.family: Typography.fontFamily
                                             font.pixelSize: Typography.label
                                         }
@@ -252,13 +252,13 @@ ColumnLayout {
                                     Layout.preferredWidth: 28
                                     Layout.preferredHeight: 28
                                     radius: Metrics.rowRadiusSm
-                                    color: netMenuHov.hovered ? Theme.colors.bg2 : "transparent"
+                                    color: netMenuHov.hovered ? Theme.colors.surfaceHigh : "transparent"
                                     Behavior on color { ColorAnimation { duration: 120 } }
 
                                     Text {
                                         anchors.centerIn: parent
                                         text: "\uf142"
-                                        color: netMenuHov.hovered ? Theme.colors.text : Theme.colors.textMuted
+                                        color: netMenuHov.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
                                         font.family: Typography.fontFamily
                                         font.pixelSize: Typography.body
                                     }
@@ -314,7 +314,7 @@ ColumnLayout {
                                     visible: wifiNetCol.wifiPwdErrorKey === modelData.rowKey
                                     Layout.fillWidth: true
                                     text: "Incorrect password"
-                                    color: Theme.colors.red
+                                    color: Theme.colors.error
                                     font.family: Typography.fontFamily
                                     font.pixelSize: Typography.label
                                 }
@@ -330,14 +330,14 @@ ColumnLayout {
                                         placeholderText: "Password"
                                         echoMode: TextInput.Password
                                         inputMethodHints: Qt.ImhHiddenText | Qt.ImhSensitiveData
-                                        color: Theme.colors.text
+                                        color: Theme.colors.foreground
                                         font.family: Typography.fontFamily
                                         font.pixelSize: Typography.bodySm
-                                        selectionColor: Theme.colors.accent
+                                        selectionColor: Theme.colors.primary
                                         background: Rectangle {
                                             radius: Metrics.rowRadius
-                                            color: Theme.colors.bg2
-                                            border.color: Theme.colors.border
+                                            color: Theme.colors.surfaceHigh
+                                            border.color: Theme.colors.outline
                                             border.width: 1
                                         }
                                         onTextChanged: {
@@ -351,14 +351,14 @@ ColumnLayout {
                                         Layout.preferredWidth: 72
                                         Layout.preferredHeight: 30
                                         radius: Metrics.rowRadius
-                                        color: wifiConnBtnHov.hovered ? Theme.colors.bg2 : Theme.colors.bg1
-                                        border.color: Theme.colors.border
+                                        color: wifiConnBtnHov.hovered ? Theme.colors.surfaceHigh : Theme.colors.surface
+                                        border.color: Theme.colors.outline
                                         border.width: 1
 
                                         Text {
                                             anchors.centerIn: parent
                                             text: "Connect"
-                                            color: Theme.colors.text
+                                            color: Theme.colors.foreground
                                             font.family: Typography.fontFamily
                                             font.pixelSize: Typography.label
                                         }
@@ -389,7 +389,7 @@ ColumnLayout {
                 return "Connecting…";
             return "";
         }
-        color: Theme.colors.accent
+        color: Theme.colors.primary
         font.family: Typography.fontFamily
         font.pixelSize: Typography.label
     }

@@ -18,7 +18,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Metrics.rowRadius
-        color: hov.hovered && root.active ? Theme.colors.bg2 : "transparent"
+        color: hov.hovered && root.active ? Theme.colors.surfaceHigh : "transparent"
         Behavior on color { ColorAnimation { duration: 120 } }
     }
 
@@ -26,7 +26,7 @@ Item {
         id: glyph
         anchors.centerIn: parent
         text: root.iconGlyph
-        color: root.active ? (hov.hovered ? Theme.colors.text : Theme.colors.textMuted) : Theme.colors.textMuted
+        color: root.active ? (hov.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted) : Theme.colors.foregroundMuted
         font.family: Typography.fontFamily
         font.pixelSize: Typography.title
         horizontalAlignment: Text.AlignHCenter

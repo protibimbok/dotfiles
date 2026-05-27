@@ -112,7 +112,7 @@ Item {
                 Layout.fillWidth: true
                 implicitHeight: Metrics.toastHeight
                 radius: Metrics.listRadius
-                color: Theme.colors.bg
+                color: Theme.colors.background
                 opacity: 0.0
                 clip: true
 
@@ -122,7 +122,7 @@ Item {
                     anchors.fill: parent
                     radius: parent.radius
                     color: "transparent"
-                    border.color: Theme.colors.border
+                    border.color: Theme.colors.outline
                     border.width: 1
                     opacity: 0.25
                 }
@@ -135,7 +135,7 @@ Item {
 
                     Text {
                         text: model.toastIcon
-                        color: Theme.colors.accent
+                        color: Theme.colors.primary
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.iconLg
                     }
@@ -146,7 +146,7 @@ Item {
 
                         Text {
                             text: model.toastTitle
-                            color: Theme.colors.text
+                            color: Theme.colors.foreground
                             font.family: Typography.fontFamily
                             font.pixelSize: Typography.body
                             font.bold: true
@@ -155,7 +155,7 @@ Item {
                         Text {
                             Layout.fillWidth: true
                             text: model.toastMsg
-                            color: Theme.colors.textMuted
+                            color: Theme.colors.foregroundMuted
                             font.family: Typography.fontFamily
                             font.pixelSize: Typography.bodySm
                             elide: Text.ElideRight

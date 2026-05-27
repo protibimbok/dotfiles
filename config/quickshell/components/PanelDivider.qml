@@ -6,6 +6,6 @@ import qs.tokens
 Rectangle {
     Layout.fillWidth: true
     height: Metrics.dividerWidth
-    color: Theme.colors.border
+    color: Theme.colors.outline
     opacity: Metrics.dividerOpacity
 }

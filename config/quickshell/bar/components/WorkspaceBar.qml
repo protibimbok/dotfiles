@@ -186,9 +186,9 @@ Item {
                         visible: false // Hidden so MultiEffect can draw it
                         anchors.fill: parent
                         radius: Metrics.listRadius
-                        color: Qt.rgba(Theme.colors.surface.r, Theme.colors.surface.g, Theme.colors.surface.b, 1.0)
+                        color: Theme.surfaceTint(Theme.colors.surface, 1.0)
                         border.width: active ? 1 : 0
-                        border.color: Theme.colors.accent
+                        border.color: Theme.colors.primary
                         
                         Behavior on color { ColorAnimation { duration: Durations.hoverSlow } }
                         Behavior on border.width { NumberAnimation { duration: Durations.hoverSlow } }
@@ -214,10 +214,10 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         x: -(width / 2) 
                         
-                        color: active ? Theme.colors.accent : Qt.rgba(Theme.colors.surface.r, Theme.colors.surface.g, Theme.colors.surface.b, 1.0)
+                        color: active ? Theme.colors.primary : Theme.surfaceTint(Theme.colors.surface, 1.0)
                         
                         border.width: active ? 0 : 1
-                        border.color: active ? "transparent" : Qt.rgba(Theme.colors.border.r, Theme.colors.border.g, Theme.colors.border.b, 0.4)
+                        border.color: active ? "transparent" : Theme.outlineTint(0.4)
                         
                         Behavior on color { ColorAnimation { duration: Durations.hoverSlow } }
                     }
@@ -240,7 +240,7 @@ Item {
                         text: wsSeg.wsId
                         color: active 
                             ? Theme.colors.surface 
-                            : Qt.rgba(Theme.colors.textMuted.r, Theme.colors.textMuted.g, Theme.colors.textMuted.b, 0.9)
+                            : Theme.foregroundMutedTint(0.9)
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.body
                         font.bold: active
@@ -301,7 +301,7 @@ Item {
                                     visible: ag.ninst > 1
                                     width: Metrics.workspaceMiniDot; height: Metrics.workspaceMiniDot
                                     radius: width * 0.5
-                                    color: Theme.colors.accent
+                                    color: Theme.colors.primary
                                     anchors {
                                         bottom: parent.top
                                         bottomMargin: -1

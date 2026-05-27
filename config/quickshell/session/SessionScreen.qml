@@ -50,15 +50,15 @@ Item {
                     radius: Metrics.sessionTileRadius
                     color: btnHover.hovered
                         ? Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.18)
-                        : Qt.rgba(Theme.colors.bg1.r, Theme.colors.bg1.g, Theme.colors.bg1.b, 0.85)
+                        : Theme.surfaceTint(Theme.colors.surface, 0.85)
 
                     Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
 
                     property color accentColor: {
-                        if (modelData.color === "accent") return Theme.colors.accent;
-                        if (modelData.color === "yellow") return Theme.colors.yellow;
-                        if (modelData.color === "cyan") return Theme.colors.cyan;
-                        return Theme.colors.red;
+                        if (modelData.color === "accent") return Theme.colors.primary;
+                        if (modelData.color === "yellow") return Theme.colors.warning;
+                        if (modelData.color === "cyan") return Theme.colors.info;
+                        return Theme.colors.error;
                     }
 
                     layer.enabled: true
@@ -85,7 +85,7 @@ Item {
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: modelData.label
-                            color: Theme.colors.text
+                            color: Theme.colors.foreground
                             font.family: Typography.fontFamily
                             font.pixelSize: Typography.title
                             font.bold: true

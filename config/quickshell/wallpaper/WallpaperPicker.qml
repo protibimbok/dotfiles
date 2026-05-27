@@ -26,12 +26,28 @@ Item {
     }
 
     property string wallpaperDir: _normalizeLocalPath(StandardPaths.writableLocation(StandardPaths.HomeLocation)) + "/Pictures/Wallpapers"
-    property string selectedWall: Theme.currentWallpaper
 
     ListModel { id: wallpaperModel }
 
-    Component.onCompleted: _scan()
-    onVisibleChanged: if (visible) _scan()
+    Component.onCompleted: {
+        _scan();
+        _syncExtractedColors();
+    }
+
+    onVisibleChanged: {
+        if (visible) {
+            _scan();
+            _syncExtractedColors();
+        }
+    }
+
+    function _syncExtractedColors() {
+        const wall = Theme.currentWallpaper;
+        if (wall.length === 0)
+            return;
+        if (Theme.extractedForWallpaper !== wall)
+            Theme.extractColorsFromWallpaper(wall);
+    }
 
     function _scan() {
         wallpaperModel.clear();
@@ -108,7 +124,7 @@ Item {
 
                 Text {
                     text: "\uf03e  Wallpapers"
-                    color: Theme.colors.text
+                    color: Theme.colors.foreground
                     font.family: Typography.fontFamily
                     font.pixelSize: Typography.header
                     font.bold: true
@@ -118,7 +134,7 @@ Item {
 
                 Text {
                     text: "Browse"
-                    color: browseHover.hovered ? Theme.colors.accent : Theme.colors.textMuted
+                    color: browseHover.hovered ? Theme.colors.primary : Theme.colors.foregroundMuted
                     font.family: Typography.fontFamily
                     font.pixelSize: Typography.body
                     Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
@@ -130,7 +146,7 @@ Item {
 
                 Text {
                     text: "\uf00d"
-                    color: wpCloseHover.hovered ? Theme.colors.text : Theme.colors.textMuted
+                    color: wpCloseHover.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
                     font.family: Typography.fontFamily
                     font.pixelSize: Typography.title
                     Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
@@ -155,10 +171,12 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 88
+                Layout.preferredHeight: 96
                 radius: Metrics.tileRadius
-                color: Qt.rgba(Theme.colors.bg1.r, Theme.colors.bg1.g, Theme.colors.bg1.b, 0.4)
-                visible: selectedWall !== ""
+                color: Theme.colors.surface
+                border.color: Theme.colors.outline
+                border.width: 1
+                visible: Theme.currentWallpaper !== ""
 
                 RowLayout {
                     anchors.fill: parent
@@ -166,15 +184,17 @@ Item {
                     spacing: Spacing.lg
 
                     Rectangle {
-                        Layout.preferredWidth: 110
-                        Layout.preferredHeight: 62
+                        Layout.preferredWidth: Metrics.wallpaperThumbWidth
+                        Layout.preferredHeight: Metrics.wallpaperThumbHeight
                         radius: Metrics.rowRadius + 2
                         clip: true
-                        color: Theme.colors.bg2
+                        color: Theme.colors.surfaceHigh
+                        border.color: Theme.colors.outline
+                        border.width: 1
 
                         Image {
                             anchors.fill: parent
-                            source: selectedWall ? root._fileUrl(selectedWall) : ""
+                            source: Theme.currentWallpaper ? root._fileUrl(Theme.currentWallpaper) : ""
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                         }
@@ -186,29 +206,37 @@ Item {
 
                         Text {
                             Layout.fillWidth: true
-                            text: selectedWall.split("/").pop() || ""
-                            color: Theme.colors.text
+                            text: Theme.currentWallpaper.split("/").pop() || ""
+                            color: Theme.colors.foreground
                             font.family: Typography.fontFamily
                             font.pixelSize: Typography.title
                             elide: Text.ElideLeft
                         }
 
+                        Text {
+                            Layout.fillWidth: true
+                            text: Theme.colorExtracting
+                                ? "Extracting colors from wallpaper…"
+                                : "Theme colors (contrast-adjusted)"
+                            color: Theme.colors.foregroundMuted
+                            font.family: Typography.fontFamily
+                            font.pixelSize: Typography.bodySm
+                            elide: Text.ElideRight
+                        }
+
                         RowLayout {
                             spacing: Spacing.xs
                             Repeater {
-                                model: [
-                                    Theme.colors.accent,
-                                    Theme.colors.accentAlt,
-                                    Theme.colors.green,
-                                    Theme.colors.yellow,
-                                    Theme.colors.red,
-                                    Theme.colors.cyan
-                                ]
+                                model: Theme.wallpaperPalette
 
                                 Rectangle {
                                     required property var modelData
-                                    width: 12; height: 12; radius: Metrics.rowRadiusSm
-                                    color: modelData
+                                    width: Metrics.wallpaperColorDot + 2
+                                    height: Metrics.wallpaperColorDot + 2
+                                    radius: Metrics.rowRadiusSm
+                                    color: modelData.color
+                                    border.color: modelData.on
+                                    border.width: 1
                                 }
                             }
                         }
@@ -217,20 +245,26 @@ Item {
                             Layout.preferredWidth: reextractText.implicitWidth + 16
                             Layout.preferredHeight: 26
                             radius: Metrics.rowRadius
-                            color: reextractHover.hovered ? Theme.colors.bg2 : Theme.colors.bg1
+                            color: reextractHover.hovered ? Theme.colors.surfaceHigh : Theme.colors.background
+                            border.color: Theme.colors.outline
+                            border.width: 1
+                            opacity: Theme.colorExtracting ? 0.55 : 1
                             Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
 
                             Text {
                                 id: reextractText
                                 anchors.centerIn: parent
-                                text: "Re-extract"
-                                color: Theme.colors.textMuted
+                                text: Theme.colorExtracting ? "Extracting…" : "Re-extract"
+                                color: Theme.colors.foreground
                                 font.family: Typography.fontFamily
                                 font.pixelSize: Typography.bodySm
                             }
 
-                            HoverHandler { id: reextractHover }
-                            TapHandler { onTapped: Theme.applyWallpaper(selectedWall) }
+                            HoverHandler { id: reextractHover; enabled: !Theme.colorExtracting }
+                            TapHandler {
+                                enabled: !Theme.colorExtracting
+                                onTapped: Theme.extractColorsFromWallpaper(Theme.currentWallpaper)
+                            }
                         }
                     }
                 }
@@ -260,7 +294,7 @@ Item {
                         width: wallGrid.cellWidth
                         height: wallGrid.cellHeight
 
-                        property bool isSelected: path === root.selectedWall
+                        property bool isSelected: path === Theme.currentWallpaper
                         property bool hovered: wallHover.hovered
 
                         Rectangle {
@@ -268,8 +302,8 @@ Item {
                             anchors.margins: 4
                             radius: Metrics.rowRadius + 2
                             clip: true
-                            color: Theme.colors.bg2
-                            border.color: wallDelegate.isSelected ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.5) : "transparent"
+                            color: Theme.colors.surfaceHigh
+                            border.color: wallDelegate.isSelected ? Theme.primaryTint(0.5) : "transparent"
                             border.width: wallDelegate.isSelected ? 2 : 0
                             scale: wallDelegate.hovered ? 1.02 : 1.0
                             Behavior on scale { NumberAnimation { duration: Durations.colorTransition; easing.type: Easing.OutCubic } }
@@ -295,14 +329,14 @@ Item {
                                 anchors.right: parent.right
                                 anchors.margins: 6
                                 text: "\uf00c"
-                                color: Theme.colors.accent
+                                color: Theme.colors.primary
                                 font.family: Typography.fontFamily
                                 font.pixelSize: Typography.header
 
                                 Rectangle {
                                     anchors.centerIn: parent
                                     width: 22; height: 22; radius: 11
-                                    color: Theme.colors.bg
+                                    color: Theme.colors.background
                                     opacity: 0.7
                                     z: -1
                                 }
@@ -311,10 +345,7 @@ Item {
 
                         HoverHandler { id: wallHover }
                         TapHandler {
-                            onTapped: {
-                                root.selectedWall = wallDelegate.path;
-                                Theme.applyWallpaper(wallDelegate.path);
-                            }
+                            onTapped: Theme.applyWallpaper(wallDelegate.path)
                         }
                     }
                 }

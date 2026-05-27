@@ -129,7 +129,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Metrics.panelRadius
-        color: Theme.colors.bg
+        color: Theme.colors.background
         opacity: 0.92
     }
 
@@ -143,8 +143,8 @@ Item {
             Layout.fillWidth: true
             Layout.preferredHeight: 48
             radius: Metrics.tileRadius
-            color: Theme.colors.bg1
-            border.color: searchInput.activeFocus ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.5) : Theme.colors.border
+            color: Theme.colors.surface
+            border.color: searchInput.activeFocus ? Theme.primaryTint(0.5) : Theme.colors.outline
             border.width: searchInput.activeFocus ? 2 : 1
             Behavior on border.color { ColorAnimation { duration: Durations.hoverMedium } }
             Behavior on border.width { NumberAnimation { duration: Durations.hoverMedium } }
@@ -157,7 +157,7 @@ Item {
 
                 Text {
                     text: "\uf002"
-                    color: Theme.colors.textMuted
+                    color: Theme.colors.foregroundMuted
                     font.family: Typography.fontFamily
                     font.pixelSize: Typography.header
                 }
@@ -165,12 +165,12 @@ Item {
                 TextInput {
                     id: searchInput
                     Layout.fillWidth: true
-                    color: Theme.colors.text
+                    color: Theme.colors.foreground
                     font.family: Typography.fontFamily
                     font.pixelSize: Typography.header
                     clip: true
                     selectByMouse: true
-                    selectionColor: Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.3)
+                    selectionColor: Theme.primaryTint(0.3)
 
                     Component.onCompleted: forceActiveFocus()
 
@@ -187,7 +187,7 @@ Item {
 
                 Text {
                     text: root.filteredApps.length + " apps"
-                    color: Theme.colors.textMuted
+                    color: Theme.colors.foregroundMuted
                     font.family: Typography.fontFamily
                     font.pixelSize: Typography.bodySm
                 }
@@ -224,8 +224,8 @@ Item {
                         anchors.fill: parent
                         anchors.margins: 4
                         radius: Metrics.listRadius
-                        color: appDelegate.isSelected ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.15) : (appDelegate.hovered ? Qt.rgba(Theme.colors.bg1.r, Theme.colors.bg1.g, Theme.colors.bg1.b, 0.5) : "transparent")
-                        border.color: appDelegate.isSelected ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.3) : "transparent"
+                        color: appDelegate.isSelected ? Theme.primaryTint(0.15) : (appDelegate.hovered ? Theme.surfaceTint(Theme.colors.surface, 0.5) : "transparent")
+                        border.color: appDelegate.isSelected ? Theme.primaryTint(0.3) : "transparent"
                         border.width: appDelegate.isSelected ? 1 : 0
                         Behavior on color { ColorAnimation { duration: Durations.colorTransition } }
                         Behavior on border.color { ColorAnimation { duration: Durations.colorTransition } }
@@ -247,7 +247,7 @@ Item {
                             Layout.alignment: Qt.AlignHCenter
                             Layout.maximumWidth: grid.cellWidth - 16
                             text: appDelegate.modelData.name
-                            color: Theme.colors.text
+                            color: Theme.colors.foreground
                             font.family: Typography.fontFamily
                             font.pixelSize: Typography.body
                             elide: Text.ElideRight

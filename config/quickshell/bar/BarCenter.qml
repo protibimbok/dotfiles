@@ -8,7 +8,6 @@ BarPill {
 
     required property var shellRoot
 
-    highlighted: true
     elevation: Metrics.barElevationCenter
     width: clockWidget.implicitWidth + horizontalPadding * 2
 
