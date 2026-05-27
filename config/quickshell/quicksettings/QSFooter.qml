@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Io
 import qs.theme
+import qs.tokens
 
 RowLayout {
     id: root
@@ -11,36 +12,36 @@ RowLayout {
 
     Layout.fillWidth: true
     Layout.topMargin: 2
-    spacing: 10
+    spacing: Spacing.tileInnerTop
 
     // ── Wallpaper (subtle button, left) ───────────────────────────────────
 
     Rectangle {
         Layout.fillWidth: true
-        Layout.preferredHeight: 40
-        radius: 20
+        Layout.preferredHeight: Metrics.footerBtnHeight
+        radius: Metrics.panelRadius
         color: wallHov.hovered ? Theme.colors.bg2 : Theme.colors.bg1
         border.width: 1
         border.color: Theme.colors.border
         opacity: 0.9
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
 
         RowLayout {
             anchors.centerIn: parent
-            spacing: 8
+            spacing: Spacing.md
 
             Text {
                 text: "\uf03e"
                 color: wallHov.hovered ? Theme.colors.text : Theme.colors.textMuted
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 15
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.iconSm
             }
 
             Text {
                 text: "Wallpaper"
                 color: wallHov.hovered ? Theme.colors.text : Theme.colors.textMuted
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 12
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.body
             }
         }
 
@@ -58,7 +59,7 @@ RowLayout {
 
     Rectangle {
         id: actionPill
-        Layout.preferredHeight: 40
+        Layout.preferredHeight: Metrics.footerBtnHeight
         Layout.preferredWidth: 153
         radius: height / 2
         color: Theme.colors.bg1
@@ -72,12 +73,12 @@ RowLayout {
             anchors.rightMargin: 6
             anchors.topMargin: 4
             anchors.bottomMargin: 4
-            spacing: 2
+            spacing: Spacing.rowGap
 
             Item {
                 id: lockBtn
                 Layout.fillHeight: true
-                Layout.preferredWidth: 44
+                Layout.preferredWidth: Metrics.footerActionSize
 
                 Rectangle {
                     anchors.fill: parent
@@ -90,8 +91,8 @@ RowLayout {
                         anchors.centerIn: parent
                         text: "\uf023"
                         color: lockHov.hovered ? Theme.colors.text : Theme.colors.textMuted
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 16
+                        font.family: Typography.fontFamily
+                        font.pixelSize: Typography.iconMd
                     }
                     HoverHandler { id: lockHov; cursorShape: Qt.PointingHandCursor }
                     TapHandler {
@@ -114,7 +115,7 @@ RowLayout {
             Item {
                 id: rebootBtn
                 Layout.fillHeight: true
-                Layout.preferredWidth: 44
+                Layout.preferredWidth: Metrics.footerActionSize
 
                 Rectangle {
                     anchors.fill: parent
@@ -127,8 +128,8 @@ RowLayout {
                         anchors.centerIn: parent
                         text: "\uf021"
                         color: rebootHov.hovered ? Theme.colors.text : Theme.colors.textMuted
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 16
+                        font.family: Typography.fontFamily
+                        font.pixelSize: Typography.iconMd
                     }
                     HoverHandler { id: rebootHov; cursorShape: Qt.PointingHandCursor }
                     TapHandler {
@@ -151,7 +152,7 @@ RowLayout {
             Item {
                 id: pwrBtn
                 Layout.fillHeight: true
-                Layout.preferredWidth: 44
+                Layout.preferredWidth: Metrics.footerActionSize
 
                 Rectangle {
                     anchors.fill: parent
@@ -164,8 +165,8 @@ RowLayout {
                         anchors.centerIn: parent
                         text: "\uf011"
                         color: pwrHov.hovered ? Theme.colors.red : Theme.colors.textMuted
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 16
+                        font.family: Typography.fontFamily
+                        font.pixelSize: Typography.iconMd
                     }
                     HoverHandler { id: pwrHov; cursorShape: Qt.PointingHandCursor }
                     TapHandler {

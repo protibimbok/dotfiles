@@ -4,6 +4,7 @@ import qs.theme
 import qs.services
 import qs.services.network
 import "components" as Qsc
+import qs.tokens
 
 ColumnLayout {
     id: root
@@ -34,8 +35,8 @@ ColumnLayout {
                 anchors.centerIn: parent
                 text: "\uf053"
                 color: btBackHov.hovered ? Theme.colors.text : Theme.colors.textMuted
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 14
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.header
                 Behavior on color { ColorAnimation { duration: 120 } }
             }
 
@@ -46,15 +47,15 @@ ColumnLayout {
         Text {
             text: "Bluetooth"
             color: Theme.colors.text
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 13
+            font.family: Typography.fontFamily
+            font.pixelSize: Typography.title
             font.bold: true
         }
 
         Item { Layout.fillWidth: true }
 
         RowLayout {
-            spacing: 4
+            spacing: Spacing.xs
 
             Qsc.QSHeaderIconButton {
                 iconGlyph: "\uf021"
@@ -84,15 +85,15 @@ ColumnLayout {
         Layout.bottomMargin: 4
         text: "Devices"
         color: Theme.colors.textMuted
-        font.family: "JetBrainsMono Nerd Font"
-        font.pixelSize: 9
+        font.family: Typography.fontFamily
+        font.pixelSize: Typography.caption
     }
 
     Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.minimumHeight: 120
-        radius: 12
+        radius: Metrics.listRadius
         color: Theme.colors.bg1
         clip: true
 
@@ -107,7 +108,7 @@ ColumnLayout {
             Column {
                 id: btDevCol
                 width: btFlick.width
-                spacing: 2
+                spacing: Spacing.rowGap
 
                 Repeater {
                     model: Bluetooth.devices
@@ -115,8 +116,8 @@ ColumnLayout {
                     delegate: Rectangle {
                         required property var modelData
                         width: btDevCol.width
-                        height: 36
-                        radius: 8
+                        height: Metrics.listRowHeight
+                        radius: Metrics.rowRadius
                         color: btDelHov.hovered
                             ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.12)
                             : "transparent"
@@ -130,8 +131,8 @@ ColumnLayout {
                                 Layout.fillWidth: true
                                 text: Bluetooth.displayName(modelData.name, modelData.address)
                                 color: Theme.colors.text
-                                font.family: "JetBrainsMono Nerd Font"
-                                font.pixelSize: 11
+                                font.family: Typography.fontFamily
+                                font.pixelSize: Typography.bodySm
                                 elide: Text.ElideRight
                             }
                             Text {
@@ -141,8 +142,8 @@ ColumnLayout {
                                     return Bluetooth.connectionStatusFor(modelData.address);
                                 }
                                 color: Theme.colors.textMuted
-                                font.family: "JetBrainsMono Nerd Font"
-                                font.pixelSize: 9
+                                font.family: Typography.fontFamily
+                                font.pixelSize: Typography.caption
                             }
                         }
                         HoverHandler { id: btDelHov; cursorShape: Qt.PointingHandCursor }

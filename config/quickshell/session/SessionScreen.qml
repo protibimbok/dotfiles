@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell.Io
 import qs.theme
+import qs.tokens
 
 Item {
     id: root
@@ -21,8 +22,8 @@ Item {
 
     Item {
         anchors.centerIn: parent
-        width: 380
-        height: 200
+        width: Metrics.sessionPanelWidth
+        height: Metrics.sessionPanelHeight
 
         MouseArea { anchors.fill: parent }
 
@@ -30,8 +31,8 @@ Item {
             anchors.fill: parent
             columns: 2
             rows: 2
-            columnSpacing: 16
-            rowSpacing: 16
+            columnSpacing: Spacing.xxl
+            rowSpacing: Spacing.xxl
 
             Repeater {
                 model: [
@@ -46,12 +47,12 @@ Item {
                     required property int index
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    radius: 16
+                    radius: Metrics.sessionTileRadius
                     color: btnHover.hovered
                         ? Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.18)
                         : Qt.rgba(Theme.colors.bg1.r, Theme.colors.bg1.g, Theme.colors.bg1.b, 0.85)
 
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
 
                     property color accentColor: {
                         if (modelData.color === "accent") return Theme.colors.accent;
@@ -71,22 +72,22 @@ Item {
 
                     ColumnLayout {
                         anchors.centerIn: parent
-                        spacing: 8
+                        spacing: Spacing.md
 
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: modelData.icon
                             color: parent.parent.accentColor
-                            font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: 28
+                            font.family: Typography.fontFamily
+                            font.pixelSize: Typography.display
                         }
 
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: modelData.label
                             color: Theme.colors.text
-                            font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: 13
+                            font.family: Typography.fontFamily
+                            font.pixelSize: Typography.title
                             font.bold: true
                         }
                     }

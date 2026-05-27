@@ -2,13 +2,14 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.theme
+import qs.tokens
 import qs.services
 
 Item {
     id: root
 
-    implicitWidth: clockRow.implicitWidth + (notifBadge.visible ? 28 : 0)
-    implicitHeight: 28
+    implicitWidth: clockRow.implicitWidth + (notifBadge.visible ? Metrics.notifBadgeExtraWidth : 0)
+    implicitHeight: Metrics.barWidgetHeight
 
     signal hoverEntered()
     signal hoverExited()
@@ -32,7 +33,7 @@ Item {
     Row {
         id: clockRow
         anchors.centerIn: parent
-        spacing: 8
+        spacing: Spacing.pillGap
 
         Row {
             spacing: 1
@@ -41,8 +42,8 @@ Item {
             Text {
                 text: Qt.formatDateTime(clock.date, "hh")
                 color: Theme.pillTextOnHighlight
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 12
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.body
                 font.bold: true
                 font.letterSpacing: 0.3
             }
@@ -50,23 +51,23 @@ Item {
             Text {
                 text: ":"
                 color: Theme.pillAccentOnHighlight
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 12
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.body
                 font.bold: true
 
                 SequentialAnimation on opacity {
                     running: true
                     loops: Animation.Infinite
-                    NumberAnimation { to: 0.4; duration: 800; easing.type: Easing.InOutSine }
-                    NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 0.4; duration: Durations.barHideDelay; easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 1.0; duration: Durations.barHideDelay; easing.type: Easing.InOutSine }
                 }
             }
 
             Text {
                 text: Qt.formatDateTime(clock.date, "mm")
                 color: Theme.pillTextOnHighlight
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 12
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.body
                 font.bold: true
                 font.letterSpacing: 0.3
             }
@@ -76,15 +77,15 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: Qt.formatDateTime(clock.date, "ddd d")
             color: Theme.pillTextMutedOnHighlight
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 10
+            font.family: Typography.fontFamily
+            font.pixelSize: Typography.label
             font.weight: Font.Medium
         }
 
         Item {
             id: notifBadge
-            width: 20
-            height: 20
+            width: Metrics.iconNotif
+            height: Metrics.iconNotif
             anchors.verticalCenter: parent.verticalCenter
             visible: Notifications.unreadCount > 0
 
@@ -92,16 +93,16 @@ Item {
                 anchors.centerIn: parent
                 text: "\uf0f3"
                 color: Theme.pillAccentOnHighlight
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 13
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.title
             }
 
             Rectangle {
                 anchors.top: parent.top
                 anchors.right: parent.right
-                width: 7
-                height: 7
-                radius: 3.5
+                width: Metrics.iconNotifBadge
+                height: Metrics.iconNotifBadge
+                radius: Metrics.iconNotifBadge / 2
                 color: Theme.pillAccentOnHighlight
             }
         }

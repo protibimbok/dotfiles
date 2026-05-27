@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.theme
+import qs.tokens
 import qs.bar.components
 
 RowLayout {
@@ -8,7 +9,7 @@ RowLayout {
 
     required property var shellRoot
 
-    spacing: 8
+    spacing: Spacing.pillGap
 
     WorkspaceBar {}
 }

@@ -2,15 +2,16 @@ import QtQuick
 import QtQuick.Layouts
 import qs.theme
 import qs.services
+import qs.tokens
 
 Item {
     id: root
 
     anchors.bottom: parent.bottom
-    anchors.bottomMargin: 80
+    anchors.bottomMargin: Metrics.osdBottomMargin
     anchors.horizontalCenter: parent.horizontalCenter
-    width: 280
-    height: 64
+    width: Metrics.osdWidth
+    height: Metrics.osdHeight
 
     property string _type: "volume"
     property int _value: 0
@@ -19,14 +20,14 @@ Item {
 
     Timer {
         id: readyTimer
-        interval: 3000
+        interval: Durations.readyDelay
         running: true
         onTriggered: root._ready = true
     }
 
     Timer {
         id: hideTimer
-        interval: 2000
+        interval: Durations.osdHide
         onTriggered: root._shown = false
     }
 
@@ -54,13 +55,13 @@ Item {
 
     opacity: _shown ? 1.0 : 0.0
     Behavior on opacity {
-        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Durations.fade; easing.type: Easing.OutCubic }
     }
     property bool windowVisible: opacity > 0.01
 
     Rectangle {
         anchors.fill: parent
-        radius: 32
+        radius: Metrics.panelRadiusLarge
         color: Theme.colors.bg
         opacity: 0.92
 
@@ -69,7 +70,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 32
+        radius: Metrics.panelRadiusLarge
         color: "transparent"
         border.color: Theme.colors.border
         border.width: 1
@@ -78,9 +79,9 @@ Item {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 20
-        anchors.rightMargin: 20
-        spacing: 12
+        anchors.leftMargin: Spacing.panelContentMarginLg
+        anchors.rightMargin: Spacing.panelContentMarginLg
+        spacing: Spacing.lg
 
         Text {
             text: {
@@ -95,14 +96,14 @@ Item {
                 return "\uf186";
             }
             color: Theme.colors.accent
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 18
+            font.family: Typography.fontFamily
+            font.pixelSize: Typography.iconLg
         }
 
         Rectangle {
             Layout.fillWidth: true
-            height: 6
-            radius: 3
+            height: Metrics.trackHeight + 1
+            radius: Metrics.trackRadius
             color: Theme.colors.bg2
 
             Rectangle {
@@ -120,8 +121,8 @@ Item {
         Text {
             text: root._value + "%"
             color: Theme.colors.text
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 13
+            font.family: Typography.fontFamily
+            font.pixelSize: Typography.title
             font.bold: true
             Layout.preferredWidth: 38
             horizontalAlignment: Text.AlignRight

@@ -1,9 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import QtCore
 import Quickshell.Io
 import qs.theme
+import qs.tokens
+import qs.components
 
 Item {
     id: root
@@ -86,53 +87,30 @@ Item {
 
     Item {
         id: panel
-        width: Math.min(840, root.width - 40)
-        height: Math.min(540, root.height - 64)
+        width: Math.min(Metrics.wallpaperPickerMaxWidth, root.width - Spacing.wallpaperSideInset)
+        height: Math.min(Metrics.wallpaperPickerMaxHeight, root.height - Spacing.panelMaxHeightInset)
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: 54
+        anchors.topMargin: Spacing.panelTopMargin
 
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            autoPaddingEnabled: true
-            shadowEnabled: true
-            shadowBlur: 1.0
-            shadowColor: "#30000000"
-            shadowVerticalOffset: 6
-        }
-
-        MouseArea { anchors.fill: parent }
-
-        Rectangle {
+        PanelChrome {
             anchors.fill: parent
-            radius: 20
-            color: Theme.colors.bg
-            opacity: 0.90
-        }
+            fillOpacity: 0.90
 
-        Rectangle {
-            anchors.fill: parent
-            radius: 20
-            color: "transparent"
-            border.color: Theme.colors.border
-            border.width: 1
-            opacity: 0.25
-        }
-
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 20
-            spacing: 14
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: Spacing.panelContentMarginLg
+                spacing: Spacing.xl
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: Spacing.tileInnerTop
 
                 Text {
                     text: "\uf03e  Wallpapers"
                     color: Theme.colors.text
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 14
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.header
                     font.bold: true
                 }
 
@@ -141,9 +119,9 @@ Item {
                 Text {
                     text: "Browse"
                     color: browseHover.hovered ? Theme.colors.accent : Theme.colors.textMuted
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 12
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.body
+                    Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
                     HoverHandler { id: browseHover }
                     TapHandler {
                         onTapped: browseProc.running = true
@@ -153,9 +131,9 @@ Item {
                 Text {
                     text: "\uf00d"
                     color: wpCloseHover.hovered ? Theme.colors.text : Theme.colors.textMuted
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 13
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.title
+                    Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
                     HoverHandler { id: wpCloseHover }
                     TapHandler { onTapped: root.close() }
                 }
@@ -178,19 +156,19 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 88
-                radius: 14
+                radius: Metrics.tileRadius
                 color: Qt.rgba(Theme.colors.bg1.r, Theme.colors.bg1.g, Theme.colors.bg1.b, 0.4)
                 visible: selectedWall !== ""
 
                 RowLayout {
                     anchors.fill: parent
                     anchors.margins: 10
-                    spacing: 12
+                    spacing: Spacing.lg
 
                     Rectangle {
                         Layout.preferredWidth: 110
                         Layout.preferredHeight: 62
-                        radius: 10
+                        radius: Metrics.rowRadius + 2
                         clip: true
                         color: Theme.colors.bg2
 
@@ -204,19 +182,19 @@ Item {
 
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 6
+                        spacing: Spacing.sm
 
                         Text {
                             Layout.fillWidth: true
                             text: selectedWall.split("/").pop() || ""
                             color: Theme.colors.text
-                            font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: 13
+                            font.family: Typography.fontFamily
+                            font.pixelSize: Typography.title
                             elide: Text.ElideLeft
                         }
 
                         RowLayout {
-                            spacing: 4
+                            spacing: Spacing.xs
                             Repeater {
                                 model: [
                                     Theme.colors.accent,
@@ -229,7 +207,7 @@ Item {
 
                                 Rectangle {
                                     required property var modelData
-                                    width: 12; height: 12; radius: 6
+                                    width: 12; height: 12; radius: Metrics.rowRadiusSm
                                     color: modelData
                                 }
                             }
@@ -238,17 +216,17 @@ Item {
                         Rectangle {
                             Layout.preferredWidth: reextractText.implicitWidth + 16
                             Layout.preferredHeight: 26
-                            radius: 8
+                            radius: Metrics.rowRadius
                             color: reextractHover.hovered ? Theme.colors.bg2 : Theme.colors.bg1
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
 
                             Text {
                                 id: reextractText
                                 anchors.centerIn: parent
                                 text: "Re-extract"
                                 color: Theme.colors.textMuted
-                                font.family: "JetBrainsMono Nerd Font"
-                                font.pixelSize: 11
+                                font.family: Typography.fontFamily
+                                font.pixelSize: Typography.bodySm
                             }
 
                             HoverHandler { id: reextractHover }
@@ -271,8 +249,8 @@ Item {
                 model: wallpaperModel
 
                 populate: Transition {
-                    NumberAnimation { properties: "opacity"; from: 0; to: 1; duration: 220; easing.type: Easing.OutCubic }
-                    NumberAnimation { properties: "scale"; from: 0.95; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
+                    NumberAnimation { properties: "opacity"; from: 0; to: 1; duration: Durations.panelEnter; easing.type: Easing.OutCubic }
+                    NumberAnimation { properties: "scale"; from: 0.95; to: 1.0; duration: Durations.panelEnter; easing.type: Easing.OutCubic }
                 }
 
                 delegate: Item {
@@ -288,14 +266,14 @@ Item {
                         Rectangle {
                             anchors.fill: parent
                             anchors.margins: 4
-                            radius: 10
+                            radius: Metrics.rowRadius + 2
                             clip: true
                             color: Theme.colors.bg2
                             border.color: wallDelegate.isSelected ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.5) : "transparent"
                             border.width: wallDelegate.isSelected ? 2 : 0
                             scale: wallDelegate.hovered ? 1.02 : 1.0
-                            Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                            Behavior on border.color { ColorAnimation { duration: 180 } }
+                            Behavior on scale { NumberAnimation { duration: Durations.colorTransition; easing.type: Easing.OutCubic } }
+                            Behavior on border.color { ColorAnimation { duration: Durations.colorTransition } }
 
                             Image {
                                 anchors.fill: parent
@@ -308,7 +286,7 @@ Item {
                                 anchors.fill: parent
                                 color: "white"
                                 opacity: wallDelegate.hovered ? 0.06 : 0
-                                Behavior on opacity { NumberAnimation { duration: 180 } }
+                                Behavior on opacity { NumberAnimation { duration: Durations.colorTransition } }
                             }
 
                             Text {
@@ -318,8 +296,8 @@ Item {
                                 anchors.margins: 6
                                 text: "\uf00c"
                                 color: Theme.colors.accent
-                                font.family: "JetBrainsMono Nerd Font"
-                                font.pixelSize: 14
+                                font.family: Typography.fontFamily
+                                font.pixelSize: Typography.header
 
                                 Rectangle {
                                     anchors.centerIn: parent
@@ -342,6 +320,7 @@ Item {
                 }
             }
         }
+    }
 
     Keys.onEscapePressed: root.close()
 }

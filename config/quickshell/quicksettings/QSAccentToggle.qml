@@ -1,5 +1,6 @@
 import QtQuick
 import qs.theme
+import qs.tokens
 
 Item {
     id: root

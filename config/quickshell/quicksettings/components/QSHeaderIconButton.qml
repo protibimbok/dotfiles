@@ -1,5 +1,6 @@
 import QtQuick
 import qs.theme
+import qs.tokens
 
 /// Compact toolbar icon (Nerd Font glyph); optional continuous rotation while `spinning` is true.
 Item {
@@ -16,7 +17,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 8
+        radius: Metrics.rowRadius
         color: hov.hovered && root.active ? Theme.colors.bg2 : "transparent"
         Behavior on color { ColorAnimation { duration: 120 } }
     }
@@ -26,8 +27,8 @@ Item {
         anchors.centerIn: parent
         text: root.iconGlyph
         color: root.active ? (hov.hovered ? Theme.colors.text : Theme.colors.textMuted) : Theme.colors.textMuted
-        font.family: "JetBrainsMono Nerd Font"
-        font.pixelSize: 13
+        font.family: Typography.fontFamily
+        font.pixelSize: Typography.title
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         transformOrigin: Item.Center

@@ -4,18 +4,19 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import qs.theme
+import qs.tokens
 import qs.services
 
 RowLayout {
     id: root
-    spacing: 6
-    implicitHeight: 28
+    spacing: Spacing.pillGapSm
+    implicitHeight: Metrics.barWidgetHeight
 
     // --- CPU arc indicator ---
     Item {
         id: cpuWidget
-        Layout.preferredWidth: 20
-        Layout.preferredHeight: 20
+        Layout.preferredWidth: Metrics.iconSys
+        Layout.preferredHeight: Metrics.iconSys
         Layout.alignment: Qt.AlignVCenter
 
         property real usage: SystemStats.cpuAverage
@@ -24,7 +25,7 @@ RowLayout {
             id: cpuCanvas
             anchors.fill: parent
             property real usage: parent.usage
-            Behavior on usage { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+            Behavior on usage { NumberAnimation { duration: Durations.spin / 2; easing.type: Easing.OutCubic } }
             onUsageChanged: requestPaint()
             onPaint: {
                 let ctx = getContext("2d");
@@ -68,15 +69,15 @@ RowLayout {
             // anchor.item positions relative to the widget item itself
             anchor.item: cpuWidget
             anchor.rect.x: (cpuWidget.width - width) / 2
-            anchor.rect.y: cpuWidget.height + 4   // below the widget
+            anchor.rect.y: cpuWidget.height + Spacing.xs
 
-            implicitWidth: cpuTipText.implicitWidth + 14
-            implicitHeight: cpuTipText.implicitHeight + 10
+            implicitWidth: cpuTipText.implicitWidth + Spacing.xl
+            implicitHeight: cpuTipText.implicitHeight + Spacing.sm
             color: "transparent"
 
             Rectangle {
                 anchors.fill: parent
-                radius: 8
+                radius: Metrics.rowRadius
                 color: Theme.colors.bg1
                 border.color: Theme.colors.border
                 border.width: 1
@@ -86,8 +87,8 @@ RowLayout {
                     anchors.centerIn: parent
                     text: "CPU: " + Math.round(SystemStats.cpuAverage * 100) + "% (" + SystemStats.cpuCores.length + " cores)"
                     color: Theme.colors.text
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 11
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.bodySm
                 }
             }
         }
@@ -96,8 +97,8 @@ RowLayout {
     // --- Memory arc indicator ---
     Item {
         id: memWidget
-        Layout.preferredWidth: 20
-        Layout.preferredHeight: 20
+        Layout.preferredWidth: Metrics.iconSys
+        Layout.preferredHeight: Metrics.iconSys
         Layout.alignment: Qt.AlignVCenter
 
         property real usage: SystemStats.memUsage
@@ -106,7 +107,7 @@ RowLayout {
             id: memCanvas
             anchors.fill: parent
             property real usage: parent.usage
-            Behavior on usage { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+            Behavior on usage { NumberAnimation { duration: Durations.spin / 2; easing.type: Easing.OutCubic } }
             onUsageChanged: requestPaint()
             onPaint: {
                 let ctx = getContext("2d");
@@ -139,15 +140,15 @@ RowLayout {
 
             anchor.item: memWidget
             anchor.rect.x: (memWidget.width - width) / 2
-            anchor.rect.y: memWidget.height + 4
+            anchor.rect.y: memWidget.height + Spacing.xs
 
-            implicitWidth: memTipText.implicitWidth + 14
-            implicitHeight: memTipText.implicitHeight + 10
+            implicitWidth: memTipText.implicitWidth + Spacing.xl
+            implicitHeight: memTipText.implicitHeight + Spacing.sm
             color: "transparent"
 
             Rectangle {
                 anchors.fill: parent
-                radius: 8
+                radius: Metrics.rowRadius
                 color: Theme.colors.bg1
                 border.color: Theme.colors.border
                 border.width: 1
@@ -157,8 +158,8 @@ RowLayout {
                     anchors.centerIn: parent
                     text: "RAM: " + SystemStats.memUsedGb.toFixed(1) + " / " + SystemStats.memTotalGb.toFixed(1) + " GB (" + Math.round(SystemStats.memUsage * 100) + "%)"
                     color: Theme.colors.text
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 11
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.bodySm
                 }
             }
         }
@@ -167,17 +168,17 @@ RowLayout {
     // --- Network icon ---
     Item {
         id: netWidget
-        Layout.preferredWidth: 20
-        Layout.preferredHeight: 20
+        Layout.preferredWidth: Metrics.iconSys
+        Layout.preferredHeight: Metrics.iconSys
         Layout.alignment: Qt.AlignVCenter
 
         Text {
             anchors.centerIn: parent
             text: "\uf0ac"
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 15
+            font.family: Typography.fontFamily
+            font.pixelSize: Typography.iconSm
             color: (SystemStats.netDownBytes > 1024 || SystemStats.netUpBytes > 1024) ? Theme.pillAccent : Theme.pillTextMuted
-            Behavior on color { ColorAnimation { duration: 300 } }
+            Behavior on color { ColorAnimation { duration: Durations.fadeSlow } }
         }
 
         HoverHandler { id: netHover; cursorShape: Qt.PointingHandCursor }
@@ -188,15 +189,15 @@ RowLayout {
 
             anchor.item: netWidget
             anchor.rect.x: (netWidget.width - width) / 2
-            anchor.rect.y: netWidget.height + 4
+            anchor.rect.y: netWidget.height + Spacing.xs
 
-            implicitWidth: netTipText.implicitWidth + 14
-            implicitHeight: netTipText.implicitHeight + 10
+            implicitWidth: netTipText.implicitWidth + Spacing.xl
+            implicitHeight: netTipText.implicitHeight + Spacing.sm
             color: "transparent"
 
             Rectangle {
                 anchors.fill: parent
-                radius: 8
+                radius: Metrics.rowRadius
                 color: Theme.colors.bg1
                 border.color: Theme.colors.border
                 border.width: 1
@@ -206,8 +207,8 @@ RowLayout {
                     anchors.centerIn: parent
                     text: "\u2193 " + SystemStats.netDown + "  \u2191 " + SystemStats.netUp
                     color: Theme.colors.text
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 11
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.bodySm
                 }
             }
         }
@@ -216,16 +217,16 @@ RowLayout {
     // --- Language indicator ---
     Item {
         Layout.preferredWidth: langText.implicitWidth + 4
-        Layout.preferredHeight: 16
+        Layout.preferredHeight: Metrics.langIndicatorHeight
         Layout.alignment: Qt.AlignVCenter
 
         Rectangle {
             anchors.fill: parent
             anchors.margins: -4
-            radius: 6
+            radius: Metrics.rowRadiusSm
             color: Theme.colors.bg1
             opacity: langHover.hovered ? 0.5 : 0
-            Behavior on opacity { NumberAnimation { duration: 150 } }
+            Behavior on opacity { NumberAnimation { duration: Durations.hoverMedium } }
         }
 
         Text {
@@ -233,8 +234,8 @@ RowLayout {
             anchors.centerIn: parent
             text: SystemStats.inputLocale
             color: Theme.pillTextMuted
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 12
+            font.family: Typography.fontFamily
+            font.pixelSize: Typography.body
         }
 
         HoverHandler { id: langHover; cursorShape: Qt.PointingHandCursor }

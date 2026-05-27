@@ -1,5 +1,6 @@
 import QtQuick
 import qs.theme
+import qs.tokens
 import qs.services
 import qs.utils
 
@@ -7,28 +8,28 @@ Item {
     id: root
 
     implicitWidth: contentRow.implicitWidth
-    implicitHeight: 22
+    implicitHeight: Metrics.barMediaHeight
 
     readonly property bool canGoToWorkspace: Mpris.playerWorkspaceId >= 0
 
     Row {
         id: contentRow
         anchors.centerIn: parent
-        spacing: 6
+        spacing: Spacing.pillGapSm
 
         Item {
             id: appIconHost
-            width: 16
-            height: 16
+            width: Metrics.iconApp
+            height: Metrics.iconApp
             anchors.verticalCenter: parent.verticalCenter
 
             Image {
                 anchors.fill: parent
                 source: Icons.forWindowClass(Mpris.playerIconClass)
-                sourceSize: Qt.size(16, 16)
+                sourceSize: Qt.size(Metrics.iconApp, Metrics.iconApp)
                 smooth: true
                 opacity: appIconHover.hovered ? 1.0 : 0.85
-                Behavior on opacity { NumberAnimation { duration: 130 } }
+                Behavior on opacity { NumberAnimation { duration: Durations.press } }
             }
 
             HoverHandler {
@@ -51,24 +52,24 @@ Item {
 
             Row {
                 id: controlsRow
-                spacing: 6
+                spacing: Spacing.pillGapSm
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: Mpris.status === "Playing" ? "\uf04c" : "\uf04b"
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 12
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.body
                     color: Theme.pillAccentAlt
                 }
 
                 Text {
                     id: titleText
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Math.min(implicitWidth, 140)
+                    width: Math.min(implicitWidth, Metrics.mediaTitleMaxWidth)
                     text: Mpris.displayLine.length > 0 ? Mpris.displayLine : Mpris.status
                     elide: Text.ElideRight
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 10
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.label
                     font.weight: Font.Medium
                     color: Theme.pillText
                 }

@@ -2,18 +2,19 @@ import QtQuick
 import QtQuick.Layouts
 import qs.theme
 import qs.services
+import qs.tokens
 
 RowLayout {
     id: root
 
     Layout.fillWidth: true
-    spacing: 8
+    spacing: Spacing.md
 
     // ── Left: battery + percent (green) + profile hint (muted) ───────────
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: Spacing.md
 
         Text {
             text: {
@@ -40,8 +41,8 @@ RowLayout {
                     return Theme.colors.green;
                 return Theme.colors.text;
             }
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 16
+            font.family: Typography.fontFamily
+            font.pixelSize: Typography.iconMd
         }
 
         Text {
@@ -49,8 +50,8 @@ RowLayout {
                 ? SystemStats.batteryLevel + "%"
                 : "AC"
             color: Theme.colors.green
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 12
+            font.family: Typography.fontFamily
+            font.pixelSize: Typography.body
             font.bold: true
         }
 
@@ -61,7 +62,7 @@ RowLayout {
     }
 
     RowLayout {
-        spacing: 4
+        spacing: Spacing.xs
 
         Repeater {
             model: [
@@ -74,25 +75,25 @@ RowLayout {
                 required property var modelData
                 property bool active: SystemStats.perfMode === modelData.mode
 
-                width: 30
-                height: 30
-                radius: 6
+                width: Metrics.iconPerfBtn
+                height: Metrics.iconPerfBtn
+                radius: Metrics.rowRadiusSm
                 color: active
                     ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.22)
                     : Theme.colors.bg1
                 border.width: active ? 1.5 : 1
                 border.color: active ? Theme.colors.accent : Theme.colors.border
                 opacity: active ? 1.0 : 0.85
-                Behavior on color { ColorAnimation { duration: 150 } }
-                Behavior on border.color { ColorAnimation { duration: 150 } }
+                Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
+                Behavior on border.color { ColorAnimation { duration: Durations.hoverMedium } }
 
                 Text {
                     anchors.centerIn: parent
                     text: modelData.icon
                     color: active ? Theme.colors.accent : Theme.colors.textMuted
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 14
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.header
+                    Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
                 }
 
                 MouseArea {

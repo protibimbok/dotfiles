@@ -7,10 +7,6 @@ import QtCore
 Singleton {
     id: root
 
-    readonly property real barOpacity: 0.90
-    readonly property real barPillHeight: 36
-    readonly property real barPillRadius: 20
-
     // Solid bar-pill surfaces (opaque, from pywal — updated in _updatePillTokens)
     property color pillBackground: colors.bg1
     property color pillBackgroundHighlight: colors.surface

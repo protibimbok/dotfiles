@@ -1,5 +1,6 @@
 import QtQuick
 import qs.theme
+import qs.tokens
 import qs.bar.components
 
 Row {
@@ -7,7 +8,7 @@ Row {
 
     required property var shellRoot
 
-    spacing: 6
+    spacing: Spacing.pillGapSm
 
     BarPill {
         id: statsPill

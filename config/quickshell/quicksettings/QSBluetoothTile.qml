@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.theme
 import qs.services
 import qs.services.network
+import qs.tokens
 
 Rectangle {
     id: root
@@ -11,11 +12,11 @@ Rectangle {
 
     Layout.fillWidth: true
     Layout.preferredHeight: 64
-    radius: 14
+    radius: Metrics.tileRadius
     color: Bluetooth.enabled
         ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.15)
         : Theme.colors.bg1
-    Behavior on color { ColorAnimation { duration: 180 } }
+    Behavior on color { ColorAnimation { duration: Durations.colorTransition } }
 
     RowLayout {
         anchors.fill: parent
@@ -30,14 +31,14 @@ Rectangle {
                 anchors.leftMargin: 14
                 anchors.topMargin: 10
                 anchors.bottomMargin: 10
-                spacing: 10
+                spacing: Spacing.tileInnerTop
 
                 Text {
                     text: "\uf294"
                     color: Bluetooth.enabled ? Theme.colors.accent : Theme.colors.textMuted
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 18
-                    Behavior on color { ColorAnimation { duration: 180 } }
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.iconLg
+                    Behavior on color { ColorAnimation { duration: Durations.colorTransition } }
                 }
 
                 ColumnLayout {
@@ -47,8 +48,8 @@ Rectangle {
                     Text {
                         text: "Bluetooth"
                         color: Theme.colors.text
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 12
+                        font.family: Typography.fontFamily
+                        font.pixelSize: Typography.body
                         font.bold: true
                     }
 
@@ -59,8 +60,8 @@ Rectangle {
                                 ? (Bluetooth.device || "Connected")
                                 : "On")
                         color: Theme.colors.textMuted
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 10
+                        font.family: Typography.fontFamily
+                        font.pixelSize: Typography.label
                         elide: Text.ElideRight
                     }
                 }
@@ -72,7 +73,7 @@ Rectangle {
 
         Rectangle {
             width: 1
-            height: 28
+            height: Metrics.iconMuteBtn
             color: Theme.colors.border
             opacity: 0.4
         }
@@ -85,8 +86,8 @@ Rectangle {
                 anchors.centerIn: parent
                 text: "\uf054"
                 color: btChevHov.hovered ? Theme.colors.text : Theme.colors.textMuted
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 10
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.label
                 Behavior on color { ColorAnimation { duration: 120 } }
             }
 

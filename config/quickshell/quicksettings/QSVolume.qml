@@ -2,25 +2,26 @@ import QtQuick
 import QtQuick.Layouts
 import qs.theme
 import qs.services
+import qs.tokens
 
 ColumnLayout {
     Layout.fillWidth: true
-    spacing: 4
+    spacing: Spacing.xs
 
     // ── Shared slider component (inline) ─────────────────────────────────
     // Volume row
     RowLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: 36
-        spacing: 12
+        spacing: Spacing.lg
 
         Item {
-            width: 28
-            height: 28
+            width: Metrics.iconMuteBtn
+            height: Metrics.iconMuteBtn
 
             Rectangle {
                 anchors.fill: parent
-                radius: 8
+                radius: Metrics.rowRadius
                 color: volIconHov.hovered
                     ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.15)
                     : "transparent"
@@ -34,8 +35,8 @@ ColumnLayout {
                     : Audio.volume >= 30 ? "\uf027"
                     : "\uf026"
                 color: Audio.muted ? Theme.colors.textMuted : Theme.colors.accent
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 16
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.iconMd
                 Behavior on color { ColorAnimation { duration: 120 } }
             }
 
@@ -46,7 +47,7 @@ ColumnLayout {
         // Slider track
         Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: 20
+            Layout.preferredHeight: Metrics.iconSys
 
             // Track background
             Rectangle {
@@ -65,16 +66,16 @@ ColumnLayout {
                 radius: 3
                 color: Audio.muted ? Theme.colors.textMuted : Theme.colors.accent
                 Behavior on width { NumberAnimation { duration: 80; easing.type: Easing.OutCubic } }
-                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
             }
 
             // Thumb
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 x: parent.width * Math.max(0, Math.min(100, Audio.volume)) / 100 - width / 2
-                width: 16
-                height: 16
-                radius: 8
+                width: Metrics.iconApp
+                height: Metrics.iconApp
+                radius: Metrics.rowRadius
                 color: Theme.colors.accent
                 border.color: Theme.colors.bg
                 border.width: 2
@@ -95,8 +96,8 @@ ColumnLayout {
             Layout.preferredWidth: 32
             text: Audio.volume + "%"
             color: Theme.colors.textMuted
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 11
+            font.family: Typography.fontFamily
+            font.pixelSize: Typography.bodySm
             horizontalAlignment: Text.AlignRight
         }
     }
@@ -105,12 +106,12 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: 36
-        spacing: 12
+        spacing: Spacing.lg
         visible: SystemStats.brightness >= 0
 
         Item {
-            width: 28
-            height: 28
+            width: Metrics.iconMuteBtn
+            height: Metrics.iconMuteBtn
 
             Text {
                 anchors.centerIn: parent
@@ -118,14 +119,14 @@ ColumnLayout {
                     : SystemStats.brightness >= 30 ? "\uf0eb"
                     : "\uf186"
                 color: Theme.colors.accent
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 16
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.iconMd
             }
         }
 
         Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: 20
+            Layout.preferredHeight: Metrics.iconSys
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
@@ -147,9 +148,9 @@ ColumnLayout {
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 x: parent.width * Math.max(0, Math.min(100, SystemStats.brightness)) / 100 - width / 2
-                width: 16
-                height: 16
-                radius: 8
+                width: Metrics.iconApp
+                height: Metrics.iconApp
+                radius: Metrics.rowRadius
                 color: Theme.colors.accent
                 border.color: Theme.colors.bg
                 border.width: 2
@@ -170,8 +171,8 @@ ColumnLayout {
             Layout.preferredWidth: 32
             text: SystemStats.brightness + "%"
             color: Theme.colors.textMuted
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 11
+            font.family: Typography.fontFamily
+            font.pixelSize: Typography.bodySm
             horizontalAlignment: Text.AlignRight
         }
     }

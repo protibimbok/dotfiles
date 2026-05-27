@@ -5,6 +5,7 @@ import qs.theme
 import qs.services
 import qs.services.network
 import "components" as Qsc
+import qs.tokens
 
 ColumnLayout {
     id: root
@@ -32,8 +33,8 @@ ColumnLayout {
                 anchors.centerIn: parent
                 text: "\uf053"
                 color: wifiBackHov.hovered ? Theme.colors.text : Theme.colors.textMuted
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 14
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.header
                 Behavior on color { ColorAnimation { duration: 120 } }
             }
 
@@ -44,15 +45,15 @@ ColumnLayout {
         Text {
             text: "Wifi"
             color: Theme.colors.text
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 13
+            font.family: Typography.fontFamily
+            font.pixelSize: Typography.title
             font.bold: true
         }
 
         Item { Layout.fillWidth: true }
 
         RowLayout {
-            spacing: 4
+            spacing: Spacing.xs
 
             Qsc.QSHeaderIconButton {
                 iconGlyph: "\uf021"
@@ -82,8 +83,8 @@ ColumnLayout {
         Layout.bottomMargin: 4
         text: "Tap a network to connect or disconnect; use the menu for Forget and settings"
         color: Theme.colors.textMuted
-        font.family: "JetBrainsMono Nerd Font"
-        font.pixelSize: 9
+        font.family: Typography.fontFamily
+        font.pixelSize: Typography.caption
         wrapMode: Text.WordWrap
         Layout.fillWidth: true
     }
@@ -107,7 +108,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.minimumHeight: 120
-        radius: 12
+        radius: Metrics.listRadius
         color: Theme.colors.bg1
         clip: true
 
@@ -122,7 +123,7 @@ ColumnLayout {
             Column {
                 id: wifiNetCol
                 width: wifiFlick.width
-                spacing: 2
+                spacing: Spacing.rowGap
 
                 property string expandedWifiKey: ""
                 property string wifiPwdErrorKey: ""
@@ -161,8 +162,8 @@ ColumnLayout {
 
                         Rectangle {
                             width: parent.width
-                            height: 36
-                            radius: 8
+                            height: Metrics.listRowHeight
+                            radius: Metrics.rowRadius
                             color: {
                                 let h = netDelHov.hovered;
                                 let base = h
@@ -177,7 +178,7 @@ ColumnLayout {
                                 anchors.fill: parent
                                 anchors.leftMargin: 8
                                 anchors.rightMargin: 4
-                                spacing: 4
+                                spacing: Spacing.xs
 
                                 Item {
                                     Layout.fillWidth: true
@@ -185,14 +186,14 @@ ColumnLayout {
 
                                     RowLayout {
                                         anchors.fill: parent
-                                        spacing: 8
+                                        spacing: Spacing.md
 
                                         Text {
                                             Layout.fillWidth: true
                                             text: modelData.ssid || "(hidden)"
                                             color: Theme.colors.text
-                                            font.family: "JetBrainsMono Nerd Font"
-                                            font.pixelSize: 11
+                                            font.family: Typography.fontFamily
+                                            font.pixelSize: Typography.bodySm
                                             elide: Text.ElideRight
                                         }
                                         Text {
@@ -208,8 +209,8 @@ ColumnLayout {
                                             color: (wifiNetRow.isRowConnecting || wifiNetRow.isThisActive)
                                                 ? Theme.colors.accent
                                                 : Theme.colors.textMuted
-                                            font.family: "JetBrainsMono Nerd Font"
-                                            font.pixelSize: 10
+                                            font.family: Typography.fontFamily
+                                            font.pixelSize: Typography.label
                                         }
                                     }
 
@@ -250,7 +251,7 @@ ColumnLayout {
                                     id: netMenuBtn
                                     Layout.preferredWidth: 28
                                     Layout.preferredHeight: 28
-                                    radius: 6
+                                    radius: Metrics.rowRadiusSm
                                     color: netMenuHov.hovered ? Theme.colors.bg2 : "transparent"
                                     Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -258,8 +259,8 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: "\uf142"
                                         color: netMenuHov.hovered ? Theme.colors.text : Theme.colors.textMuted
-                                        font.family: "JetBrainsMono Nerd Font"
-                                        font.pixelSize: 12
+                                        font.family: Typography.fontFamily
+                                        font.pixelSize: Typography.body
                                     }
 
                                     HoverHandler { id: netMenuHov; cursorShape: Qt.PointingHandCursor }
@@ -307,20 +308,20 @@ ColumnLayout {
                             ColumnLayout {
                                 id: pwdBlock
                                 width: parent.width
-                                spacing: 6
+                                spacing: Spacing.sm
 
                                 Text {
                                     visible: wifiNetCol.wifiPwdErrorKey === modelData.rowKey
                                     Layout.fillWidth: true
                                     text: "Incorrect password"
                                     color: Theme.colors.red
-                                    font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 10
+                                    font.family: Typography.fontFamily
+                                    font.pixelSize: Typography.label
                                 }
 
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    spacing: 8
+                                    spacing: Spacing.md
 
                                     QQC2.TextField {
                                         id: wifiPwdField
@@ -330,11 +331,11 @@ ColumnLayout {
                                         echoMode: TextInput.Password
                                         inputMethodHints: Qt.ImhHiddenText | Qt.ImhSensitiveData
                                         color: Theme.colors.text
-                                        font.family: "JetBrainsMono Nerd Font"
-                                        font.pixelSize: 11
+                                        font.family: Typography.fontFamily
+                                        font.pixelSize: Typography.bodySm
                                         selectionColor: Theme.colors.accent
                                         background: Rectangle {
-                                            radius: 8
+                                            radius: Metrics.rowRadius
                                             color: Theme.colors.bg2
                                             border.color: Theme.colors.border
                                             border.width: 1
@@ -349,7 +350,7 @@ ColumnLayout {
                                     Rectangle {
                                         Layout.preferredWidth: 72
                                         Layout.preferredHeight: 30
-                                        radius: 8
+                                        radius: Metrics.rowRadius
                                         color: wifiConnBtnHov.hovered ? Theme.colors.bg2 : Theme.colors.bg1
                                         border.color: Theme.colors.border
                                         border.width: 1
@@ -358,8 +359,8 @@ ColumnLayout {
                                             anchors.centerIn: parent
                                             text: "Connect"
                                             color: Theme.colors.text
-                                            font.family: "JetBrainsMono Nerd Font"
-                                            font.pixelSize: 10
+                                            font.family: Typography.fontFamily
+                                            font.pixelSize: Typography.label
                                         }
                                         HoverHandler { id: wifiConnBtnHov; cursorShape: Qt.PointingHandCursor }
                                         TapHandler {
@@ -389,7 +390,7 @@ ColumnLayout {
             return "";
         }
         color: Theme.colors.accent
-        font.family: "JetBrainsMono Nerd Font"
-        font.pixelSize: 10
+        font.family: Typography.fontFamily
+        font.pixelSize: Typography.label
     }
 }

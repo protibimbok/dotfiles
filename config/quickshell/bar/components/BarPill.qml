@@ -1,13 +1,13 @@
 import QtQuick
 import QtQuick.Effects
 import qs.theme
+import qs.tokens
 
-// Solid floating pill — opaque wal-derived fill, readable text via Theme.pillText*.
 Item {
     id: root
 
-    property real radius: Theme.barPillRadius
-    property int elevation: 3
+    property real radius: Metrics.barPillRadius
+    property int elevation: Metrics.barElevation
     property bool highlighted: false
     property bool hovered: false
     property real explicitWidth: 0
@@ -15,8 +15,8 @@ Item {
 
     default property alias content: contentItem.data
 
-    property real horizontalPadding: 9
-    readonly property real pillHeight: explicitHeight > 0 ? explicitHeight : Theme.barPillHeight
+    property real horizontalPadding: Spacing.pillPadding
+    readonly property real pillHeight: explicitHeight > 0 ? explicitHeight : Metrics.barPillHeight
 
     implicitWidth: explicitWidth > 0
         ? explicitWidth
@@ -38,8 +38,8 @@ Item {
         border.color: highlighted ? Theme.pillAccent : Theme.pillBorder
         clip: true
 
-        Behavior on color { ColorAnimation { duration: 220; easing.type: Easing.OutCubic } }
-        Behavior on border.color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on color { ColorAnimation { duration: Durations.colorTransitionSlow; easing.type: Easing.OutCubic } }
+        Behavior on border.color { ColorAnimation { duration: Durations.colorTransition; easing.type: Easing.OutCubic } }
 
         layer.enabled: root.elevation > 0
         layer.effect: MultiEffect {

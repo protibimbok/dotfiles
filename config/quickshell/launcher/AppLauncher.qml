@@ -4,6 +4,7 @@ import QtCore
 import Quickshell
 import Quickshell.Io
 import qs.theme
+import qs.tokens
 
 Item {
     id: root
@@ -127,46 +128,46 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 20
+        radius: Metrics.panelRadius
         color: Theme.colors.bg
         opacity: 0.92
     }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 20
-        spacing: 14
+        anchors.margins: Spacing.panelContentMarginLg
+        spacing: Spacing.xl
 
         Rectangle {
             id: searchBar
             Layout.fillWidth: true
             Layout.preferredHeight: 48
-            radius: 14
+            radius: Metrics.tileRadius
             color: Theme.colors.bg1
             border.color: searchInput.activeFocus ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.5) : Theme.colors.border
             border.width: searchInput.activeFocus ? 2 : 1
-            Behavior on border.color { ColorAnimation { duration: 150 } }
-            Behavior on border.width { NumberAnimation { duration: 150 } }
+            Behavior on border.color { ColorAnimation { duration: Durations.hoverMedium } }
+            Behavior on border.width { NumberAnimation { duration: Durations.hoverMedium } }
 
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 14
                 anchors.rightMargin: 14
-                spacing: 10
+                spacing: Spacing.tileInnerTop
 
                 Text {
                     text: "\uf002"
                     color: Theme.colors.textMuted
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 14
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.header
                 }
 
                 TextInput {
                     id: searchInput
                     Layout.fillWidth: true
                     color: Theme.colors.text
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 14
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.header
                     clip: true
                     selectByMouse: true
                     selectionColor: Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.3)
@@ -187,8 +188,8 @@ Item {
                 Text {
                     text: root.filteredApps.length + " apps"
                     color: Theme.colors.textMuted
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 11
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.bodySm
                 }
             }
         }
@@ -222,21 +223,21 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         anchors.margins: 4
-                        radius: 12
+                        radius: Metrics.listRadius
                         color: appDelegate.isSelected ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.15) : (appDelegate.hovered ? Qt.rgba(Theme.colors.bg1.r, Theme.colors.bg1.g, Theme.colors.bg1.b, 0.5) : "transparent")
                         border.color: appDelegate.isSelected ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.3) : "transparent"
                         border.width: appDelegate.isSelected ? 1 : 0
-                        Behavior on color { ColorAnimation { duration: 180 } }
-                        Behavior on border.color { ColorAnimation { duration: 180 } }
+                        Behavior on color { ColorAnimation { duration: Durations.colorTransition } }
+                        Behavior on border.color { ColorAnimation { duration: Durations.colorTransition } }
                     }
 
                     ColumnLayout {
                         anchors.centerIn: parent
-                        spacing: 6
+                        spacing: Spacing.sm
 
                         Image {
                             Layout.alignment: Qt.AlignHCenter
-                            width: 40; height: 40
+                            width: Metrics.iconLauncher; height: Metrics.footerBtnHeight
                             source: Quickshell.iconPath(appDelegate.modelData.icon, "application-x-executable")
                             sourceSize: Qt.size(40, 40)
                             smooth: true
@@ -247,8 +248,8 @@ Item {
                             Layout.maximumWidth: grid.cellWidth - 16
                             text: appDelegate.modelData.name
                             color: Theme.colors.text
-                            font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: 12
+                            font.family: Typography.fontFamily
+                            font.pixelSize: Typography.body
                             elide: Text.ElideRight
                             maximumLineCount: 1
                             horizontalAlignment: Text.AlignHCenter

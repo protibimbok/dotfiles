@@ -1,9 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
 import qs.theme
+import qs.tokens
 import qs.services
+import qs.components
 
 Item {
     id: root
@@ -16,7 +17,6 @@ Item {
         id: notifListModel
     }
 
-    // FIX: Smart sync to preserve ListView add/remove animations
     function syncNotificationModel() {
         const arr = Notifications.notifications;
 
@@ -74,62 +74,39 @@ Item {
 
     Item {
         id: panel
-        width: 600
-        height: Math.min(480, root.height - 64)
+        width: Metrics.notificationPanelWidth
+        height: Math.min(Metrics.notificationPanelMaxHeight, root.height - Spacing.panelMaxHeightInset)
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: 54
+        anchors.topMargin: Spacing.panelTopMargin
 
         HoverHandler {
             onHoveredChanged: shellRoot.notifPanelHovered = hovered
         }
 
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            autoPaddingEnabled: true
-            shadowEnabled: true
-            shadowBlur: 1.0
-            shadowColor: "#30000000"
-            shadowVerticalOffset: 6
-        }
-
-        MouseArea { anchors.fill: parent }
-
-        Rectangle {
+        PanelChrome {
             anchors.fill: parent
-            radius: 20
-            color: Theme.colors.bg
-            opacity: 0.88
-        }
+            fillOpacity: Metrics.panelFillOpacityNotif
 
-        Rectangle {
-            anchors.fill: parent
-            radius: 20
-            color: "transparent"
-            border.color: Theme.colors.border
-            border.width: 1
-            opacity: 0.25
-        }
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.margins: 20
-            spacing: 16
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: Spacing.panelContentMarginLg
+                spacing: Spacing.xxl
 
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 12
+                spacing: Spacing.lg
 
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: Spacing.md
 
                     Text {
                         text: "Notifications"
                         color: Theme.colors.text
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 14
+                        font.family: Typography.fontFamily
+                        font.pixelSize: Typography.header
                         font.bold: true
                     }
 
@@ -137,7 +114,7 @@ Item {
                         visible: Notifications.unreadCount > 0
                         width: unreadText.implicitWidth + 12
                         height: 20
-                        radius: 10
+                        radius: Metrics.rowRadius + 2
                         color: Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.15)
 
                         Text {
@@ -145,8 +122,8 @@ Item {
                             anchors.centerIn: parent
                             text: Notifications.unreadCount
                             color: Theme.colors.accent
-                            font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: 11
+                            font.family: Typography.fontFamily
+                            font.pixelSize: Typography.bodySm
                         }
                     }
 
@@ -156,9 +133,9 @@ Item {
                         visible: Notifications.notifications.length > 0
                         text: "Clear"
                         color: clearHover.hovered ? Theme.colors.text : Theme.colors.textMuted
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 12
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        font.family: Typography.fontFamily
+                        font.pixelSize: Typography.body
+                        Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
                         HoverHandler { id: clearHover; cursorShape: Qt.PointingHandCursor }
                         TapHandler { onTapped: Notifications.clearAll() }
                     }
@@ -173,17 +150,17 @@ Item {
                         id: notifList
                         anchors.fill: parent
                         model: notifListModel
-                        spacing: 6
+                        spacing: Spacing.sm
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
 
                         add: Transition {
-                            NumberAnimation { properties: "opacity"; from: 0; to: 1; duration: 200; easing.type: Easing.OutCubic }
-                            NumberAnimation { properties: "x"; from: -8; to: 0; duration: 200; easing.type: Easing.OutCubic }
+                            NumberAnimation { properties: "opacity"; from: 0; to: 1; duration: Durations.fade; easing.type: Easing.OutCubic }
+                            NumberAnimation { properties: "x"; from: -8; to: 0; duration: Durations.fade; easing.type: Easing.OutCubic }
                         }
 
                         remove: Transition {
-                            NumberAnimation { properties: "opacity"; to: 0; duration: 150; easing.type: Easing.InCubic }
+                            NumberAnimation { properties: "opacity"; to: 0; duration: Durations.hoverMedium; easing.type: Easing.InCubic }
                         }
 
                         delegate: Rectangle {
@@ -198,17 +175,17 @@ Item {
                             
                             width: notifList.width
                             height: notifContent.implicitHeight + 20
-                            radius: 12
+                            radius: Metrics.listRadius
                             color: Qt.rgba(Theme.colors.bg1.r, Theme.colors.bg1.g, Theme.colors.bg1.b, 0.6)
 
                             RowLayout {
                                 id: notifContent
-                                // FIX: Removed 'anchors.fill: parent' to fix the height binding loop
+                                // Height driven by content; avoid anchors.fill binding loop
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.margins: 10
-                                spacing: 12
+                                spacing: Spacing.lg
 
                                 Image {
                                     Layout.preferredWidth: 22
@@ -221,21 +198,21 @@ Item {
 
                                 ColumnLayout {
                                     Layout.fillWidth: true
-                                    spacing: 2
+                                    spacing: Spacing.rowGap
 
                                     Text {
                                         text: notifItem.appName
                                         color: Theme.colors.textMuted
-                                        font.family: "JetBrainsMono Nerd Font"
-                                        font.pixelSize: 11
+                                        font.family: Typography.fontFamily
+                                        font.pixelSize: Typography.bodySm
                                         Layout.fillWidth: true
                                     }
 
                                     Text {
                                         text: notifItem.summary
                                         color: Theme.colors.text
-                                        font.family: "JetBrainsMono Nerd Font"
-                                        font.pixelSize: 13
+                                        font.family: Typography.fontFamily
+                                        font.pixelSize: Typography.title
                                         Layout.fillWidth: true
                                         wrapMode: Text.Wrap
                                     }
@@ -244,8 +221,8 @@ Item {
                                         visible: notifItem.body !== ""
                                         text: notifItem.body
                                         color: Theme.colors.textMuted
-                                        font.family: "JetBrainsMono Nerd Font"
-                                        font.pixelSize: 12
+                                        font.family: Typography.fontFamily
+                                        font.pixelSize: Typography.body
                                         Layout.fillWidth: true
                                         wrapMode: Text.Wrap
                                         maximumLineCount: 3
@@ -255,8 +232,8 @@ Item {
                                     Text {
                                         text: notifItem.timeAgo
                                         color: Theme.colors.textMuted
-                                        font.family: "JetBrainsMono Nerd Font"
-                                        font.pixelSize: 10
+                                        font.family: Typography.fontFamily
+                                        font.pixelSize: Typography.label
                                         opacity: 0.7
                                     }
                                 }
@@ -265,9 +242,9 @@ Item {
                                     Layout.alignment: Qt.AlignTop
                                     text: "\uf00d"
                                     color: dismissHover.hovered ? Qt.rgba(Theme.colors.red.r, Theme.colors.red.g, Theme.colors.red.b, 0.7) : Theme.colors.textMuted
-                                    font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 11
-                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    font.family: Typography.fontFamily
+                                    font.pixelSize: Typography.bodySm
+                                    Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
                                     HoverHandler { id: dismissHover; cursorShape: Qt.PointingHandCursor }
                                     TapHandler { onTapped: Notifications.dismiss(notifItem.notifId) }
                                 }
@@ -280,8 +257,8 @@ Item {
                         visible: notifListModel.count === 0
                         text: "All clear"
                         color: Theme.colors.textMuted
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 13
+                        font.family: Typography.fontFamily
+                        font.pixelSize: Typography.title
                     }
                 }
             }
@@ -294,13 +271,14 @@ Item {
             }
 
             MiniCalendar {}
+            }
         }
     }
 
     Keys.onEscapePressed: root.close()
 
     component MiniCalendar: ColumnLayout {
-        spacing: 8
+        spacing: Spacing.md
         Layout.preferredWidth: 210
         Layout.minimumWidth: 210
         Layout.maximumWidth: 210
@@ -327,9 +305,9 @@ Item {
             Text {
                 text: "\uf104"
                 color: prevHover.hovered ? Theme.colors.text : Theme.colors.textMuted
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 13
-                Behavior on color { ColorAnimation { duration: 150 } }
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.title
+                Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
                 HoverHandler { id: prevHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler {
                     onTapped: {
@@ -344,8 +322,8 @@ Item {
             Text {
                 text: Qt.locale().monthName(viewMonth, Locale.LongFormat) + " " + viewYear
                 color: Theme.colors.text
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 12
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.body
                 font.bold: true
             }
 
@@ -354,9 +332,9 @@ Item {
             Text {
                 text: "\uf105"
                 color: nextHover.hovered ? Theme.colors.text : Theme.colors.textMuted
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 13
-                Behavior on color { ColorAnimation { duration: 150 } }
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.title
+                Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
                 HoverHandler { id: nextHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler {
                     onTapped: {
@@ -379,8 +357,8 @@ Item {
                     text: modelData
                     horizontalAlignment: Text.AlignHCenter
                     color: Theme.colors.textMuted
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 10
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.label
                 }
             }
         }
@@ -415,8 +393,8 @@ Item {
                         anchors.centerIn: parent
                         text: validDay ? dayNum : ""
                         color: isToday ? Theme.colors.bg : Theme.colors.text
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 11
+                        font.family: Typography.fontFamily
+                        font.pixelSize: Typography.bodySm
                     }
                 }
             }

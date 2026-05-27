@@ -1,8 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import qs.theme
+import qs.tokens
 import qs.services
+import qs.components
 
 Item {
     id: root
@@ -16,98 +17,65 @@ Item {
 
     Item {
         id: panel
-        width: 380
-        height: Math.min(400, root.height - 64)
+        width: Metrics.quickSettingsWidth
+        height: Math.min(Metrics.quickSettingsMaxHeight, root.height - Spacing.panelMaxHeightInset)
         anchors.right: parent.right
-        anchors.rightMargin: 10
+        anchors.rightMargin: Spacing.panelSideMargin
         anchors.top: parent.top
-        anchors.topMargin: 54
+        anchors.topMargin: Spacing.panelTopMargin
 
         HoverHandler {
             onHoveredChanged: shellRoot.qsPanelHovered = hovered
         }
 
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            autoPaddingEnabled: true
-            shadowEnabled: true
-            shadowBlur: 1.0
-            shadowColor: "#30000000"
-            shadowVerticalOffset: 6
-        }
-
-        MouseArea { anchors.fill: parent }
-
-        Rectangle {
+        PanelChrome {
             anchors.fill: parent
-            radius: 20
-            color: Theme.colors.bg
-            opacity: 0.92
-        }
 
-        Rectangle {
-            anchors.fill: parent
-            radius: 20
-            color: "transparent"
-            border.color: Theme.colors.border
-            border.width: 1
-            opacity: 0.25
-        }
-
-        Item {
-            anchors.fill: parent
-            anchors.margins: 18
-            visible: shellRoot.qsSubview === "main"
-
-            ColumnLayout {
+            Item {
                 anchors.fill: parent
-                spacing: 14
+                anchors.margins: Spacing.panelContentMargin
+                visible: shellRoot.qsSubview === "main"
 
-                QSHeader {}
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: Spacing.xl
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 1
-                    color: Theme.colors.border
-                    opacity: 0.2
-                }
+                    QSHeader {}
 
-                QSConnectivity {
-                    shellRoot: root.shellRoot
-                }
+                    PanelDivider {}
 
-                QSEthernetDndRow {}
+                    QSConnectivity {
+                        shellRoot: root.shellRoot
+                    }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 1
-                    color: Theme.colors.border
-                    opacity: 0.2
-                }
+                    QSEthernetDndRow {}
 
-                QSVolume {}
+                    PanelDivider {}
 
-                Item { Layout.fillHeight: true }
+                    QSVolume {}
 
-                QSFooter {
-                    shellRoot: root.shellRoot
-                    onRequestClose: root.close()
+                    Item { Layout.fillHeight: true }
+
+                    QSFooter {
+                        shellRoot: root.shellRoot
+                        onRequestClose: root.close()
+                    }
                 }
             }
-        }
 
-        QSWifiPanel {
-            anchors.fill: parent
-            anchors.margins: 18
-            visible: shellRoot.qsSubview === "wifi"
-            shellRoot: root.shellRoot
-        }
+            QSWifiPanel {
+                anchors.fill: parent
+                anchors.margins: Spacing.panelContentMargin
+                visible: shellRoot.qsSubview === "wifi"
+                shellRoot: root.shellRoot
+            }
 
-        QSBluetoothPanel {
-            anchors.fill: parent
-            anchors.margins: 18
-            visible: shellRoot.qsSubview === "bluetooth"
-            shellRoot: root.shellRoot
+            QSBluetoothPanel {
+                anchors.fill: parent
+                anchors.margins: Spacing.panelContentMargin
+                visible: shellRoot.qsSubview === "bluetooth"
+                shellRoot: root.shellRoot
+            }
         }
     }
 

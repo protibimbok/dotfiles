@@ -11,6 +11,7 @@ import qs.services
 import qs.osd
 import qs.toasts
 import qs.session
+import qs.tokens
 
 ShellRoot {
     id: shell
@@ -50,7 +51,7 @@ ShellRoot {
 
     Timer {
         id: qsHideTimer
-        interval: 90
+        interval: Durations.panelHoverHide
         onTriggered: {
             if (!shell.qsTriggerHovered && !shell.qsPanelHovered)
                 shell.quickSettingsVisible = false
@@ -59,7 +60,7 @@ ShellRoot {
 
     Timer {
         id: notifHideTimer
-        interval: 90
+        interval: Durations.panelHoverHide
         onTriggered: {
             if (!shell.notifTriggerHovered && !shell.notifPanelHovered)
                 shell.notifPanelVisible = false
@@ -110,8 +111,8 @@ ShellRoot {
                 left: true
                 right: true
             }
-            implicitHeight: 46
-            exclusiveZone: 46
+            implicitHeight: Metrics.barHeight
+            exclusiveZone: Metrics.barHeight
             color: "transparent"
 
             Item {
@@ -135,7 +136,7 @@ ShellRoot {
 
                 Timer {
                     id: hideTimer
-                    interval: 800
+                    interval: Durations.barHideDelay
                     onTriggered: {
                         if (!barHover.hovered && !shell.anyPanelOpen)
                             barContainer._hoverActive = false;
@@ -157,12 +158,12 @@ ShellRoot {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    height: 46
-                    y: barContainer.barShown ? 0 : -46
+                    height: Metrics.barHeight
+                    y: barContainer.barShown ? 0 : Metrics.barHideOffset
                     shellRoot: shell
 
                     Behavior on y {
-                        NumberAnimation { duration: 280; easing.type: Easing.OutExpo }
+                        NumberAnimation { duration: Durations.barSlide; easing.type: Easing.OutExpo }
                     }
                 }
             }
@@ -178,9 +179,9 @@ ShellRoot {
         color: "transparent"
 
         readonly property int _launcherW: screen
-            ? Math.min(640, Math.max(400, screen.width - 96))
-            : 640
-        readonly property int _launcherH: 480
+            ? Math.min(Metrics.launcherMaxWidth, Math.max(Metrics.launcherMinWidth, screen.width - Metrics.launcherWidthInset))
+            : Metrics.launcherMaxWidth
+        readonly property int _launcherH: Metrics.launcherHeight
 
         implicitWidth: _launcherW
         implicitHeight: _launcherH
@@ -212,7 +213,7 @@ ShellRoot {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.top: parent.top
-            anchors.topMargin: 54
+            anchors.topMargin: Spacing.panelTopMargin
         }
 
         NotificationPanel {
@@ -241,7 +242,7 @@ ShellRoot {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.top: parent.top
-            anchors.topMargin: 54
+            anchors.topMargin: Spacing.panelTopMargin
         }
 
         QuickSettings {
@@ -290,7 +291,7 @@ ShellRoot {
         id: osdWindow
         visible: osdItem.windowVisible
         anchors { bottom: true; left: true; right: true }
-        implicitHeight: 180
+        implicitHeight: Metrics.osdWindowHeight
         exclusionMode: ExclusionMode.Ignore
         color: "transparent"
 
@@ -304,7 +305,7 @@ ShellRoot {
         id: toastWindow
         visible: toastMgr.count > 0
         anchors { top: true; left: true; right: true }
-        implicitHeight: 400
+        implicitHeight: Metrics.toastWindowHeight
         exclusionMode: ExclusionMode.Ignore
         color: "transparent"
 

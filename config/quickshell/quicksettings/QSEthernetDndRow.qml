@@ -3,12 +3,13 @@ import QtQuick.Layouts
 import qs.theme
 import qs.services
 import qs.services.network
+import qs.tokens
 
 RowLayout {
     id: root
 
     Layout.fillWidth: true
-    spacing: 8
+    spacing: Spacing.md
 
     property int rowHeight: 44
 
@@ -17,7 +18,7 @@ RowLayout {
     Rectangle {
         Layout.fillWidth: true
         Layout.preferredHeight: root.rowHeight
-        radius: 14
+        radius: Metrics.tileRadius
         color: Theme.colors.bg1
         border.width: 1
         border.color: Theme.colors.border
@@ -27,7 +28,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "\uef44"
             color: Theme.colors.textMuted
-            font.family: "JetBrainsMono Nerd Font"
+            font.family: Typography.fontFamily
             font.pixelSize: 20
             opacity: Ethernet.connected ? 0.75 : 0.45
         }
@@ -73,8 +74,8 @@ RowLayout {
                     anchors.centerIn: parent
                     text: "\uf1f6"
                     color: Notifications.dndMode === 0 ? Theme.colors.accent : Theme.colors.textMuted
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 15
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.iconSm
                 }
                 HoverHandler { id: d0; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: Notifications.dndMode = 0 }
@@ -104,8 +105,8 @@ RowLayout {
                     anchors.centerIn: parent
                     text: "\uf0f3"
                     color: Notifications.dndMode === 1 ? Theme.colors.accent : Theme.colors.textMuted
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 15
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.iconSm
                 }
                 HoverHandler { id: d1; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: Notifications.dndMode = 1 }
@@ -136,8 +137,8 @@ RowLayout {
                     // codicon bell-dot in Nerd Fonts: priority / urgent alerts
                     text: "\uea20"
                     color: Notifications.dndMode === 2 ? Theme.colors.accent : Theme.colors.textMuted
-                    font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 15
+                    font.family: Typography.fontFamily
+                    font.pixelSize: Typography.iconSm
                 }
                 HoverHandler { id: d2; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: Notifications.dndMode = 2 }

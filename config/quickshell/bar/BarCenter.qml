@@ -1,5 +1,6 @@
 import QtQuick
 import qs.theme
+import qs.tokens
 import qs.bar.components
 
 BarPill {
@@ -8,7 +9,7 @@ BarPill {
     required property var shellRoot
 
     highlighted: true
-    elevation: 4
+    elevation: Metrics.barElevationCenter
     width: clockWidget.implicitWidth + horizontalPadding * 2
 
     ClockNotifWidget {

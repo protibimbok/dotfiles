@@ -1,0 +1,5 @@
+module qs.tokens
+singleton Metrics 1.0 Metrics.qml
+singleton Typography 1.0 Typography.qml
+singleton Spacing 1.0 Spacing.qml
+singleton Durations 1.0 Durations.qml

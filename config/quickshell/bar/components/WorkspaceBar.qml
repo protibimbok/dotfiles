@@ -4,12 +4,13 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Hyprland
 import qs.theme
+import qs.tokens
 import qs.utils
 
 Item {
     id: root
     implicitWidth: shell.implicitWidth
-    implicitHeight: parent ? parent.height : 44
+    implicitHeight: parent ? parent.height : Metrics.tileHeight
 
     function appsForWorkspace(wsId) {
         let toplevels = Hyprland.toplevels.values
@@ -132,16 +133,16 @@ Item {
         id: shell
         width: row.implicitWidth
         implicitWidth: row.implicitWidth
-        height: 36
+        height: Metrics.workspacePillHeight
         anchors.verticalCenter: parent.verticalCenter
 
         Row {
             id: row
             z: 1
             anchors.fill: parent
-            leftPadding: 8
-            rightPadding: 8
-            spacing: 14
+            leftPadding: Spacing.pillGap
+            rightPadding: Spacing.pillGap
+            spacing: Spacing.xl
 
             Repeater {
                 id: wsRepeater
@@ -167,8 +168,8 @@ Item {
                         return root.appsForWorkspace(wsId)
                     }
 
-                    width: appIconsRow.width > 0 ? appIconsRow.width + 16 : 22
-                    height: 24
+                    width: appIconsRow.width > 0 ? appIconsRow.width + Spacing.xxl : 22
+                    height: Metrics.workspaceDotHeight
                     anchors.verticalCenter: parent.verticalCenter
 
                     MouseArea {
@@ -184,13 +185,13 @@ Item {
                         id: wsBg
                         visible: false // Hidden so MultiEffect can draw it
                         anchors.fill: parent
-                        radius: 12
+                        radius: Metrics.listRadius
                         color: Qt.rgba(Theme.colors.surface.r, Theme.colors.surface.g, Theme.colors.surface.b, 1.0)
                         border.width: active ? 1 : 0
                         border.color: Theme.colors.accent
                         
-                        Behavior on color { ColorAnimation { duration: 160 } }
-                        Behavior on border.width { NumberAnimation { duration: 160 } }
+                        Behavior on color { ColorAnimation { duration: Durations.hoverSlow } }
+                        Behavior on border.width { NumberAnimation { duration: Durations.hoverSlow } }
                     }
 
                     MultiEffect {
@@ -207,8 +208,8 @@ Item {
                     Rectangle {
                         id: wsNumBg
                         visible: false // Hidden so MultiEffect can draw it
-                        width: 16
-                        height: 16
+                        width: Metrics.workspaceDotSize
+                        height: Metrics.workspaceDotSize
                         radius: width / 2
                         anchors.verticalCenter: parent.verticalCenter
                         x: -(width / 2) 
@@ -218,7 +219,7 @@ Item {
                         border.width: active ? 0 : 1
                         border.color: active ? "transparent" : Qt.rgba(Theme.colors.border.r, Theme.colors.border.g, Theme.colors.border.b, 0.4)
                         
-                        Behavior on color { ColorAnimation { duration: 160 } }
+                        Behavior on color { ColorAnimation { duration: Durations.hoverSlow } }
                     }
 
                     MultiEffect {
@@ -240,10 +241,10 @@ Item {
                         color: active 
                             ? Theme.colors.surface 
                             : Qt.rgba(Theme.colors.textMuted.r, Theme.colors.textMuted.g, Theme.colors.textMuted.b, 0.9)
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 12
+                        font.family: Typography.fontFamily
+                        font.pixelSize: Typography.body
                         font.bold: active
-                        Behavior on color { ColorAnimation { duration: 200 } }
+                        Behavior on color { ColorAnimation { duration: Durations.fade } }
                     }
 
                     // --- 4. Application Icons ---
@@ -253,7 +254,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.left: parent.left
                         anchors.leftMargin: (wsNumBg.width / 2) + 1 
-                        spacing: 4
+                        spacing: Spacing.xs
 
                         Repeater {
                             id: appRepeater
@@ -263,8 +264,8 @@ Item {
                                 id: ag
                                 required property var modelData
                                 property var g: ag.modelData
-                                width: 16
-                                height: 16
+                                width: Metrics.iconApp
+                                height: Metrics.iconApp
                                 property bool gActive: root.groupIsActive(g)
                                 property int ninst: (g && g.instances) ? g.instances.length : 0
                                 property string iconClass: {
@@ -290,15 +291,15 @@ Item {
                                 Image {
                                     anchors.fill: parent
                                     source: Icons.forWindowClass(ag.iconClass)
-                                    sourceSize: Qt.size(16, 16)
+                                    sourceSize: Qt.size(Metrics.iconApp, Metrics.iconApp)
                                     smooth: true
                                     opacity: ag.gActive ? 1.0 : (gHover.hovered ? 0.88 : 0.5)
-                                    Behavior on opacity { NumberAnimation { duration: 130 } }
+                                    Behavior on opacity { NumberAnimation { duration: Durations.press } }
                                 }
                                 Rectangle {
                                     z: 2
                                     visible: ag.ninst > 1
-                                    width: 3; height: 3
+                                    width: Metrics.workspaceMiniDot; height: Metrics.workspaceMiniDot
                                     radius: width * 0.5
                                     color: Theme.colors.accent
                                     anchors {

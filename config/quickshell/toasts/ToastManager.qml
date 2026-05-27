@@ -2,15 +2,16 @@ import QtQuick
 import QtQuick.Layouts
 import qs.theme
 import qs.services
+import qs.tokens
 
 Item {
     id: root
 
     anchors.top: parent.top
-    anchors.topMargin: 54
+    anchors.topMargin: Spacing.panelTopMargin
     anchors.right: parent.right
-    anchors.rightMargin: 10
-    width: 340
+    anchors.rightMargin: Spacing.panelSideMargin
+    width: Metrics.toastColumnWidth
 
     property int count: toastModel.count
 
@@ -24,7 +25,7 @@ Item {
 
     Timer {
         id: readyTimer
-        interval: 3000
+        interval: Durations.readyDelay
         running: true
         onTriggered: {
             root._ready = true;
@@ -99,7 +100,7 @@ Item {
         id: toastColumn
         anchors.left: parent.left
         anchors.right: parent.right
-        spacing: 6
+        spacing: Spacing.sm
 
         Repeater {
             model: toastModel
@@ -109,8 +110,8 @@ Item {
                 required property var model
                 required property int index
                 Layout.fillWidth: true
-                implicitHeight: 56
-                radius: 12
+                implicitHeight: Metrics.toastHeight
+                radius: Metrics.listRadius
                 color: Theme.colors.bg
                 opacity: 0.0
                 clip: true
@@ -130,13 +131,13 @@ Item {
                     anchors.fill: parent
                     anchors.leftMargin: 14
                     anchors.rightMargin: 14
-                    spacing: 12
+                    spacing: Spacing.lg
 
                     Text {
                         text: model.toastIcon
                         color: Theme.colors.accent
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 18
+                        font.family: Typography.fontFamily
+                        font.pixelSize: Typography.iconLg
                     }
 
                     ColumnLayout {
@@ -146,8 +147,8 @@ Item {
                         Text {
                             text: model.toastTitle
                             color: Theme.colors.text
-                            font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: 12
+                            font.family: Typography.fontFamily
+                            font.pixelSize: Typography.body
                             font.bold: true
                         }
 
@@ -155,8 +156,8 @@ Item {
                             Layout.fillWidth: true
                             text: model.toastMsg
                             color: Theme.colors.textMuted
-                            font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: 11
+                            font.family: Typography.fontFamily
+                            font.pixelSize: Typography.bodySm
                             elide: Text.ElideRight
                         }
                     }
@@ -165,14 +166,14 @@ Item {
                 NumberAnimation on opacity {
                     id: fadeIn
                     from: 0; to: 0.92
-                    duration: 200
+                    duration: Durations.fade
                     easing.type: Easing.OutCubic
                     running: true
                 }
 
                 Timer {
                     id: lifeTimer
-                    interval: 3000
+                    interval: Durations.toastLife
                     running: true
                     onTriggered: fadeOut.start()
                 }
@@ -180,7 +181,7 @@ Item {
                 NumberAnimation on opacity {
                     id: fadeOut
                     from: 0.92; to: 0
-                    duration: 200
+                    duration: Durations.fade
                     easing.type: Easing.InCubic
                     onFinished: {
                         let idx = toastItem.index;
