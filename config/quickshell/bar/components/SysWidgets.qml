@@ -246,6 +246,7 @@ RowLayout {
         Process {
             id: langToggle
             command: ["bash", "-c", "command -v fcitx5-remote >/dev/null 2>&1 && fcitx5-remote -t"]
+            onExited: SystemStats.refreshInputLocale()
         }
     }
 }

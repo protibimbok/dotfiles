@@ -248,17 +248,54 @@ Singleton {
         }
     }
 
+    function refreshInputLocale() {
+        langProc.running = true;
+    }
+
+    function _localeFromKeyboardLayout(code: string): string {
+        const map = {
+            us: "EN", gb: "EN", ca: "EN", au: "EN",
+            fr: "FR", de: "DE", es: "ES", it: "IT",
+            jp: "JP", ja: "JP", cn: "ZH", zh: "ZH",
+            kr: "KR", ko: "KR", ru: "RU", ar: "AR",
+            bn: "BN", bd: "BN", in: "HI", hi: "HI",
+            pt: "PT", br: "PT", nl: "NL", pl: "PL",
+            tr: "TR", vn: "VI", vi: "VI", th: "TH",
+        };
+        return map[code] || code.toUpperCase();
+    }
+
     function _parseLang(data: string) {
         let d = data.trim().toLowerCase();
-        if (d.indexOf("arabic") >= 0) inputLocale = "AR";
-        else if (d.indexOf("french") >= 0) inputLocale = "FR";
-        else if (d.indexOf("german") >= 0) inputLocale = "DE";
-        else if (d.indexOf("spanish") >= 0) inputLocale = "ES";
-        else if (d.indexOf("japanese") >= 0) inputLocale = "JP";
-        else if (d.indexOf("chinese") >= 0) inputLocale = "ZH";
-        else if (d.indexOf("korean") >= 0) inputLocale = "KR";
-        else if (d.indexOf("russian") >= 0) inputLocale = "RU";
-        else inputLocale = "EN";
+        if (!d) {
+            inputLocale = "EN";
+            return;
+        }
+
+        let kb = d.match(/^keyboard-([a-z]{2,3})(?:-.*)?$/);
+        if (kb) {
+            inputLocale = _localeFromKeyboardLayout(kb[1]);
+            return;
+        }
+
+        const keywords = [
+            ["bangla", "BN"], ["bengali", "BN"],
+            ["arabic", "AR"], ["french", "FR"], ["german", "DE"],
+            ["spanish", "ES"], ["italian", "IT"], ["japanese", "JP"],
+            ["mozc", "JP"], ["anthy", "JP"], ["kana", "JP"],
+            ["chinese", "ZH"], ["pinyin", "ZH"], ["rime", "ZH"], ["chewing", "ZH"],
+            ["korean", "KR"], ["hangul", "KR"],
+            ["russian", "RU"], ["hindi", "HI"], ["vietnamese", "VI"],
+            ["thai", "TH"], ["portuguese", "PT"],
+        ];
+        for (let i = 0; i < keywords.length; i++) {
+            if (d.indexOf(keywords[i][0]) >= 0) {
+                inputLocale = keywords[i][1];
+                return;
+            }
+        }
+
+        inputLocale = "EN";
     }
 
     function setPerfMode(mode: string) {
