@@ -12,7 +12,8 @@ Item {
     // removes the pointer hit target (no hover cursor, no tap → panel never toggles).
     implicitHeight: 44
 
-    signal panelRequested()
+    signal hoverEntered()
+    signal hoverExited()
 
     SystemClock {
         id: clock
@@ -28,8 +29,16 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 180 } }
     }
 
-    HoverHandler { id: hoverArea; cursorShape: Qt.PointingHandCursor }
-    TapHandler { onTapped: root.panelRequested() }
+    HoverHandler {
+        id: hoverArea
+        cursorShape: Qt.PointingHandCursor
+        onHoveredChanged: {
+            if (hovered)
+                root.hoverEntered()
+            else
+                root.hoverExited()
+        }
+    }
 
     RowLayout {
         id: row

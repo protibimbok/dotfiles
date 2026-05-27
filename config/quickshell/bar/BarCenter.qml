@@ -12,6 +12,7 @@ RowLayout {
     ClockNotifWidget {
         Layout.fillHeight: true
         Layout.preferredHeight: 44
-        onPanelRequested: root.shellRoot.notifPanelVisible = !root.shellRoot.notifPanelVisible
+        onHoverEntered: root.shellRoot.notifTriggerHovered = true
+        onHoverExited: root.shellRoot.notifTriggerHovered = false
     }
 }

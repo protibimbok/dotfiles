@@ -7,9 +7,11 @@ import qs.services.network
 Item {
     id: root
     implicitWidth: row.implicitWidth + 16
-    implicitHeight: parent ? parent.height : 44
+    // Fixed height: RowLayout parent height can resolve to 0 and shrink the hit target.
+    implicitHeight: 44
 
-    signal settingsRequested()
+    signal hoverEntered()
+    signal hoverExited()
 
     Rectangle {
         anchors.fill: parent
@@ -17,16 +19,15 @@ Item {
         radius: 10
         color: Theme.colors.bg1
         opacity: containerHover.hovered ? 0.4 : 0
+        z: 0
         Behavior on opacity { NumberAnimation { duration: 150 } }
     }
-
-    HoverHandler { id: containerHover; cursorShape: Qt.PointingHandCursor }
-    TapHandler { onTapped: root.settingsRequested() }
 
     RowLayout {
         id: row
         anchors.centerIn: parent
         spacing: 4
+        z: 1
 
         Item {
             visible: Wifi.enabled
@@ -45,21 +46,6 @@ Item {
                 font.pixelSize: 15
             }
 
-            HoverHandler { id: wifiHover }
-            StatusTip {
-                visible: wifiHover.hovered
-                text: {
-                    if (Wifi.busyMessage.length > 0)
-                        return "Wi-Fi: " + Wifi.busyMessage;
-                    if (Wifi.nmConnecting)
-                        return "Wi-Fi: Connecting…";
-                    if (Wifi.connected) {
-                        let s = (Wifi.activeSsid || Wifi.ssid || "Connected").trim();
-                        return "Wi-Fi: " + (s.length > 0 ? s : "Connected");
-                    }
-                    return "Wi-Fi";
-                }
-            }
         }
 
         Item {
@@ -90,12 +76,6 @@ Item {
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 15
                 Behavior on color { ColorAnimation { duration: 200 } }
-            }
-
-            HoverHandler { id: btHover }
-            StatusTip {
-                visible: btHover.hovered
-                text: Bluetooth.connected ? Bluetooth.device : "Bluetooth on (no device)"
             }
         }
 
@@ -147,26 +127,20 @@ Item {
         }
     }
 
-    component StatusTip: Rectangle {
-        property alias text: tipText.text
-        x: (parent.width - width) / 2
-        y: parent.height + 6
-        width: tipText.implicitWidth + 14
-        height: tipText.implicitHeight + 10
-        radius: 8
-        color: Theme.colors.bg1
-        border.color: Theme.colors.border
-        border.width: 1
-        z: 100
-        opacity: visible ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 100 } }
+    // Full-bar hit target above icons so child items do not steal hover.
+    Item {
+        anchors.fill: parent
+        z: 2
 
-        Text {
-            id: tipText
-            anchors.centerIn: parent
-            color: Theme.colors.text
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 11
+        HoverHandler {
+            id: containerHover
+            cursorShape: Qt.PointingHandCursor
+            onHoveredChanged: {
+                if (hovered)
+                    root.hoverEntered()
+                else
+                    root.hoverExited()
+            }
         }
     }
 }

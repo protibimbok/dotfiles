@@ -17,7 +17,11 @@ ShellRoot {
 
     property bool launcherVisible: false
     property bool notifPanelVisible: false
+    property bool notifTriggerHovered: false
+    property bool notifPanelHovered: false
     property bool quickSettingsVisible: false
+    property bool qsTriggerHovered: false
+    property bool qsPanelHovered: false
     /// quick-settings inner view: main grid vs full-panel wifi / bluetooth
     property string qsSubview: "main"
     property bool wallpaperPickerVisible: false
@@ -29,9 +33,67 @@ ShellRoot {
     Connections {
         target: shell
         function onQuickSettingsVisibleChanged() {
-            if (!shell.quickSettingsVisible)
-                shell.qsSubview = "main";
+            if (!shell.quickSettingsVisible) {
+                shell.qsSubview = "main"
+                shell.qsPanelHovered = false
+            }
         }
+    }
+
+    Connections {
+        target: shell
+        function onNotifPanelVisibleChanged() {
+            if (!shell.notifPanelVisible)
+                shell.notifPanelHovered = false
+        }
+    }
+
+    Timer {
+        id: qsHideTimer
+        interval: 90
+        onTriggered: {
+            if (!shell.qsTriggerHovered && !shell.qsPanelHovered)
+                shell.quickSettingsVisible = false
+        }
+    }
+
+    Timer {
+        id: notifHideTimer
+        interval: 90
+        onTriggered: {
+            if (!shell.notifTriggerHovered && !shell.notifPanelHovered)
+                shell.notifPanelVisible = false
+        }
+    }
+
+    function updateQuickSettingsHover() {
+        if (qsTriggerHovered || qsPanelHovered) {
+            qsHideTimer.stop()
+            quickSettingsVisible = true
+        } else {
+            qsHideTimer.restart()
+        }
+    }
+
+    function updateNotifHover() {
+        if (notifTriggerHovered || notifPanelHovered) {
+            notifHideTimer.stop()
+            notifPanelVisible = true
+        } else {
+            notifHideTimer.restart()
+        }
+    }
+
+    Connections {
+        target: shell
+        function onQsTriggerHoveredChanged() { shell.updateQuickSettingsHover() }
+        function onQsPanelHoveredChanged() { shell.updateQuickSettingsHover() }
+    }
+
+    Connections {
+        target: shell
+        function onNotifTriggerHoveredChanged() { shell.updateNotifHover() }
+        function onNotifPanelHoveredChanged() { shell.updateNotifHover() }
     }
 
     // Bar — per screen, with auto-hide on hover
@@ -141,9 +203,21 @@ ShellRoot {
         focusable: true
         visible: shell.notifPanelVisible
         color: "transparent"
+        // Bar strip passes pointer events so hover isn't stolen on open.
+        mask: Region { item: notifClickMask }
+
+        Item {
+            id: notifClickMask
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.top: parent.top
+            anchors.topMargin: 54
+        }
 
         NotificationPanel {
             anchors.fill: parent
+            shellRoot: shell
             panelOpen: shell.notifPanelVisible
             onClose: shell.notifPanelVisible = false
         }
@@ -158,6 +232,17 @@ ShellRoot {
         focusable: true
         visible: shell.quickSettingsVisible
         color: "transparent"
+        // Bar strip passes pointer events so status-icon hover is not stolen on open.
+        mask: Region { item: qsClickMask }
+
+        Item {
+            id: qsClickMask
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.top: parent.top
+            anchors.topMargin: 54
+        }
 
         QuickSettings {
             anchors.fill: parent

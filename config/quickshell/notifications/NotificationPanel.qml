@@ -9,6 +9,7 @@ Item {
     id: root
     signal close()
 
+    required property var shellRoot
     property bool panelOpen: false
 
     ListModel {
@@ -58,7 +59,7 @@ Item {
     onPanelOpenChanged: {
         if (panelOpen) {
             Notifications.markRead();
-            root.syncNotificationModel();
+            Qt.callLater(root.syncNotificationModel);
         }
     }
 
@@ -71,17 +72,6 @@ Item {
 
     Component.onCompleted: root.syncNotificationModel()
 
-    Rectangle {
-        anchors.fill: parent
-        color: "#000000"
-        opacity: 0.15
-    }
-
-    MouseArea {
-        anchors.fill: parent
-        onClicked: root.close()
-    }
-
     Item {
         id: panel
         width: 600
@@ -89,6 +79,10 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: 54
+
+        HoverHandler {
+            onHoveredChanged: shellRoot.notifPanelHovered = hovered
+        }
 
         layer.enabled: true
         layer.effect: MultiEffect {

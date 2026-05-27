@@ -21,6 +21,9 @@ RowLayout {
     }
 
     StatusIcons {
-        onSettingsRequested: root.shellRoot.quickSettingsVisible = !root.shellRoot.quickSettingsVisible
+        Layout.preferredHeight: 44
+        Layout.alignment: Qt.AlignVCenter
+        onHoverEntered: root.shellRoot.qsTriggerHovered = true
+        onHoverExited: root.shellRoot.qsTriggerHovered = false
     }
 }

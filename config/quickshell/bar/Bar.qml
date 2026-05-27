@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
 import qs.theme
 import qs.services
 
@@ -23,29 +22,23 @@ Item {
         opacity: 0.3
     }
 
-    RowLayout {
-        anchors.fill: parent
+    BarLeft {
+        anchors.left: parent.left
         anchors.leftMargin: 14
+        anchors.verticalCenter: parent.verticalCenter
+        shellRoot: root.shellRoot
+    }
+
+    BarCenter {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        shellRoot: root.shellRoot
+    }
+
+    BarRight {
+        anchors.right: parent.right
         anchors.rightMargin: 14
-        spacing: 0
-
-        BarLeft {
-            Layout.fillWidth: false
-            shellRoot: root.shellRoot
-        }
-
-        Item { Layout.fillWidth: true }
-
-        BarCenter {
-            Layout.fillWidth: false
-            shellRoot: root.shellRoot
-        }
-
-        Item { Layout.fillWidth: true }
-
-        BarRight {
-            Layout.fillWidth: false
-            shellRoot: root.shellRoot
-        }
+        anchors.verticalCenter: parent.verticalCenter
+        shellRoot: root.shellRoot
     }
 }

@@ -12,18 +12,7 @@ Item {
 
     focus: visible
 
-    onVisibleChanged: if (visible) Audio.refresh()
-
-    Rectangle {
-        anchors.fill: parent
-        color: "#000000"
-        opacity: 0.15
-    }
-
-    MouseArea {
-        anchors.fill: parent
-        onClicked: root.close()
-    }
+    onVisibleChanged: if (visible) Qt.callLater(Audio.refresh)
 
     Item {
         id: panel
@@ -33,6 +22,10 @@ Item {
         anchors.rightMargin: 10
         anchors.top: parent.top
         anchors.topMargin: 54
+
+        HoverHandler {
+            onHoveredChanged: shellRoot.qsPanelHovered = hovered
+        }
 
         layer.enabled: true
         layer.effect: MultiEffect {
