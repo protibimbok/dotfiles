@@ -12,19 +12,5 @@
     "description": "Switch to a random wallpaper",
     "command": ["randomWallpaper"],
     "enabled": true
-  },
-  {
-    "name": "Light",
-    "icon": "light_mode",
-    "description": "Apply light pywal theme on current wallpaper",
-    "command": ["setMode", "light"],
-    "enabled": true
-  },
-  {
-    "name": "Dark",
-    "icon": "dark_mode",
-    "description": "Apply dark pywal theme on current wallpaper",
-    "command": ["setMode", "dark"],
-    "enabled": true
   }
 ]
