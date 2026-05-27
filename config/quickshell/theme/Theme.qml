@@ -70,9 +70,15 @@ Singleton {
         id: savedWallFile
         path: root._wallpaperCache
         preload: true
+        onLoaded: {
+            let p = text().trim();
+            if (p.length > 0)
+                root.currentWallpaper = p;
+        }
         onFileChanged: {
             let p = text().trim();
-            if (p.length > 0) root.currentWallpaper = p;
+            if (p.length > 0)
+                root.currentWallpaper = p;
         }
     }
 

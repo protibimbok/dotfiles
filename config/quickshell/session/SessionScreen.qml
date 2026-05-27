@@ -7,6 +7,8 @@ import qs.tokens
 
 Item {
     id: root
+
+    required property var shellRoot
     signal close()
 
     Rectangle {
@@ -36,7 +38,7 @@ Item {
 
             Repeater {
                 model: [
-                    { label: "Lock",     icon: "\uf023", color: "accent",    cmd: ["loginctl", "lock-session"] },
+                    { label: "Lock",     icon: "\uf023", color: "accent",    action: "lock" },
                     { label: "Logout",   icon: "\uf2f5", color: "yellow",    cmd: ["loginctl", "terminate-user", ""] },
                     { label: "Reboot",   icon: "\uf021", color: "cyan",      cmd: ["systemctl", "reboot"] },
                     { label: "Shutdown", icon: "\uf011", color: "red",       cmd: ["systemctl", "poweroff"] }
@@ -95,6 +97,11 @@ Item {
                     HoverHandler { id: btnHover; cursorShape: Qt.PointingHandCursor }
                     TapHandler {
                         onTapped: {
+                            if (modelData.action === "lock") {
+                                root.shellRoot.lockSession();
+                                root.close();
+                                return;
+                            }
                             cmdProc.command = modelData.cmd;
                             cmdProc.running = true;
                             root.close();

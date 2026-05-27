@@ -1,8 +1,10 @@
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Wayland
 import QtQuick
 import qs.bar
 import qs.launcher
+import qs.lockscreen
 import qs.notifications
 import qs.quicksettings
 import qs.theme
@@ -28,6 +30,15 @@ ShellRoot {
 
     property bool anyPanelOpen: launcherVisible || notifPanelVisible || quickSettingsVisible
         || sessionVisible
+
+    function lockSession() {
+        launcherVisible = false;
+        notifPanelVisible = false;
+        quickSettingsVisible = false;
+        sessionVisible = false;
+        lockContext.reset();
+        sessionLock.locked = true;
+    }
 
     Connections {
         target: shell
@@ -269,7 +280,28 @@ ShellRoot {
 
         SessionScreen {
             anchors.fill: parent
+            shellRoot: shell
             onClose: shell.sessionVisible = false
+        }
+    }
+
+    LockContext {
+        id: lockContext
+
+        onUnlocked: {
+            lockContext.reset();
+            sessionLock.locked = false;
+        }
+    }
+
+    WlSessionLock {
+        id: sessionLock
+
+        WlSessionLockSurface {
+            LockSurface {
+                anchors.fill: parent
+                context: lockContext
+            }
         }
     }
 
@@ -316,5 +348,13 @@ ShellRoot {
         name: "toggle-session"
         description: "Toggle session/power menu"
         onPressed: shell.sessionVisible = !shell.sessionVisible
+    }
+
+    // hyprland.conf: bind = SUPER, L, global, quickshell:lock
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "lock"
+        description: "Lock the session"
+        onPressed: shell.lockSession()
     }
 }

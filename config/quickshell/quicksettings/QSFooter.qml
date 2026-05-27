@@ -58,7 +58,7 @@ RowLayout {
                     HoverHandler { id: lockHov; cursorShape: Qt.PointingHandCursor }
                     TapHandler {
                         onTapped: {
-                            lockProc.running = true;
+                            root.shellRoot.lockSession();
                             root.requestClose();
                         }
                     }
@@ -139,11 +139,6 @@ RowLayout {
                 }
             }
         }
-    }
-
-    Process {
-        id: lockProc
-        command: ["loginctl", "lock-session"]
     }
 
     Process {
