@@ -16,6 +16,8 @@ ColumnLayout {
 
     onVisibleChanged: if (visible)
         Wifi.scan()
+    else if (wifiNetCol)
+        wifiNetCol.openWifiMenuKey = ""
 
     function goBack() {
         shellRoot.qsSubview = "main";
@@ -81,7 +83,7 @@ ColumnLayout {
 
     Text {
         Layout.bottomMargin: 4
-        text: "Tap a network to connect or disconnect; use the menu for Forget and settings"
+        text: "Tap a network to connect; use the menu on saved networks to disconnect or forget"
         color: Theme.colors.foregroundMuted
         font.family: Typography.fontFamily
         font.pixelSize: Typography.caption
@@ -97,6 +99,7 @@ ColumnLayout {
             if (success) {
                 wifiNetCol.expandedWifiKey = "";
                 wifiNetCol.wifiPwdErrorKey = "";
+                wifiNetCol.openWifiMenuKey = "";
             } else {
                 wifiNetCol.expandedWifiKey = rowKey;
                 wifiNetCol.wifiPwdErrorKey = rowKey;
@@ -105,12 +108,12 @@ ColumnLayout {
     }
 
     Rectangle {
+        id: listBox
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.minimumHeight: 120
         radius: Metrics.listRadius
         color: Theme.colors.surface
-        clip: true
 
         Flickable {
             id: wifiFlick
@@ -127,6 +130,25 @@ ColumnLayout {
 
                 property string expandedWifiKey: ""
                 property string wifiPwdErrorKey: ""
+                property string openWifiMenuKey: ""
+                property string openWifiMenuSsid: ""
+                property real menuPopupX: 0
+                property real menuPopupY: 0
+                readonly property real menuPopupWidth: Math.min(width * 0.62, 220)
+                readonly property bool openWifiMenuActive: openWifiMenuSsid.length > 0
+                    && Wifi.connected
+                    && Wifi.activeSsid === openWifiMenuSsid
+
+                function openMenu(anchor, rowKey, ssid) {
+                    let menuH = Metrics.listRowHeight * 2;
+                    let pt = anchor.mapToItem(listBox, 0, anchor.height);
+                    menuPopupX = Math.max(4, pt.x + anchor.width - menuPopupWidth);
+                    menuPopupY = pt.y + 2;
+                    if (menuPopupY + menuH > listBox.height - 4)
+                        menuPopupY = Math.max(4, pt.y - anchor.height - menuH - 2);
+                    openWifiMenuSsid = ssid || "";
+                    Qt.callLater(() => { openWifiMenuKey = rowKey; });
+                }
 
                 Repeater {
                     model: Wifi.networks
@@ -221,6 +243,7 @@ ColumnLayout {
                                             let rk = modelData.rowKey || ssid;
                                             let sec = (modelData.security || "").toLowerCase();
                                             let open = sec === "--" || sec === "" || sec === "none";
+                                            wifiNetCol.openWifiMenuKey = "";
                                             if (Wifi.connected && ssid.length > 0
                                                 && Wifi.activeSsid === ssid) {
                                                 Wifi.disconnect();
@@ -249,51 +272,43 @@ ColumnLayout {
 
                                 Rectangle {
                                     id: netMenuBtn
-                                    Layout.preferredWidth: 28
+                                    visible: wifiNetRow.isSaved
+                                    Layout.preferredWidth: visible ? 28 : 0
                                     Layout.preferredHeight: 28
                                     radius: Metrics.rowRadiusSm
-                                    color: netMenuHov.hovered ? Theme.colors.surfaceHigh : "transparent"
+                                    color: (netMenuHov.hovered || netMenuBtn.isMenuOpen)
+                                        ? Theme.colors.surfaceHigh
+                                        : "transparent"
                                     Behavior on color { ColorAnimation { duration: 120 } }
+
+                                    property bool isMenuOpen: wifiNetCol.openWifiMenuKey.length > 0
+                                        && wifiNetCol.openWifiMenuKey === modelData.rowKey
 
                                     Text {
                                         anchors.centerIn: parent
                                         text: "\uf142"
-                                        color: netMenuHov.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
+                                        color: (netMenuHov.hovered || netMenuBtn.isMenuOpen)
+                                            ? Theme.colors.foreground
+                                            : Theme.colors.foregroundMuted
                                         font.family: Typography.fontFamily
                                         font.pixelSize: Typography.body
                                     }
 
                                     HoverHandler { id: netMenuHov; cursorShape: Qt.PointingHandCursor }
                                     TapHandler {
-                                        onTapped: wifiCtxMenu.popup(netMenuBtn)
-                                    }
-
-                                    QQC2.Menu {
-                                        id: wifiCtxMenu
-                                        parent: netMenuBtn
-
-                                        QQC2.MenuItem {
-                                            text: "Disconnect"
-                                            visible: wifiNetRow.isThisActive
-                                            onTriggered: Wifi.disconnect()
-                                        }
-                                        QQC2.MenuItem {
-                                            text: "Forget network"
-                                            visible: wifiNetRow.isSaved
-                                            onTriggered: {
-                                                Wifi.forget(modelData.ssid);
-                                                if (wifiNetCol.expandedWifiKey === modelData.rowKey) {
-                                                    wifiNetCol.expandedWifiKey = "";
-                                                    wifiNetCol.wifiPwdErrorKey = "";
-                                                }
+                                        onTapped: {
+                                            let rk = modelData.rowKey || modelData.ssid || "";
+                                            if (wifiNetCol.openWifiMenuKey === rk) {
+                                                wifiNetCol.openWifiMenuKey = "";
+                                                return;
                                             }
-                                        }
-                                        QQC2.MenuItem {
-                                            text: "Open network settings"
-                                            onTriggered: {
-                                                Wifi.openSettings();
-                                                root.goBack();
-                                            }
+                                            wifiNetCol.expandedWifiKey = "";
+                                            wifiNetCol.wifiPwdErrorKey = "";
+                                            wifiNetCol.openMenu(
+                                                netMenuBtn,
+                                                rk,
+                                                modelData.ssid || ""
+                                            );
                                         }
                                     }
                                 }
@@ -366,6 +381,115 @@ ColumnLayout {
                                         TapHandler {
                                             onTapped: Wifi.tryConnect(modelData.ssid, wifiPwdField.text, modelData.rowKey)
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Item {
+            id: wifiMenuOverlay
+            anchors.fill: parent
+            visible: wifiNetCol.openWifiMenuKey.length > 0
+            z: 10
+
+            MouseArea {
+                anchors.fill: parent
+                z: 0
+                onClicked: wifiNetCol.openWifiMenuKey = ""
+            }
+
+            Item {
+                id: wifiMenuPopup
+                z: 1
+                x: wifiNetCol.menuPopupX
+                y: wifiNetCol.menuPopupY
+                width: wifiNetCol.menuPopupWidth
+                height: Metrics.listRowHeight * 2
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: Metrics.rowRadius
+                    color: Theme.colors.surfaceHighest
+                    border.color: Theme.colors.outline
+                    border.width: 1
+
+                    Column {
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        spacing: 0
+
+                        Rectangle {
+                            width: parent.width
+                            height: Metrics.listRowHeight
+                            radius: Metrics.rowRadiusSm
+                            color: wifiMenuConnHov.hovered
+                                ? Theme.primaryTint(0.12)
+                                : "transparent"
+                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                text: wifiNetCol.openWifiMenuActive ? "Disconnect" : "Connect"
+                                color: Theme.colors.foreground
+                                font.family: Typography.fontFamily
+                                font.pixelSize: Typography.bodySm
+                            }
+
+                            HoverHandler { id: wifiMenuConnHov; cursorShape: Qt.PointingHandCursor }
+                            TapHandler {
+                                onTapped: {
+                                    let ssid = wifiNetCol.openWifiMenuSsid;
+                                    let rk = wifiNetCol.openWifiMenuKey;
+                                    let active = wifiNetCol.openWifiMenuActive;
+                                    wifiNetCol.openWifiMenuKey = "";
+                                    if (active) {
+                                        Wifi.disconnect();
+                                        return;
+                                    }
+                                    wifiNetCol.wifiPwdErrorKey = "";
+                                    Wifi.tryConnect(ssid, "", rk);
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: parent.width
+                            height: Metrics.listRowHeight
+                            radius: Metrics.rowRadiusSm
+                            color: wifiMenuForgetHov.hovered
+                                ? Theme.errorTint(0.12)
+                                : "transparent"
+                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                text: "Forget network"
+                                color: wifiMenuForgetHov.hovered
+                                    ? Theme.colors.error
+                                    : Theme.colors.foreground
+                                font.family: Typography.fontFamily
+                                font.pixelSize: Typography.bodySm
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                            }
+
+                            HoverHandler { id: wifiMenuForgetHov; cursorShape: Qt.PointingHandCursor }
+                            TapHandler {
+                                onTapped: {
+                                    let ssid = wifiNetCol.openWifiMenuSsid;
+                                    let rk = wifiNetCol.openWifiMenuKey;
+                                    wifiNetCol.openWifiMenuKey = "";
+                                    Wifi.forget(ssid);
+                                    if (wifiNetCol.expandedWifiKey === rk) {
+                                        wifiNetCol.expandedWifiKey = "";
+                                        wifiNetCol.wifiPwdErrorKey = "";
                                     }
                                 }
                             }

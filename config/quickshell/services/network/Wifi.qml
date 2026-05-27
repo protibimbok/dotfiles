@@ -200,7 +200,7 @@ Singleton {
             onStreamFinished: {
                 const raw = typeof text !== "undefined" && text !== null ? String(text) : "";
                 root._parseWifiList(raw);
-                root.wifiSavedListProc.running = true;
+                wifiSavedListProc.running = true;
             }
         }
         onExited: {
