@@ -93,184 +93,201 @@ Item {
                 anchors.margins: Spacing.panelContentMarginLg
                 spacing: Spacing.xxl
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                spacing: Spacing.lg
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Spacing.md
-
-                    Text {
-                        text: "Notifications"
-                        color: Theme.colors.foreground
-                        font.family: Typography.fontFamily
-                        font.pixelSize: Typography.header
-                        font.bold: true
-                    }
-
-                    Rectangle {
-                        visible: Notifications.unreadCount > 0
-                        width: unreadText.implicitWidth + 12
-                        height: 20
-                        radius: Metrics.rowRadius + 2
-                        color: Theme.primaryTint(0.15)
-
-                        Text {
-                            id: unreadText
-                            anchors.centerIn: parent
-                            text: Notifications.unreadCount
-                            color: Theme.colors.primary
-                            font.family: Typography.fontFamily
-                            font.pixelSize: Typography.bodySm
-                        }
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    Text {
-                        visible: Notifications.notifications.length > 0
-                        text: "Clear"
-                        color: clearHover.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
-                        font.family: Typography.fontFamily
-                        font.pixelSize: Typography.body
-                        Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
-                        HoverHandler { id: clearHover; cursorShape: Qt.PointingHandCursor }
-                        TapHandler { onTapped: Notifications.clearAll() }
-                    }
-                }
-
-                Item {
+                ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    clip: true
+                    spacing: Spacing.lg
 
-                    ListView {
-                        id: notifList
-                        anchors.fill: parent
-                        model: notifListModel
-                        spacing: Spacing.sm
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Spacing.md
+
+                        Text {
+                            text: "Notifications"
+                            color: Theme.colors.foreground
+                            font.family: Typography.fontFamily
+                            font.pixelSize: Typography.header
+                            font.bold: true
+                        }
+
+                        Rectangle {
+                            visible: Notifications.unreadCount > 0
+                            width: unreadText.implicitWidth + 12
+                            height: 20
+                            radius: Metrics.rowRadius + 2
+                            color: Theme.primaryTint(0.15)
+
+                            Text {
+                                id: unreadText
+                                anchors.centerIn: parent
+                                text: Notifications.unreadCount
+                                color: Theme.colors.primary
+                                font.family: Typography.fontFamily
+                                font.pixelSize: Typography.bodySm
+                            }
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        Text {
+                            visible: Notifications.notifications.length > 0
+                            text: "Clear"
+                            color: clearHover.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
+                            font.family: Typography.fontFamily
+                            font.pixelSize: Typography.body
+                            Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
+                            HoverHandler { id: clearHover; cursorShape: Qt.PointingHandCursor }
+                            TapHandler { onTapped: Notifications.clearAll() }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
                         clip: true
-                        boundsBehavior: Flickable.StopAtBounds
 
-                        add: Transition {
-                            NumberAnimation { properties: "opacity"; from: 0; to: 1; duration: Durations.fade; easing.type: Easing.OutCubic }
-                            NumberAnimation { properties: "x"; from: -8; to: 0; duration: Durations.fade; easing.type: Easing.OutCubic }
-                        }
+                        ListView {
+                            id: notifList
+                            anchors.fill: parent
+                            model: notifListModel
+                            spacing: Spacing.sm
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
 
-                        remove: Transition {
-                            NumberAnimation { properties: "opacity"; to: 0; duration: Durations.hoverMedium; easing.type: Easing.InCubic }
-                        }
+                            add: Transition {
+                                NumberAnimation { properties: "opacity"; from: 0; to: 1; duration: Durations.fade; easing.type: Easing.OutCubic }
+                                NumberAnimation { properties: "x"; from: -8; to: 0; duration: Durations.fade; easing.type: Easing.OutCubic }
+                            }
 
-                        delegate: Rectangle {
-                            id: notifItem
-                            required property int index
-                            required property var notifId
-                            required property string appName
-                            required property string appIcon
-                            required property string summary
-                            required property string body
-                            required property string timeAgo
-                            
-                            width: notifList.width
-                            height: notifContent.implicitHeight + 20
-                            radius: Metrics.listRadius
-                            color: Theme.surfaceTint(Theme.colors.surface, 0.6)
+                            remove: Transition {
+                                NumberAnimation { properties: "opacity"; to: 0; duration: Durations.hoverMedium; easing.type: Easing.InCubic }
+                            }
 
-                            RowLayout {
-                                id: notifContent
-                                // Height driven by content; avoid anchors.fill binding loop
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.margins: 10
-                                spacing: Spacing.lg
+                            delegate: Rectangle {
+                                id: notifItem
+                                required property int index
+                                required property var notifId
+                                required property string appName
+                                required property string appIcon
+                                required property string summary
+                                required property string body
+                                required property string timeAgo
+                                property bool bodyExpanded: false
 
-                                Image {
-                                    Layout.preferredWidth: 22
-                                    Layout.preferredHeight: 22
-                                    Layout.alignment: Qt.AlignTop
-                                    source: notifItem.appIcon ? Quickshell.iconPath(notifItem.appIcon, "application-x-executable") : ""
-                                    sourceSize: Qt.size(22, 22)
-                                    visible: notifItem.appIcon !== ""
-                                }
+                                onBodyChanged: bodyExpanded = false
 
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: Spacing.rowGap
+                                width: notifList.width
+                                height: notifContent.implicitHeight + 20
+                                radius: Metrics.listRadius
+                                color: Theme.surfaceTint(Theme.colors.surface, 0.6)
+
+                                RowLayout {
+                                    id: notifContent
+                                    // Height driven by content; avoid anchors.fill binding loop
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.margins: 10
+                                    spacing: Spacing.lg
+
+                                    Image {
+                                        Layout.preferredWidth: 22
+                                        Layout.preferredHeight: 22
+                                        Layout.alignment: Qt.AlignTop
+                                        source: notifItem.appIcon ? Quickshell.iconPath(notifItem.appIcon, "application-x-executable") : ""
+                                        sourceSize: Qt.size(22, 22)
+                                        visible: notifItem.appIcon !== ""
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: Spacing.rowGap
+
+                                        Text {
+                                            text: notifItem.appName
+                                            color: Theme.colors.foregroundMuted
+                                            font.family: Typography.fontFamily
+                                            font.pixelSize: Typography.bodySm
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Text {
+                                            text: notifItem.summary
+                                            color: Theme.colors.foreground
+                                            font.family: Typography.fontFamily
+                                            font.pixelSize: Typography.title
+                                            Layout.fillWidth: true
+                                            wrapMode: Text.Wrap
+                                        }
+
+                                        Text {
+                                            id: bodyText
+                                            visible: notifItem.body !== ""
+                                            text: notifItem.body
+                                            color: Theme.colors.foregroundMuted
+                                            font.family: Typography.fontFamily
+                                            font.pixelSize: Typography.body
+                                            Layout.fillWidth: true
+                                            wrapMode: Text.Wrap
+                                            maximumLineCount: notifItem.bodyExpanded ? 0 : 3
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            visible: bodyText.truncated
+                                                || (notifItem.bodyExpanded && bodyText.lineCount > 3)
+                                            text: notifItem.bodyExpanded ? "Show less" : "Show more"
+                                            color: expandHover.hovered ? Theme.colors.foreground : Theme.colors.primary
+                                            font.family: Typography.fontFamily
+                                            font.pixelSize: Typography.bodySm
+                                            Layout.fillWidth: true
+                                            Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
+                                            HoverHandler { id: expandHover; cursorShape: Qt.PointingHandCursor }
+                                            TapHandler { onTapped: notifItem.bodyExpanded = !notifItem.bodyExpanded }
+                                        }
+
+                                        Text {
+                                            text: notifItem.timeAgo
+                                            color: Theme.colors.foregroundMuted
+                                            font.family: Typography.fontFamily
+                                            font.pixelSize: Typography.label
+                                            opacity: 0.7
+                                        }
+                                    }
 
                                     Text {
-                                        text: notifItem.appName
-                                        color: Theme.colors.foregroundMuted
+                                        Layout.alignment: Qt.AlignTop
+                                        text: "\uf00d"
+                                        color: dismissHover.hovered ? Theme.errorTint(0.7) : Theme.colors.foregroundMuted
                                         font.family: Typography.fontFamily
                                         font.pixelSize: Typography.bodySm
-                                        Layout.fillWidth: true
+                                        Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
+                                        HoverHandler { id: dismissHover; cursorShape: Qt.PointingHandCursor }
+                                        TapHandler { onTapped: Notifications.dismiss(notifItem.notifId) }
                                     }
-
-                                    Text {
-                                        text: notifItem.summary
-                                        color: Theme.colors.foreground
-                                        font.family: Typography.fontFamily
-                                        font.pixelSize: Typography.title
-                                        Layout.fillWidth: true
-                                        wrapMode: Text.Wrap
-                                    }
-
-                                    Text {
-                                        visible: notifItem.body !== ""
-                                        text: notifItem.body
-                                        color: Theme.colors.foregroundMuted
-                                        font.family: Typography.fontFamily
-                                        font.pixelSize: Typography.body
-                                        Layout.fillWidth: true
-                                        wrapMode: Text.Wrap
-                                        maximumLineCount: 3
-                                        elide: Text.ElideRight
-                                    }
-
-                                    Text {
-                                        text: notifItem.timeAgo
-                                        color: Theme.colors.foregroundMuted
-                                        font.family: Typography.fontFamily
-                                        font.pixelSize: Typography.label
-                                        opacity: 0.7
-                                    }
-                                }
-
-                                Text {
-                                    Layout.alignment: Qt.AlignTop
-                                    text: "\uf00d"
-                                    color: dismissHover.hovered ? Theme.errorTint(0.7) : Theme.colors.foregroundMuted
-                                    font.family: Typography.fontFamily
-                                    font.pixelSize: Typography.bodySm
-                                    Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
-                                    HoverHandler { id: dismissHover; cursorShape: Qt.PointingHandCursor }
-                                    TapHandler { onTapped: Notifications.dismiss(notifItem.notifId) }
                                 }
                             }
                         }
-                    }
 
-                    Text {
-                        anchors.centerIn: parent
-                        visible: notifListModel.count === 0
-                        text: "All clear"
-                        color: Theme.colors.foregroundMuted
-                        font.family: Typography.fontFamily
-                        font.pixelSize: Typography.title
+                        Text {
+                            anchors.centerIn: parent
+                            visible: notifListModel.count === 0
+                            text: "All clear"
+                            color: Theme.colors.foregroundMuted
+                            font.family: Typography.fontFamily
+                            font.pixelSize: Typography.title
+                        }
                     }
                 }
-            }
 
-            Rectangle {
-                Layout.preferredWidth: 1
-                Layout.fillHeight: true
-                color: Theme.colors.outline
-                opacity: 0.2
-            }
+                Rectangle {
+                    Layout.preferredWidth: 1
+                    Layout.fillHeight: true
+                    color: Theme.colors.outline
+                    opacity: 0.2
+                }
 
-            MiniCalendar {}
+                MiniCalendar {}
             }
         }
     }
