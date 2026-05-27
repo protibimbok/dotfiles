@@ -1,29 +1,45 @@
 import QtQuick
-import QtQuick.Layouts
 import qs.theme
 import qs.bar.components
 
-RowLayout {
+Row {
     id: root
 
     required property var shellRoot
 
-    spacing: 10
+    spacing: 6
 
-    SysWidgets {}
+    BarPill {
+        id: statsPill
+        width: sysWidgets.implicitWidth + horizontalPadding * 2
 
-    Rectangle {
-        Layout.preferredWidth: 1
-        Layout.preferredHeight: 18
-        Layout.alignment: Qt.AlignVCenter
-        color: Theme.colors.border
-        opacity: 0.25
+        SysWidgets {
+            id: sysWidgets
+            anchors.centerIn: parent
+        }
     }
 
-    StatusIcons {
-        Layout.preferredHeight: 44
-        Layout.alignment: Qt.AlignVCenter
-        onHoverEntered: root.shellRoot.qsTriggerHovered = true
-        onHoverExited: root.shellRoot.qsTriggerHovered = false
+    BarPill {
+        id: connectivityPill
+        width: connectivityIcons.implicitWidth + horizontalPadding * 2
+
+        StatusIcons {
+            id: connectivityIcons
+            anchors.centerIn: parent
+            section: "connectivity"
+        }
+    }
+
+    BarPill {
+        id: systemPill
+        width: systemIcons.implicitWidth + horizontalPadding * 2
+
+        StatusIcons {
+            id: systemIcons
+            anchors.centerIn: parent
+            section: "system"
+            onHoverEntered: root.shellRoot.qsTriggerHovered = true
+            onHoverExited: root.shellRoot.qsTriggerHovered = false
+        }
     }
 }

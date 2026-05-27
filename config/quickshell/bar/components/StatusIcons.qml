@@ -6,31 +6,31 @@ import qs.services.network
 
 Item {
     id: root
-    implicitWidth: row.implicitWidth + 16
-    // Fixed height: RowLayout parent height can resolve to 0 and shrink the hit target.
-    implicitHeight: 44
+
+    /// "all" | "connectivity" (wifi, ethernet, bluetooth) | "system" (volume, battery)
+    property string section: "all"
+
+    implicitWidth: row.implicitWidth
+    implicitHeight: 28
 
     signal hoverEntered()
     signal hoverExited()
 
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: 4
-        radius: 10
-        color: Theme.colors.bg1
-        opacity: containerHover.hovered ? 0.4 : 0
-        z: 0
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+    function _showConnectivity(): bool {
+        return section === "all" || section === "connectivity"
+    }
+
+    function _showSystem(): bool {
+        return section === "all" || section === "system"
     }
 
     RowLayout {
         id: row
         anchors.centerIn: parent
         spacing: 4
-        z: 1
 
         Item {
-            visible: Wifi.enabled
+            visible: _showConnectivity() && Wifi.enabled
                 && (Wifi.connected
                     || Wifi.busyMessage.length > 0
                     || Wifi.nmConnecting)
@@ -41,7 +41,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: Wifi.strength > 0.75 ? "\u{f0928}" : (Wifi.strength > 0.4 ? "\u{f0925}" : "\u{f0922}")
-                color: Wifi.connected ? Theme.colors.text : Theme.colors.accent
+                color: Wifi.connected ? Theme.pillText : Theme.pillAccent
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 15
             }
@@ -49,7 +49,7 @@ Item {
         }
 
         Item {
-            visible: Ethernet.connected
+            visible: _showConnectivity() && Ethernet.connected
             Layout.preferredWidth: 20
             Layout.preferredHeight: 20
             Layout.alignment: Qt.AlignVCenter
@@ -57,14 +57,14 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: "\u{ef44}"
-                color: Theme.colors.green
+                color: Theme.pillGreen
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 15
             }
         }
 
         Item {
-            visible: Bluetooth.enabled
+            visible: _showConnectivity() && Bluetooth.enabled
             Layout.preferredWidth: 20
             Layout.preferredHeight: 20
             Layout.alignment: Qt.AlignVCenter
@@ -72,7 +72,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: "\uf294"
-                color: Bluetooth.connected ? Theme.colors.cyan : Theme.colors.textMuted
+                color: Bluetooth.connected ? Theme.pillCyan : Theme.pillTextMuted
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 15
                 Behavior on color { ColorAnimation { duration: 200 } }
@@ -80,6 +80,7 @@ Item {
         }
 
         Item {
+            visible: _showSystem()
             Layout.preferredWidth: 20
             Layout.preferredHeight: 20
             Layout.alignment: Qt.AlignVCenter
@@ -92,7 +93,7 @@ Item {
                     if (Audio.volume > 20) return "\uf027";
                     return "\uf026";
                 }
-                color: Audio.muted ? Theme.colors.textMuted : Theme.colors.text
+                color: Audio.muted ? Theme.pillTextMuted : Theme.pillText
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 15
                 Behavior on color { ColorAnimation { duration: 150 } }
@@ -100,7 +101,7 @@ Item {
         }
 
         Item {
-            visible: SystemStats.batteryPresent
+            visible: _showSystem() && SystemStats.batteryPresent
             Layout.preferredWidth: 20
             Layout.preferredHeight: 20
             Layout.alignment: Qt.AlignVCenter
@@ -116,9 +117,9 @@ Item {
                     return "\u{f008e}";
                 }
                 color: {
-                    if (SystemStats.batteryLevel < 20 && !SystemStats.batteryCharging) return Theme.colors.red;
-                    if (SystemStats.batteryCharging) return Theme.colors.green;
-                    return Theme.colors.text;
+                    if (SystemStats.batteryLevel < 20 && !SystemStats.batteryCharging) return Theme.pillRed;
+                    if (SystemStats.batteryCharging) return Theme.pillGreen;
+                    return Theme.pillText;
                 }
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 15
@@ -127,20 +128,17 @@ Item {
         }
     }
 
-    // Full-bar hit target above icons so child items do not steal hover.
-    Item {
-        anchors.fill: parent
-        z: 2
-
-        HoverHandler {
-            id: containerHover
-            cursorShape: Qt.PointingHandCursor
-            onHoveredChanged: {
-                if (hovered)
-                    root.hoverEntered()
-                else
-                    root.hoverExited()
-            }
+    HoverHandler {
+        id: containerHover
+        enabled: section === "all" || section === "system"
+        cursorShape: Qt.PointingHandCursor
+        onHoveredChanged: {
+            if (!enabled)
+                return
+            if (hovered)
+                root.hoverEntered()
+            else
+                root.hoverExited()
         }
     }
 }

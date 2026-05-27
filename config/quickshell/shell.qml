@@ -110,8 +110,8 @@ ShellRoot {
                 left: true
                 right: true
             }
-            implicitHeight: 44
-            exclusiveZone: 44
+            implicitHeight: 46
+            exclusiveZone: 46
             color: "transparent"
 
             Item {
@@ -157,8 +157,8 @@ ShellRoot {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    height: 44
-                    y: barContainer.barShown ? 0 : -44
+                    height: 46
+                    y: barContainer.barShown ? 0 : -46
                     shellRoot: shell
 
                     Behavior on y {

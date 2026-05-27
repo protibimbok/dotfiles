@@ -8,6 +8,31 @@ Singleton {
     id: root
 
     readonly property real barOpacity: 0.90
+    readonly property real barPillHeight: 36
+    readonly property real barPillRadius: 20
+
+    // Solid bar-pill surfaces (opaque, from pywal — updated in _updatePillTokens)
+    property color pillBackground: colors.bg1
+    property color pillBackgroundHighlight: colors.surface
+    property color pillBackgroundHover: colors.bg2
+    property color pillBorder: colors.border
+    property color pillText: colors.text
+    property color pillTextMuted: colors.textMuted
+    property color pillAccent: colors.accent
+    property color pillAccentAlt: colors.accentAlt
+    property color pillGreen: colors.green
+    property color pillRed: colors.red
+    property color pillCyan: colors.cyan
+    property color pillTrack: colors.bg2
+    property color pillTextOnHighlight: colors.text
+    property color pillTextMutedOnHighlight: colors.textMuted
+    property color pillAccentOnHighlight: colors.accent
+
+    readonly property color surfaceContainer: colors.surface
+    readonly property color surfaceContainerHigh: colors.bg1
+    readonly property color surfaceContainerHighest: colors.bg2
+    readonly property color outlineVariant: colors.border
+    readonly property color shadow: "#000000"
 
     property string currentWallpaper: ""
 
@@ -90,9 +115,80 @@ Singleton {
             colors.yellow = c.color3 || colors.yellow;
             colors.red = c.color1 || colors.red;
             colors.cyan = c.color6 || colors.cyan;
+            root._updatePillTokens();
         } catch (e) {
             console.warn("Theme: failed to parse wal colors:", e);
         }
+    }
+
+    Component.onCompleted: root._updatePillTokens()
+
+    function _updatePillTokens() {
+        const bg = colors.bg;
+        const elevated = colors.bg1;
+        const raised = colors.bg2;
+        pillBackground = elevated;
+        pillBackgroundHighlight = raised;
+        pillBackgroundHover = _blend(elevated, raised, 0.45);
+        pillBorder = colors.border;
+        pillText = _textOn(elevated, colors.text, bg);
+        pillTextMuted = _textOnMuted(elevated, colors.textMuted, pillText, 4.2);
+        pillAccent = _accentOn(elevated, colors.accent, pillText);
+        pillAccentAlt = _accentOn(elevated, colors.accentAlt, pillText);
+        pillGreen = _accentOn(elevated, colors.green, pillText);
+        pillRed = _accentOn(elevated, colors.red, pillText);
+        pillCyan = _accentOn(elevated, colors.cyan, pillText);
+        pillTrack = _mix(elevated, pillTextMuted, 0.28);
+        pillTextOnHighlight = _textOn(raised, colors.text, bg);
+        pillTextMutedOnHighlight = _textOnMuted(raised, colors.textMuted, pillTextOnHighlight, 4.2);
+        pillAccentOnHighlight = _accentOn(raised, colors.accent, pillTextOnHighlight);
+    }
+
+    function _channel(c: real): real {
+        return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    }
+
+    function _luminance(c: color): real {
+        return 0.2126 * _channel(c.r) + 0.7152 * _channel(c.g) + 0.0722 * _channel(c.b);
+    }
+
+    function _contrast(a: color, b: color): real {
+        const l1 = _luminance(a);
+        const l2 = _luminance(b);
+        const hi = Math.max(l1, l2);
+        const lo = Math.min(l1, l2);
+        return (hi + 0.05) / (lo + 0.05);
+    }
+
+    function _mix(a: color, b: color, t: real): color {
+        return Qt.rgba(
+            a.r * (1 - t) + b.r * t,
+            a.g * (1 - t) + b.g * t,
+            a.b * (1 - t) + b.b * t,
+            1.0
+        );
+    }
+
+    function _textOn(bg: color, preferred: color, fallback: color): color {
+        if (_contrast(bg, preferred) >= 4.5)
+            return preferred;
+        if (_contrast(bg, fallback) >= 4.5)
+            return fallback;
+        return _luminance(bg) > 0.45 ? "#111111" : "#f4f4f4";
+    }
+
+    function _textOnMuted(bg: color, preferred: color, strong: color, minRatio: real): color {
+        if (_contrast(bg, preferred) >= minRatio)
+            return preferred;
+        if (_contrast(bg, strong) >= minRatio)
+            return strong;
+        return _textOn(bg, strong, strong);
+    }
+
+    function _accentOn(bg: color, accent: color, fallback: color): color {
+        if (_contrast(bg, accent) >= 3.0)
+            return accent;
+        return fallback;
     }
 
     function _blend(a: string, b: string, t: real): string {

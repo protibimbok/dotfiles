@@ -1,17 +1,19 @@
 import QtQuick
-import QtQuick.Layouts
+import qs.theme
 import qs.bar.components
 
-RowLayout {
+BarPill {
     id: root
 
     required property var shellRoot
 
-    spacing: 0
+    highlighted: true
+    elevation: 4
+    width: clockWidget.implicitWidth + horizontalPadding * 2
 
     ClockNotifWidget {
-        Layout.fillHeight: true
-        Layout.preferredHeight: 44
+        id: clockWidget
+        anchors.centerIn: parent
         onHoverEntered: root.shellRoot.notifTriggerHovered = true
         onHoverExited: root.shellRoot.notifTriggerHovered = false
     }

@@ -8,7 +8,8 @@ import qs.services
 
 RowLayout {
     id: root
-    spacing: 10
+    spacing: 6
+    implicitHeight: 28
 
     // --- CPU arc indicator ---
     Item {
@@ -34,7 +35,7 @@ RowLayout {
                 ctx.beginPath();
                 ctx.arc(cx, cy, r, 0, 2 * Math.PI);
                 ctx.lineWidth = 2.5;
-                ctx.strokeStyle = Qt.rgba(Theme.colors.bg2.r, Theme.colors.bg2.g, Theme.colors.bg2.b, 0.4);
+                ctx.strokeStyle = Theme.pillTrack;
                 ctx.stroke();
 
                 if (usage > 0.01) {
@@ -42,7 +43,7 @@ RowLayout {
                     ctx.arc(cx, cy, r, startAngle, startAngle + 2 * Math.PI * usage);
                     ctx.lineWidth = 2.5;
                     ctx.lineCap = "round";
-                    ctx.strokeStyle = Theme.colors.accent;
+                    ctx.strokeStyle = Theme.pillAccent;
                     ctx.stroke();
                 }
             }
@@ -116,7 +117,7 @@ RowLayout {
                 ctx.beginPath();
                 ctx.arc(cx, cy, r, 0, 2 * Math.PI);
                 ctx.lineWidth = 2.5;
-                ctx.strokeStyle = Qt.rgba(Theme.colors.bg2.r, Theme.colors.bg2.g, Theme.colors.bg2.b, 0.4);
+                ctx.strokeStyle = Theme.pillTrack;
                 ctx.stroke();
 
                 if (usage > 0.01) {
@@ -124,7 +125,7 @@ RowLayout {
                     ctx.arc(cx, cy, r, startAngle, startAngle + 2 * Math.PI * usage);
                     ctx.lineWidth = 2.5;
                     ctx.lineCap = "round";
-                    ctx.strokeStyle = Theme.colors.accentAlt;
+                    ctx.strokeStyle = Theme.pillAccentAlt;
                     ctx.stroke();
                 }
             }
@@ -175,7 +176,7 @@ RowLayout {
             text: "\uf0ac"
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: 15
-            color: (SystemStats.netDownBytes > 1024 || SystemStats.netUpBytes > 1024) ? Theme.colors.accent : Theme.colors.textMuted
+            color: (SystemStats.netDownBytes > 1024 || SystemStats.netUpBytes > 1024) ? Theme.pillAccent : Theme.pillTextMuted
             Behavior on color { ColorAnimation { duration: 300 } }
         }
 
@@ -231,7 +232,7 @@ RowLayout {
             id: langText
             anchors.centerIn: parent
             text: SystemStats.inputLocale
-            color: Theme.colors.textMuted
+            color: Theme.pillTextMuted
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: 12
         }

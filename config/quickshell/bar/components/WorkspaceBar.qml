@@ -130,15 +130,15 @@ Item {
 
     Item {
         id: shell
-        implicitWidth: row.implicitWidth + 24 
+        width: row.implicitWidth
+        implicitWidth: row.implicitWidth
         height: 36
         anchors.verticalCenter: parent.verticalCenter
 
         Row {
             id: row
             z: 1
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.fill: parent
             leftPadding: 8
             rightPadding: 8
             spacing: 14
