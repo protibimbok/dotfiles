@@ -14,46 +14,7 @@ RowLayout {
     Layout.topMargin: 2
     spacing: Spacing.tileInnerTop
 
-    // ── Wallpaper (subtle button, left) ───────────────────────────────────
-
-    Rectangle {
-        Layout.fillWidth: true
-        Layout.preferredHeight: Metrics.footerBtnHeight
-        radius: Metrics.panelRadius
-        color: wallHov.hovered ? Theme.colors.surfaceHigh : Theme.colors.surface
-        border.width: 1
-        border.color: Theme.colors.outline
-        opacity: 0.9
-        Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
-
-        RowLayout {
-            anchors.centerIn: parent
-            spacing: Spacing.md
-
-            Text {
-                text: "\uf03e"
-                color: wallHov.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
-                font.family: Typography.fontFamily
-                font.pixelSize: Typography.iconSm
-            }
-
-            Text {
-                text: "Wallpaper"
-                color: wallHov.hovered ? Theme.colors.foreground : Theme.colors.foregroundMuted
-                font.family: Typography.fontFamily
-                font.pixelSize: Typography.body
-            }
-        }
-
-        HoverHandler { id: wallHov; cursorShape: Qt.PointingHandCursor }
-        TapHandler {
-            onTapped: {
-                root.shellRoot.wallpaperPickerVisible = true;
-                root.requestClose();
-            }
-        }
-    }
-
+    Item { Layout.fillWidth: true }
 
     // ── Lock | Power pill (right) ─────────────────────────────────────────
 

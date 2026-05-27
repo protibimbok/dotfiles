@@ -5,7 +5,6 @@ import qs.bar
 import qs.launcher
 import qs.notifications
 import qs.quicksettings
-import qs.wallpaper
 import qs.theme
 import qs.services
 import qs.osd
@@ -25,11 +24,10 @@ ShellRoot {
     property bool qsPanelHovered: false
     /// quick-settings inner view: main grid vs full-panel wifi / bluetooth
     property string qsSubview: "main"
-    property bool wallpaperPickerVisible: false
     property bool sessionVisible: false
 
     property bool anyPanelOpen: launcherVisible || notifPanelVisible || quickSettingsVisible
-        || wallpaperPickerVisible || sessionVisible
+        || sessionVisible
 
     Connections {
         target: shell
@@ -170,28 +168,35 @@ ShellRoot {
         }
     }
 
-    // Launcher — real floating toplevel (not layer-shell panel)
-    FloatingWindow {
+    // Launcher — bottom drawer overlay
+    PanelWindow {
         id: launcherWindow
-        screen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
-        title: "App launcher"
+        anchors { top: true; bottom: true; left: true; right: true }
+        exclusionMode: ExclusionMode.Ignore
+        aboveWindows: true
+        focusable: true
         visible: shell.launcherVisible
         color: "transparent"
 
-        readonly property int _launcherW: screen
-            ? Math.min(Metrics.launcherMaxWidth, Math.max(Metrics.launcherMinWidth, screen.width - Metrics.launcherWidthInset))
-            : Metrics.launcherMaxWidth
-        readonly property int _launcherH: Metrics.launcherHeight
-
-        implicitWidth: _launcherW
-        implicitHeight: _launcherH
-        // Position: Quickshell FloatingWindow has no writable x/y; use Hyprland `center` on this title.
-
-        onClosed: shell.launcherVisible = false
-
-        AppLauncher {
+        MouseArea {
             anchors.fill: parent
-            onClose: shell.launcherVisible = false
+            enabled: shell.launcherVisible
+            onClicked: shell.launcherVisible = false
+        }
+
+        Item {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 48
+
+            LauncherWrapper {
+                id: launcherRoot
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                active: shell.launcherVisible
+                onClose: shell.launcherVisible = false
+            }
         }
     }
 
@@ -249,22 +254,6 @@ ShellRoot {
             anchors.fill: parent
             shellRoot: shell
             onClose: shell.quickSettingsVisible = false
-        }
-    }
-
-    // Wallpaper picker
-    PanelWindow {
-        id: wallpaperWindow
-        anchors { top: true; bottom: true; left: true; right: true }
-        exclusionMode: ExclusionMode.Ignore
-        aboveWindows: true
-        focusable: true
-        visible: shell.wallpaperPickerVisible
-        color: "transparent"
-
-        WallpaperPicker {
-            anchors.fill: parent
-            onClose: shell.wallpaperPickerVisible = false
         }
     }
 

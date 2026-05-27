@@ -17,7 +17,6 @@ Singleton {
     readonly property int panelContentMargin: 18
     readonly property int panelContentMarginLg: 20
     readonly property int panelMaxHeightInset: 64
-    readonly property int wallpaperSideInset: 40
 
     readonly property int barHorizontal: 11
     readonly property int barTop: 1
@@ -36,4 +35,10 @@ Singleton {
     readonly property int sectionBottomSm: 4
     readonly property int footerGap: 24
     readonly property int toggleKnobInset: 5
+
+    readonly property int small: 7
+    readonly property int smaller: 10
+    readonly property int normal: 12
+    readonly property int larger: 15
+    readonly property int large: 20
 }

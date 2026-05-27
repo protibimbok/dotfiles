@@ -31,8 +31,6 @@ Singleton {
     readonly property int notificationPanelMaxHeight: 480
     readonly property int sessionPanelWidth: 380
     readonly property int sessionPanelHeight: 200
-    readonly property int wallpaperPickerMaxWidth: 840
-    readonly property int wallpaperPickerMaxHeight: 540
     readonly property int osdWidth: 280
     readonly property int osdHeight: 64
     readonly property int toastColumnWidth: 340
@@ -88,13 +86,6 @@ Singleton {
     readonly property int trackRadius: 3
     readonly property int thumbSize: 16
     readonly property int thumbRadius: 8
-
-    // Wallpaper grid
-    readonly property int wallpaperThumbWidth: 110
-    readonly property int wallpaperThumbHeight: 62
-    readonly property int wallpaperColorDot: 12
-    readonly property int wallpaperCellFallback: 100
-    readonly property int wallpaperCellExtra: 8
 
     // Misc
     readonly property int dividerWidth: 1

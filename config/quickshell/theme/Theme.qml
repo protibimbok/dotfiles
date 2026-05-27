@@ -39,18 +39,9 @@ Singleton {
     property string extractedForWallpaper: ""
     property bool colorExtracting: false
 
-    // Ordered swatches for WallpaperPicker (contrast-safe Theme.colors)
-    readonly property var wallpaperPalette: [
-        { role: "background", color: colors.background, on: colors.foreground },
-        { role: "surface", color: colors.surface, on: colors.foreground },
-        { role: "foreground", color: colors.foreground, on: colors.background },
-        { role: "primary", color: colors.primary, on: colors.surface },
-        { role: "accent", color: colors.accent, on: colors.surface },
-        { role: "success", color: colors.success, on: colors.surface },
-        { role: "warning", color: colors.warning, on: colors.surface },
-        { role: "error", color: colors.error, on: colors.surface },
-        { role: "info", color: colors.info, on: colors.surface }
-    ]
+    property bool previewActive: false
+    property string previewWallpaperPath: ""
+    property bool previewColourLock: false
 
     function _normalizeLocalPath(p: string): string {
         if (!p || p.length === 0)
@@ -365,6 +356,43 @@ Singleton {
         }
     }
 
+    Process {
+        id: walLightProc
+        property string wallPath: ""
+        command: ["/usr/bin/wal", "-l", "-i", wallPath, "-n", "-q"]
+        onExited: {
+            colorFile.reload();
+            root._parseColors();
+        }
+    }
+
+    Process {
+        id: walPreviewProc
+        property string wallPath: ""
+        command: ["/usr/bin/wal", "-i", wallPath, "-n", "-q"]
+        onExited: {
+            if (root.previewWallpaperPath !== wallPath)
+                return;
+            colorFile.reload();
+            root._parseColors();
+            root.previewActive = true;
+            root.colorExtracting = false;
+        }
+    }
+
+    Process {
+        id: walRestoreProc
+        property string wallPath: ""
+        command: ["/usr/bin/wal", "-i", wallPath, "-n", "-q"]
+        onExited: {
+            colorFile.reload();
+            root._parseColors();
+            root.previewActive = false;
+            root.previewWallpaperPath = "";
+            root.colorExtracting = false;
+        }
+    }
+
     Process { id: mkdirProc; command: ["mkdir", "-p", root._cacheDir] }
 
     Process {
@@ -377,6 +405,8 @@ Singleton {
         const p = _normalizeLocalPath(path);
         if (!p || p.length === 0)
             return;
+        previewActive = false;
+        previewWallpaperPath = "";
         currentWallpaper = p;
         colorExtracting = true;
         mkdirProc.running = true;
@@ -384,5 +414,52 @@ Singleton {
         saveWallProc.running = true;
         wallpaperAwwwProc.wallPath = p;
         awwwDaemonWarmProc.running = true;
+    }
+
+    function previewWallpaper(path: string) {
+        const p = _normalizeLocalPath(path);
+        if (!p || p.length === 0 || p === currentWallpaper)
+            return;
+        previewWallpaperPath = p;
+        colorExtracting = true;
+        walPreviewProc.wallPath = p;
+        walPreviewProc.running = true;
+    }
+
+    function stopPreview() {
+        if (previewColourLock || !previewActive)
+            return;
+        const wall = currentWallpaper;
+        if (!wall || wall.length === 0) {
+            previewActive = false;
+            previewWallpaperPath = "";
+            return;
+        }
+        colorExtracting = true;
+        walRestoreProc.wallPath = wall;
+        walRestoreProc.running = true;
+    }
+
+    function commitPreview(path: string) {
+        const p = _normalizeLocalPath(path || previewWallpaperPath);
+        if (!p || p.length === 0)
+            return;
+        previewColourLock = true;
+        applyWallpaper(p);
+        previewColourLock = false;
+    }
+
+    function setWalMode(mode: string) {
+        const wall = currentWallpaper;
+        if (!wall || wall.length === 0)
+            return;
+        colorExtracting = true;
+        if (mode === "light") {
+            walLightProc.wallPath = wall;
+            walLightProc.running = true;
+        } else {
+            walExtractProc.wallPath = wall;
+            walExtractProc.running = true;
+        }
     }
 }

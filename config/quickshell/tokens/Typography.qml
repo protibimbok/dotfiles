@@ -4,6 +4,8 @@ import QtQuick
 
 Singleton {
     readonly property string fontFamily: "JetBrainsMono Nerd Font"
+    readonly property string materialFamily: "Material Symbols Rounded"
+    readonly property string sansFamily: fontFamily
 
     readonly property int caption: 9
     readonly property int label: 10
@@ -15,4 +17,10 @@ Singleton {
     readonly property int iconMd: 16
     readonly property int iconLg: 18
     readonly property int display: 28
+
+    readonly property int smaller: 12
+    readonly property int normal: 13
+    readonly property int larger: 15
+    readonly property int large: 18
+    readonly property int extraLarge: 28
 }

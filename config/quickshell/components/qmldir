@@ -1,3 +1,14 @@
 module qs.components
 PanelChrome 1.0 PanelChrome.qml
 PanelDivider 1.0 PanelDivider.qml
+Anim 1.0 Anim.qml
+CAnim 1.0 CAnim.qml
+StyledRect 1.0 StyledRect.qml
+StyledText 1.0 StyledText.qml
+StyledTextField 1.0 StyledTextField.qml
+MaterialIcon 1.0 MaterialIcon.qml
+StateLayer 1.0 StateLayer.qml
+StyledListView 1.0 StyledListView.qml
+StyledScrollBar 1.0 StyledScrollBar.qml
+StyledClippingRect 1.0 StyledClippingRect.qml
+Elevation 1.0 Elevation.qml

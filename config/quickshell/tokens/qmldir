@@ -3,3 +3,6 @@ singleton Metrics 1.0 Metrics.qml
 singleton Typography 1.0 Typography.qml
 singleton Spacing 1.0 Spacing.qml
 singleton Durations 1.0 Durations.qml
+singleton AnimTokens 1.0 AnimTokens.qml
+singleton Rounding 1.0 Rounding.qml
+singleton LauncherMetrics 1.0 LauncherMetrics.qml
