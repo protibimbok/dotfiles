@@ -13,28 +13,46 @@ RowLayout {
 
     property int rowHeight: 44
 
-    // ── Ethernet: icon only, muted / off style ───────────────────────────
+    // ── Ethernet: icon toggle — connected / disconnected ─────────────────
 
     Rectangle {
         Layout.fillWidth: true
         Layout.preferredHeight: root.rowHeight
         radius: Metrics.tileRadius
-        color: Theme.colors.surface
-        border.width: 1
-        border.color: Theme.colors.outline
-        opacity: 0.85
+        color: Ethernet.connected
+            ? Theme.primaryTint(0.22)
+            : ethHover.hovered
+                ? Theme.primaryTint(0.08)
+                : Theme.colors.surface
+        border.width: Ethernet.connected ? 1.5 : 1
+        border.color: Ethernet.connected ? Theme.colors.primary : Theme.colors.outline
+        opacity: 0.95
+        Behavior on color { ColorAnimation { duration: 120 } }
 
-        Text {
+        RowLayout {
             anchors.centerIn: parent
-            text: "\uef44"
-            color: Theme.colors.foregroundMuted
-            font.family: Typography.fontFamily
-            font.pixelSize: 20
-            opacity: Ethernet.connected ? 0.75 : 0.45
+            spacing: Spacing.sm
+
+            Text {
+                text: "\uef44"
+                color: Ethernet.connected ? Theme.colors.primary : Theme.colors.foregroundMuted
+                font.family: Typography.fontFamily
+                font.pixelSize: 20
+                Behavior on color { ColorAnimation { duration: 120 } }
+            }
+
+            Text {
+                text: "Ethernet"
+                color: Ethernet.connected ? Theme.colors.primary : Theme.colors.foregroundMuted
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.body
+                font.bold: Ethernet.connected
+                Behavior on color { ColorAnimation { duration: 120 } }
+            }
         }
 
-        HoverHandler { cursorShape: Qt.PointingHandCursor }
-        TapHandler { onTapped: Ethernet.openSettings() }
+        HoverHandler { id: ethHover; cursorShape: Qt.PointingHandCursor }
+        TapHandler { onTapped: Ethernet.toggle() }
     }
 
     // ── DND: pill with 3 icon buttons + inner dividers ────────────────────

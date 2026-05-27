@@ -7,6 +7,10 @@ Singleton {
     id: root
 
     property bool connected: false
+    /// Wired interface currently connected (from poll).
+    property string device: ""
+    /// Last disconnected wired interface — used to reconnect on toggle.
+    property string _reconnectDevice: ""
 
     Timer {
         interval: 3000
@@ -16,36 +20,102 @@ Singleton {
         onTriggered: ethernetProc.running = true
     }
 
-    // NetMgr-style: only TYPE and STATE — lines are "ethernet:connected" (two fields; old parser wrongly required >= 3 parts)
     Process {
         id: ethernetProc
-        command: ["nmcli", "-t", "-f", "TYPE,STATE", "dev"]
+        command: ["/usr/bin/nmcli", "-t", "-f", "DEVICE,TYPE,STATE", "dev"]
         stdout: StdioCollector {
             onStreamFinished: root._parseEthernet(text)
         }
         onExited: (code) => {
-            if (code !== 0)
+            if (code !== 0) {
                 root.connected = false;
+                root.device = "";
+            }
         }
+    }
+
+    function _wiredStateConnected(state: string): bool {
+        state = state.toLowerCase();
+        return state === "connected" || state.startsWith("connected ");
     }
 
     function _parseEthernet(data: string) {
         let eth = false;
+        let connectedDev = "";
+        let disconnectedDev = "";
+
         for (let line of data.trim().split("\n")) {
             line = line.trim();
             if (!line.length)
                 continue;
-            let idx = line.indexOf(":");
-            if (idx < 0)
+            let parts = line.split(":");
+            if (parts.length < 3)
                 continue;
-            let type = line.slice(0, idx).toLowerCase();
-            let state = line.slice(idx + 1).toLowerCase();
-            if (type === "ethernet" || type === "bridge") {
-                if (state === "connected" || state.indexOf("connected") >= 0)
-                    eth = true;
+            let state = parts[parts.length - 1];
+            let type = parts[parts.length - 2].toLowerCase();
+            let dev = parts.slice(0, -2).join(":");
+            if (type !== "ethernet" && type !== "bridge")
+                continue;
+            if (_wiredStateConnected(state)) {
+                eth = true;
+                connectedDev = dev;
+            } else if (state.toLowerCase() === "disconnected" && !disconnectedDev.length) {
+                disconnectedDev = dev;
             }
         }
+
         connected = eth;
+        device = connectedDev;
+        if (disconnectedDev.length)
+            _reconnectDevice = disconnectedDev;
+        else if (connectedDev.length)
+            _reconnectDevice = connectedDev;
+    }
+
+    function _refreshAfterEthChange() {
+        ethernetProc.running = true;
+        ethRefreshTimer.restart();
+    }
+
+    function toggle() {
+        if (connected) {
+            if (!device.length)
+                return;
+            ethActionProc.command = ["/usr/bin/nmcli", "device", "disconnect", device];
+        } else {
+            let target = _reconnectDevice.length ? _reconnectDevice : device;
+            if (!target.length)
+                return;
+            ethActionProc.command = ["/usr/bin/nmcli", "device", "connect", target];
+        }
+        ethActionProc.running = true;
+    }
+
+    function connect() {
+        let target = _reconnectDevice.length ? _reconnectDevice : device;
+        if (!target.length)
+            return;
+        ethActionProc.command = ["/usr/bin/nmcli", "device", "connect", target];
+        ethActionProc.running = true;
+    }
+
+    function disconnect() {
+        if (!device.length)
+            return;
+        ethActionProc.command = ["/usr/bin/nmcli", "device", "disconnect", device];
+        ethActionProc.running = true;
+    }
+
+    Timer {
+        id: ethRefreshTimer
+        interval: 800
+        repeat: false
+        onTriggered: ethernetProc.running = true
+    }
+
+    Process {
+        id: ethActionProc
+        onExited: root._refreshAfterEthChange()
     }
 
     function openSettings() {
