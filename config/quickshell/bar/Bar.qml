@@ -11,13 +11,11 @@ Item {
 
     Item {
         id: barContainer
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
+        anchors.fill: parent
         anchors.leftMargin: Spacing.barHorizontal
         anchors.rightMargin: Spacing.barHorizontal
-        anchors.topMargin: Spacing.barTop
-        height: parent.height - Spacing.barVerticalInset
+        anchors.topMargin: Spacing.barVerticalInset
+        anchors.bottomMargin: Spacing.barVerticalInset
 
         BarPill {
             id: leftPill

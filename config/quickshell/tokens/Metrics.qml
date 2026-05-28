@@ -3,8 +3,8 @@ import Quickshell
 import QtQuick
 
 Singleton {
-    // Bar
-    readonly property int barHeight: 46
+    // Bar — reserved layer height matches pill + vertical inset
+    readonly property int barHeight: barPillHeight + 2 * Spacing.barVerticalInset
     readonly property int barPillHeight: 36
     readonly property int barPillRadius: 20
     readonly property int barHideOffset: -barHeight
