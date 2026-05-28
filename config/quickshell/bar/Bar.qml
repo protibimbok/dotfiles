@@ -9,7 +9,7 @@ Item {
 
     required property var shellRoot
 
-    readonly property bool unifiedBar: Hyprland.singleAppBarMode
+    readonly property bool unifiedBar: Hyprland.singleWindowBarMode
 
     Item {
         id: barContainer
