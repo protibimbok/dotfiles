@@ -139,4 +139,8 @@ Item {
     function focusSearch() {
         searchInput.forceActiveFocus();
     }
+
+    function refreshList() {
+        list.refreshList();
+    }
 }

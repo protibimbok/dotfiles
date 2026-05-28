@@ -26,11 +26,18 @@ Item {
         NumberAnimation { duration: Durations.panelEnter; easing.type: Easing.OutCubic }
     }
 
-    Component.onCompleted: Qt.callLater(() => LauncherApps)
+    Component.onCompleted: Qt.callLater(() => {
+        LauncherApps;
+        LauncherActions;
+        LauncherWallpapers;
+    })
 
     onActiveChanged: {
         if (active)
-            Qt.callLater(() => content.focusSearch());
+            Qt.callLater(() => {
+                content.focusSearch();
+                content.refreshList();
+            });
         else
             content.clearSearch();
     }

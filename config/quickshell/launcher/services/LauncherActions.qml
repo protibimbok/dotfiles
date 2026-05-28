@@ -23,11 +23,20 @@ Singleton {
     }
 
     function _load() {
+        const raw = actionsFile.text();
+        if (typeof raw !== "string" || raw.trim().length === 0)
+            return;
         try {
-            actions = JSON.parse(actionsFile.text()).filter(a => a.enabled !== false);
+            actions = JSON.parse(raw).filter(a => a.enabled !== false);
         } catch (e) {
-            actions = [];
+            if (actions.length === 0)
+                actions = [];
         }
+    }
+
+    function ensureLoaded() {
+        if (actions.length === 0)
+            _load();
     }
 
     function transformSearch(search: string): string {

@@ -18,10 +18,8 @@ Singleton {
         path: Quickshell.shellPath("launcher/launcher_hidden.json")
         preload: true
         watchChanges: true
-        onFileChanged: {
-            try { root.hiddenApps = JSON.parse(text()); } catch (e) { root.hiddenApps = []; }
-            root._rebuild();
-        }
+        onFileChanged: root._loadHidden()
+        onLoaded: root._loadHidden()
     }
 
     FileView {
@@ -39,6 +37,11 @@ Singleton {
     }
 
     Component.onCompleted: _rebuild()
+
+    function _loadHidden() {
+        try { root.hiddenApps = JSON.parse(hiddenFile.text()); } catch (e) { root.hiddenApps = []; }
+        root._rebuild();
+    }
 
     function _loadCommands() {
         try {

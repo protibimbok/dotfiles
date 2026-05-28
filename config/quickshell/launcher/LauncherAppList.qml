@@ -41,12 +41,17 @@ ListView {
                 return;
             }
             mode = "actions";
+            LauncherActions.ensureLoaded();
             items = LauncherActions.query(text);
             return;
         }
         mode = "apps";
         const results = LauncherApps.search(text);
         items = text.length === 0 ? results.slice(0, LauncherMetrics.maxShown) : results;
+    }
+
+    function refresh() {
+        _updateModel();
     }
 
     Connections {
@@ -57,6 +62,11 @@ ListView {
     Connections {
         target: LauncherApps
         function onAllAppsChanged() { root._updateModel(); }
+    }
+
+    Connections {
+        target: LauncherActions
+        function onActionsChanged() { root._updateModel(); }
     }
 
     Component.onCompleted: _updateModel()

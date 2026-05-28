@@ -34,6 +34,10 @@ Item {
         requestClose: root.requestClose
     }
 
+    function refreshList() {
+        appList.refresh();
+    }
+
     LauncherWallpaperList {
         id: wallpaperList
         anchors.fill: parent
