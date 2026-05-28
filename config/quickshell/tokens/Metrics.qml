@@ -4,7 +4,7 @@ import QtQuick
 
 Singleton {
     // Bar — reserved layer height matches pill + vertical inset
-    readonly property int barHeight: barPillHeight + 2 * Spacing.barVerticalInset
+    readonly property int barHeight: barPillHeight + Spacing.barTopInset + Spacing.barBottomInset
     readonly property int barPillHeight: 36
     readonly property int barPillRadius: 20
     readonly property int barHideOffset: -barHeight
@@ -95,6 +95,7 @@ Singleton {
     readonly property int workspaceDotSize: 16
     readonly property int workspaceMiniDot: 3
     readonly property int osdBottomMargin: 80
+    readonly property real barUnifiedFillOpacity: 0.78
     readonly property real panelFillOpacityDefault: 0.92
     readonly property real panelFillOpacityNotif: 0.88
     readonly property real panelBorderOpacity: 0.25

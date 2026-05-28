@@ -7,11 +7,13 @@ Row {
     id: root
 
     required property var shellRoot
+    property bool backgroundless: false
 
     spacing: Spacing.pillGapSm
 
     BarPill {
         id: connectivityPill
+        backgroundless: root.backgroundless
         width: connectivityIcons.implicitWidth + horizontalPadding * 2
 
         StatusIcons {
@@ -23,6 +25,7 @@ Row {
 
     BarPill {
         id: systemPill
+        backgroundless: root.backgroundless
         width: systemIcons.implicitWidth + horizontalPadding * 2
 
         StatusIcons {

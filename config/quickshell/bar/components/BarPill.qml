@@ -10,6 +10,7 @@ Item {
     property int elevation: Metrics.barElevation
     property bool highlighted: false
     property bool hovered: false
+    property bool backgroundless: false
     property real explicitWidth: 0
     property real explicitHeight: 0
 
@@ -25,23 +26,26 @@ Item {
     width: implicitWidth
     height: pillHeight
 
-    readonly property color resolvedFill: highlighted
-        ? Theme.pillBackgroundHighlight
-        : (hovered ? Theme.pillBackgroundHover : Theme.pillBackground)
+    readonly property color resolvedFill: backgroundless
+        ? "transparent"
+        : (highlighted
+            ? Theme.pillBackgroundHighlight
+            : (hovered ? Theme.pillBackgroundHover : Theme.pillBackground))
 
     Rectangle {
         id: surface
         anchors.fill: parent
         radius: root.radius
         color: root.resolvedFill
-        border.width: 1
+        border.width: root.backgroundless ? 0 : 1
         border.color: highlighted ? Theme.pillAccent : Theme.pillBorder
         clip: true
 
         Behavior on color { ColorAnimation { duration: Durations.colorTransitionSlow; easing.type: Easing.OutCubic } }
         Behavior on border.color { ColorAnimation { duration: Durations.colorTransition; easing.type: Easing.OutCubic } }
+        Behavior on border.width { NumberAnimation { duration: Durations.colorTransition; easing.type: Easing.OutCubic } }
 
-        layer.enabled: root.elevation > 0
+        layer.enabled: root.elevation > 0 && !root.backgroundless
         layer.effect: MultiEffect {
             shadowEnabled: true
             shadowBlur: root.highlighted ? 1.0 : 0.8
