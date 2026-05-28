@@ -65,6 +65,9 @@ Singleton {
 
     readonly property string _cacheDir: _homeLocal() + "/.cache/quickshell"
     readonly property string _wallpaperCache: _cacheDir + "/wallpaper.txt"
+    readonly property string _themeCache: _cacheDir + "/theme-colors.json"
+
+    property bool _startupDone: false
 
     FileView {
         id: savedWallFile
@@ -74,12 +77,20 @@ Singleton {
             let p = text().trim();
             if (p.length > 0)
                 root.currentWallpaper = p;
+            root._cacheFileReady();
         }
         onFileChanged: {
             let p = text().trim();
             if (p.length > 0)
                 root.currentWallpaper = p;
         }
+    }
+
+    FileView {
+        id: themeCacheFile
+        path: root._themeCache
+        preload: true
+        onLoaded: root._cacheFileReady()
     }
 
     property var colors: QtObject {
@@ -115,6 +126,7 @@ Singleton {
         path: root._homeLocal() + "/.cache/wal/colors.json"
         preload: true
         watchChanges: true
+        onLoaded: root._cacheFileReady()
         onFileChanged: root._parseColors()
     }
 
@@ -184,6 +196,130 @@ Singleton {
             root.extractedForWallpaper = _normalizeLocalPath(String(wall));
 
         root._updatePillTokens();
+        root._saveThemeCache();
+    }
+
+    function _colorHex(c: color): string {
+        const h = c.toString();
+        if (h.length === 9)
+            return "#" + h.substring(3);
+        return h;
+    }
+
+    function _applyThemeColors(data: var): bool {
+        const c = data.colors;
+        if (!c || !c.background)
+            return false;
+
+        colors.background = c.background;
+        colors.surface = c.surface;
+        colors.surfaceHigh = c.surfaceHigh;
+        colors.surfaceHighest = c.surfaceHighest;
+        colors.foreground = c.foreground;
+        colors.foregroundMuted = c.foregroundMuted;
+        colors.primary = c.primary;
+        colors.accent = c.accent;
+        colors.outline = c.outline;
+        colors.success = c.success;
+        colors.warning = c.warning;
+        colors.error = c.error;
+        colors.info = c.info;
+
+        const wall = data.wallpaper;
+        if (wall && String(wall).length > 0)
+            root.extractedForWallpaper = _normalizeLocalPath(String(wall));
+
+        root._updatePillTokens();
+        return true;
+    }
+
+    function _loadThemeCache(): bool {
+        const t = themeCacheFile.text();
+        if (t.length === 0)
+            return false;
+        try {
+            const data = JSON.parse(t);
+            const cachedWall = data.wallpaper ? _normalizeLocalPath(String(data.wallpaper)) : "";
+            const currentWall = root.currentWallpaper.trim();
+            if (currentWall.length > 0 && cachedWall.length > 0
+                    && cachedWall !== _normalizeLocalPath(currentWall))
+                return false;
+            return root._applyThemeColors(data);
+        } catch (e) {
+            console.warn("Theme: failed to parse theme cache:", e);
+            return false;
+        }
+    }
+
+    function _saveThemeCache() {
+        if (root.previewWallpaperPath.length > 0)
+            return;
+
+        const wall = root.currentWallpaper || root.extractedForWallpaper;
+        if (!wall || String(wall).length === 0)
+            return;
+
+        const payload = {
+            wallpaper: wall,
+            colors: {
+                background: _colorHex(colors.background),
+                surface: _colorHex(colors.surface),
+                surfaceHigh: _colorHex(colors.surfaceHigh),
+                surfaceHighest: _colorHex(colors.surfaceHighest),
+                foreground: _colorHex(colors.foreground),
+                foregroundMuted: _colorHex(colors.foregroundMuted),
+                primary: _colorHex(colors.primary),
+                accent: _colorHex(colors.accent),
+                outline: _colorHex(colors.outline),
+                success: _colorHex(colors.success),
+                warning: _colorHex(colors.warning),
+                error: _colorHex(colors.error),
+                info: _colorHex(colors.info)
+            }
+        };
+
+        saveThemeCacheProc.content = JSON.stringify(payload, null, 2);
+        mkdirProc.running = true;
+        saveThemeCacheProc.running = true;
+    }
+
+    property bool _skipColorExtract: false
+    property int _cacheFilesReady: 0
+
+    function _cacheFileReady() {
+        root._cacheFilesReady++;
+        if (root._cacheFilesReady >= 3)
+            root._finishStartup();
+    }
+
+    function _finishStartup() {
+        if (root._startupDone)
+            return;
+        root._startupDone = true;
+
+        if (!root._loadThemeCache() && colorFile.text().length > 0)
+            root._parseColors();
+        else if (!root.extractedForWallpaper)
+            root._updatePillTokens();
+
+        const wall = root.currentWallpaper.trim();
+        if (wall.length === 0)
+            return;
+
+        const wallNorm = root._normalizeLocalPath(wall);
+        root._skipColorExtract = root.extractedForWallpaper === wallNorm;
+        root.restoreWallpaperOnly(wallNorm);
+
+        if (!root._skipColorExtract)
+            root.extractColorsFromWallpaper(wallNorm);
+    }
+
+    function restoreWallpaperOnly(path: string) {
+        const p = _normalizeLocalPath(path);
+        if (!p || p.length === 0)
+            return;
+        wallpaperAwwwProc.wallPath = p;
+        awwwDaemonWarmProc.running = true;
     }
 
     function extractColorsFromWallpaper(path: string) {
@@ -195,12 +331,14 @@ Singleton {
         walExtractProc.running = true;
     }
 
-    Component.onCompleted: {
-        if (colorFile.text().length > 0)
-            _parseColors();
-        else
-            _updatePillTokens();
+    Timer {
+        id: startupFallback
+        interval: 500
+        repeat: false
+        onTriggered: root._finishStartup()
     }
+
+    Component.onCompleted: startupFallback.start()
 
     function _updatePillTokens() {
         const bg = colors.background;
@@ -349,7 +487,11 @@ Singleton {
             "--transition-duration", "1.5",
             "--transition-fps", "60"
         ]
-        onExited: root.extractColorsFromWallpaper(wallPath)
+        onExited: {
+            if (!root._skipColorExtract)
+                root.extractColorsFromWallpaper(wallPath);
+            root._skipColorExtract = false;
+        }
     }
 
     Process {
@@ -405,6 +547,12 @@ Singleton {
         id: saveWallProc
         property string content: ""
         command: ["/usr/bin/bash", "-c", "printf '%s' " + JSON.stringify(content) + " > " + JSON.stringify(root._wallpaperCache)]
+    }
+
+    Process {
+        id: saveThemeCacheProc
+        property string content: ""
+        command: ["/usr/bin/bash", "-c", "printf '%s' " + JSON.stringify(content) + " > " + JSON.stringify(root._themeCache)]
     }
 
     function applyWallpaper(path: string) {
