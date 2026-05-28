@@ -167,8 +167,11 @@ Item {
                         void Hyprland.activeToplevel
                         return root.appsForWorkspace(wsId)
                     }
+                    property bool hasApps: appGroups.length > 0
 
-                    width: appIconsRow.width > 0 ? appIconsRow.width + Spacing.xxl : 22
+                    width: hasApps
+                        ? (wsNumBg.width / 2) + 1 + appIconsRow.width + Spacing.md
+                        : (wsNumBg.width / 2)
                     height: Metrics.workspaceDotHeight
                     anchors.verticalCenter: parent.verticalCenter
 
@@ -180,26 +183,27 @@ Item {
                         onClicked: Hyprland.dispatch("workspace " + wsSeg.wsId)
                     }
 
-                    // --- 1. Main Workspace Background ---
+                    // --- 1. Main Workspace Background (apps only) ---
                     Rectangle {
                         id: wsBg
                         visible: false // Hidden so MultiEffect can draw it
                         anchors.fill: parent
                         radius: Metrics.listRadius
-                        color: Theme.surfaceTint(Theme.colors.surface, 1.0)
-                        border.width: active ? 1 : 0
-                        border.color: Theme.colors.primary
-                        
+                        color: active ? Theme.pillBackgroundHighlight : Theme.pillBackground
+                        border.width: active && hasApps ? 1 : 0
+                        border.color: Theme.pillAccent
+
                         Behavior on color { ColorAnimation { duration: Durations.hoverSlow } }
                         Behavior on border.width { NumberAnimation { duration: Durations.hoverSlow } }
                     }
 
                     MultiEffect {
+                        visible: hasApps
                         source: wsBg
                         anchors.fill: wsBg
                         z: 1
                         shadowEnabled: true
-                        shadowColor: Qt.rgba(0, 0, 0, 0.2)
+                        shadowColor: Qt.rgba(Theme.shadow.r, Theme.shadow.g, Theme.shadow.b, 0.2)
                         shadowBlur: 0.6
                         shadowVerticalOffset: 2
                     }
@@ -214,10 +218,10 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         x: -(width / 2) 
                         
-                        color: active ? Theme.colors.primary : Theme.surfaceTint(Theme.colors.surface, 1.0)
-                        
+                        color: active ? Theme.pillAccent : Theme.pillBackground
+
                         border.width: active ? 0 : 1
-                        border.color: active ? "transparent" : Theme.outlineTint(0.4)
+                        border.color: active ? "transparent" : Theme.pillBorder
                         
                         Behavior on color { ColorAnimation { duration: Durations.hoverSlow } }
                     }
@@ -227,7 +231,7 @@ Item {
                         anchors.fill: wsNumBg
                         z: 3
                         shadowEnabled: true
-                        shadowColor: Qt.rgba(0, 0, 0, 0.25)
+                        shadowColor: Qt.rgba(Theme.shadow.r, Theme.shadow.g, Theme.shadow.b, 0.25)
                         shadowBlur: 0.6
                         shadowVerticalOffset: 2
                     }
@@ -238,9 +242,9 @@ Item {
                         z: 4
                         anchors.centerIn: wsNumBg
                         text: wsSeg.wsId
-                        color: active 
-                            ? Theme.colors.surface 
-                            : Theme.foregroundMutedTint(0.9)
+                        color: active
+                            ? Theme.pillBackground
+                            : Theme.pillTextMuted
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.body
                         font.bold: active
@@ -250,10 +254,11 @@ Item {
                     // --- 4. Application Icons ---
                     Row {
                         id: appIconsRow
+                        visible: hasApps
                         z: 2
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.left: parent.left
-                        anchors.leftMargin: (wsNumBg.width / 2) + 1 
+                        anchors.leftMargin: (wsNumBg.width / 2) + 1
                         spacing: Spacing.xs
 
                         Repeater {
@@ -301,7 +306,7 @@ Item {
                                     visible: ag.ninst > 1
                                     width: Metrics.workspaceMiniDot; height: Metrics.workspaceMiniDot
                                     radius: width * 0.5
-                                    color: Theme.colors.primary
+                                    color: Theme.pillAccent
                                     anchors {
                                         bottom: parent.top
                                         bottomMargin: -1
