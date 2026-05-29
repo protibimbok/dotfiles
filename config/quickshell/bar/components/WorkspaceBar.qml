@@ -129,6 +129,14 @@ Item {
         return false
     }
 
+    function singleEmptyWorkspace() {
+        const ids = visibleWorkspaces()
+        if (ids.length !== 1) {
+            return false
+        }
+        return appsForWorkspace(ids[0]).length === 0
+    }
+
     Item {
         id: shell
         width: row.implicitWidth
@@ -140,9 +148,9 @@ Item {
             id: row
             z: 1
             anchors.fill: parent
-            leftPadding: Spacing.pillGap
-            rightPadding: Spacing.pillGap
-            spacing: Spacing.xl
+            leftPadding: root.singleEmptyWorkspace() ? Spacing.xs : Spacing.pillGapSm
+            rightPadding: root.singleEmptyWorkspace() ? Spacing.xs : Spacing.pillGapSm
+            spacing: Spacing.lg
 
             Repeater {
                 id: wsRepeater
@@ -168,10 +176,11 @@ Item {
                         return root.appsForWorkspace(wsId)
                     }
                     property bool hasApps: appGroups.length > 0
+                    property bool aloneEmpty: wsRepeater.count === 1 && !hasApps
 
                     width: hasApps
                         ? (wsNumBg.width / 2) + 1 + appIconsRow.width + Spacing.md
-                        : (wsNumBg.width / 2)
+                        : (aloneEmpty ? wsNumBg.width : (wsNumBg.width / 2))
                     height: Metrics.workspaceDotHeight
                     anchors.verticalCenter: parent.verticalCenter
 
@@ -216,7 +225,7 @@ Item {
                         height: Metrics.workspaceDotSize
                         radius: width / 2
                         anchors.verticalCenter: parent.verticalCenter
-                        x: -(width / 2) 
+                        x: aloneEmpty ? (wsSeg.width - width) / 2 : -(width / 2)
                         
                         color: active ? Theme.pillAccent : Theme.pillBackground
 

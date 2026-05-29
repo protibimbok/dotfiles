@@ -92,7 +92,7 @@ Singleton {
     readonly property int barElevation: 3
     readonly property int barElevationCenter: 4
     readonly property int mediaTitleMaxWidth: 140
-    readonly property int workspaceDotSize: 16
+    readonly property int workspaceDotSize: 14
     readonly property int workspaceMiniDot: 3
     readonly property int osdBottomMargin: 80
     readonly property real barUnifiedFillOpacity: 0.78
