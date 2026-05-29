@@ -3,7 +3,6 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import QtCore
 import qs.theme
 import qs.utils
 import qs.tokens
@@ -13,29 +12,9 @@ Singleton {
 
     property var list: []
     property int listVersion: 0
-    property string wallpaperDir: _homeDir() + "/Pictures/Wallpapers"
+    property string wallpaperDir: PathUtils.home() + "/Pictures/Wallpapers"
     property bool committed: false
     property string pendingPreviewPath: ""
-
-    function _normalizeLocalPath(p) {
-        if (!p || p.length === 0)
-            return p;
-        let s = String(p).replace(/\\/g, "/").trim();
-        if (!s.startsWith("file://"))
-            return s;
-        s = s.substring("file://".length);
-        if (s.startsWith("localhost/"))
-            s = "/" + s.substring("localhost/".length);
-        else if (!s.startsWith("/") && !/^[A-Za-z]:/.test(s))
-            s = "/" + s;
-        return s;
-    }
-
-    function _homeDir(): string {
-        let h = StandardPaths.writableLocation(StandardPaths.HomeLocation);
-        let s = (typeof h === "string") ? h : (h && h.toString ? h.toString() : String(h));
-        return _normalizeLocalPath(s);
-    }
 
     function transformSearch(search: string): string {
         const prefix = `${LauncherMetrics.actionPrefix}wallpaper `;

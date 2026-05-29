@@ -39,7 +39,7 @@ Singleton {
         let count = 0;
         for (let i = 0; i < vals.length; i++) {
             const c = vals[i];
-            if (c.workspace.id !== focusedWorkspace.id)
+            if (!c.workspace || c.workspace.id !== focusedWorkspace.id)
                 continue;
             if (!isBarToplevel(c))
                 continue;

@@ -2,7 +2,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import QtQuick
-import QtCore
+import qs.utils
 
 Singleton {
     id: root
@@ -43,27 +43,7 @@ Singleton {
     property string previewWallpaperPath: ""
     property bool previewColourLock: false
 
-    function _normalizeLocalPath(p: string): string {
-        if (!p || p.length === 0)
-            return p;
-        let s = String(p).replace(/\\/g, "/").trim();
-        if (!s.startsWith("file://"))
-            return s;
-        s = s.substring("file://".length);
-        if (s.startsWith("localhost/"))
-            s = "/" + s.substring("localhost/".length);
-        else if (!s.startsWith("/") && !/^[A-Za-z]:/.test(s))
-            s = "/" + s;
-        return s;
-    }
-
-    function _homeLocal(): string {
-        let h = StandardPaths.writableLocation(StandardPaths.HomeLocation);
-        let s = (typeof h === "string") ? h : (h && h.toString ? h.toString() : String(h));
-        return _normalizeLocalPath(s);
-    }
-
-    readonly property string _cacheDir: _homeLocal() + "/.cache/quickshell"
+    readonly property string _cacheDir: PathUtils.home() + "/.cache/quickshell"
     readonly property string _wallpaperCache: _cacheDir + "/wallpaper.txt"
     readonly property string _themeCache: _cacheDir + "/theme-colors.json"
 
@@ -123,7 +103,7 @@ Singleton {
 
     FileView {
         id: colorFile
-        path: root._homeLocal() + "/.cache/wal/colors.json"
+        path: PathUtils.home() + "/.cache/wal/colors.json"
         preload: true
         watchChanges: true
         onLoaded: root._cacheFileReady()
@@ -193,7 +173,7 @@ Singleton {
 
         const wall = data.wallpaper;
         if (wall && String(wall).length > 0)
-            root.extractedForWallpaper = _normalizeLocalPath(String(wall));
+            root.extractedForWallpaper = PathUtils.normalizeLocalPath(String(wall));
 
         root._updatePillTokens();
         root._saveThemeCache();
@@ -227,7 +207,7 @@ Singleton {
 
         const wall = data.wallpaper;
         if (wall && String(wall).length > 0)
-            root.extractedForWallpaper = _normalizeLocalPath(String(wall));
+            root.extractedForWallpaper = PathUtils.normalizeLocalPath(String(wall));
 
         root._updatePillTokens();
         return true;
@@ -239,10 +219,10 @@ Singleton {
             return false;
         try {
             const data = JSON.parse(t);
-            const cachedWall = data.wallpaper ? _normalizeLocalPath(String(data.wallpaper)) : "";
+            const cachedWall = data.wallpaper ? PathUtils.normalizeLocalPath(String(data.wallpaper)) : "";
             const currentWall = root.currentWallpaper.trim();
             if (currentWall.length > 0 && cachedWall.length > 0
-                    && cachedWall !== _normalizeLocalPath(currentWall))
+                    && cachedWall !== PathUtils.normalizeLocalPath(currentWall))
                 return false;
             return root._applyThemeColors(data);
         } catch (e) {
@@ -306,7 +286,7 @@ Singleton {
         if (wall.length === 0)
             return;
 
-        const wallNorm = root._normalizeLocalPath(wall);
+        const wallNorm = PathUtils.normalizeLocalPath(wall);
         root._skipColorExtract = root.extractedForWallpaper === wallNorm;
         root.restoreWallpaperOnly(wallNorm);
 
@@ -315,7 +295,7 @@ Singleton {
     }
 
     function restoreWallpaperOnly(path: string) {
-        const p = _normalizeLocalPath(path);
+        const p = PathUtils.normalizeLocalPath(path);
         if (!p || p.length === 0)
             return;
         wallpaperAwwwProc.wallPath = p;
@@ -323,7 +303,7 @@ Singleton {
     }
 
     function extractColorsFromWallpaper(path: string) {
-        const p = _normalizeLocalPath(path);
+        const p = PathUtils.normalizeLocalPath(path);
         if (!p || p.length === 0)
             return;
         colorExtracting = true;
@@ -556,7 +536,7 @@ Singleton {
     }
 
     function applyWallpaper(path: string) {
-        const p = _normalizeLocalPath(path);
+        const p = PathUtils.normalizeLocalPath(path);
         if (!p || p.length === 0)
             return;
         previewActive = false;
@@ -571,7 +551,7 @@ Singleton {
     }
 
     function previewWallpaper(path: string) {
-        const p = _normalizeLocalPath(path);
+        const p = PathUtils.normalizeLocalPath(path);
         if (!p || p.length === 0 || p === currentWallpaper)
             return;
         previewWallpaperPath = p;
@@ -595,7 +575,7 @@ Singleton {
     }
 
     function commitPreview(path: string) {
-        const p = _normalizeLocalPath(path || previewWallpaperPath);
+        const p = PathUtils.normalizeLocalPath(path || previewWallpaperPath);
         if (!p || p.length === 0)
             return;
         previewColourLock = true;

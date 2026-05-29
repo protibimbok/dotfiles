@@ -1,3 +1,4 @@
 module qs.utils
 singleton Icons 1.0 Icons.qml
+singleton PathUtils 1.0 PathUtils.qml
 singleton Searcher 1.0 Searcher.qml

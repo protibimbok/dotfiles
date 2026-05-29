@@ -2,9 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
-import Quickshell.Hyprland
 import qs.theme
 import qs.tokens
+import qs.services
 import qs.utils
 
 Item {
@@ -24,19 +24,16 @@ Item {
                 continue
             }
 
+            if (!Hyprland.isBarToplevel(c))
+                continue
+
             const appId = c.wayland && c.wayland.appId;
-            
             const rawClass = appId
-                || (c.lastIpcObject ? c.lastIpcObject["class"] : "") 
-                || c["class"] 
-                || c.initialClass 
+                || (c.lastIpcObject ? c.lastIpcObject["class"] : "")
+                || c["class"]
+                || c.initialClass
                 || "";
-
             const key = String(rawClass).trim();
-
-            if (["", "org.quickshell"].includes(key)) {
-                continue;
-            }
 
             if (!byKey[key]) {
                 byKey[key] = []

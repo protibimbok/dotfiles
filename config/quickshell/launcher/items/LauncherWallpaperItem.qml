@@ -4,6 +4,7 @@ import qs.components
 import qs.launcher.services
 import qs.theme
 import qs.tokens
+import qs.utils
 
 Item {
     id: root
@@ -14,28 +15,6 @@ Item {
 
     readonly property string path: modelData?.path ?? ""
     readonly property real thumbWidth: LauncherMetrics.wallpaperWidth * 0.8
-
-    function _normalizeLocalPath(p) {
-        if (!p || p.length === 0)
-            return p;
-        let s = String(p).replace(/\\/g, "/").trim();
-        if (!s.startsWith("file://"))
-            return s;
-        s = s.substring("file://".length);
-        if (s.startsWith("localhost/"))
-            s = "/" + s.substring("localhost/".length);
-        else if (!s.startsWith("/") && !/^[A-Za-z]:/.test(s))
-            s = "/" + s;
-        return s;
-    }
-
-    function _fileUrl(path) {
-        if (!path || path.length === 0)
-            return "";
-        const norm = _normalizeLocalPath(path).replace(/\\/g, "/");
-        const enc = norm.split("/").map(s => encodeURIComponent(s)).join("/");
-        return "file://" + enc;
-    }
 
     width: thumbWidth + Spacing.larger * 2
     height: ListView.view ? ListView.view.height : LauncherMetrics.wallpaperHeight
@@ -99,7 +78,7 @@ Item {
         Image {
             id: wallpaperImage
             anchors.fill: parent
-            source: root.path ? root._fileUrl(root.path) : ""
+            source: root.path ? PathUtils.fileUrl(root.path) : ""
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             smooth: !root.ListView.view?.moving

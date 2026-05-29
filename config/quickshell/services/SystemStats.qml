@@ -2,13 +2,9 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import QtQuick
-import qs.services.network
 
 Singleton {
     id: root
-
-    /// Wired link up (ethernet or bridge), from NetworkManager — see Ethernet.qml
-    property bool ethernetConnected: Ethernet.connected
 
     property var cpuCores: []
     property real cpuAverage: 0.0
