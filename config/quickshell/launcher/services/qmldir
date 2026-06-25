@@ -1,4 +1,0 @@
-module qs.launcher.services
-singleton LauncherApps 1.0 LauncherApps.qml
-singleton LauncherActions 1.0 LauncherActions.qml
-singleton LauncherWallpapers 1.0 LauncherWallpapers.qml

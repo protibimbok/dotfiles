@@ -3,6 +3,8 @@ import qs.theme
 import qs.tokens
 import qs.bar.components
 
+// Mirrors the Waybar `modules-right` status group, left-to-right:
+//   bluetooth, network, pulseaudio, cpu, battery
 Row {
     id: root
 
@@ -11,29 +13,15 @@ Row {
 
     spacing: Spacing.pillGapSm
 
+    // bluetooth · network · pulseaudio · cpu · battery
     BarPill {
-        id: connectivityPill
+        id: statusPill
         backgroundless: root.backgroundless
-        width: connectivityIcons.implicitWidth + horizontalPadding * 2
+        width: statusIcons.implicitWidth + horizontalPadding * 2
 
         StatusIcons {
-            id: connectivityIcons
+            id: statusIcons
             anchors.centerIn: parent
-            section: "connectivity"
-        }
-    }
-
-    BarPill {
-        id: systemPill
-        backgroundless: root.backgroundless
-        width: systemIcons.implicitWidth + horizontalPadding * 2
-
-        StatusIcons {
-            id: systemIcons
-            anchors.centerIn: parent
-            section: "system"
-            onHoverEntered: root.shellRoot.qsTriggerHovered = true
-            onHoverExited: root.shellRoot.qsTriggerHovered = false
         }
     }
 }

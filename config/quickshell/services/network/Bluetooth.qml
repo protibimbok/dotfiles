@@ -1,177 +1,156 @@
 pragma Singleton
 import Quickshell
+import Quickshell.Bluetooth as Bluez
 import Quickshell.Io
 import QtQuick
 
+// Bluetooth status/control backed by Quickshell's native BlueZ (org.bluez) D-Bus
+// bindings — no bluetoothctl/busctl shelling. Properties update reactively as
+// devices connect/disconnect; the only external process is launching a settings GUI.
 Singleton {
     id: root
 
-    property bool enabled: false
+    readonly property var adapter: Bluez.Bluetooth.defaultAdapter
+
+    property bool enabled: adapter ? adapter.enabled : false
     property bool connected: false
     property string device: ""
 
-    /// MAC addresses currently connected (from `bluetoothctl devices Connected`).
+    /// MAC addresses currently connected.
     property var connectedAddresses: []
 
-    /// MAC passed to `connectTo` while `bluetoothctl connect` is running.
+    /// Human-readable names for `connectedAddresses` (same order).
+    property var connectedNames: []
+
+    /// MAC passed to `connectTo` while a connection attempt is in flight.
     property string connectingAddress: ""
 
+    /// All known devices as `{ address, name }`, saved (paired) ones first.
     property var devices: []
 
-    /// MACs from `bluetoothctl devices Paired` (saved devices; listed before scanned-only peers).
+    /// MACs of paired (saved) devices.
     property var pairedAddresses: []
 
-    /// True while `bluetoothctl --timeout … scan on` is running.
-    property bool scanning: false
+    /// True while the adapter is discovering (see `startScan`).
+    property bool scanning: adapter ? adapter.discovering : false
 
+    // Per-device watcher: any membership or relevant property change recomputes
+    // the aggregate lists. `sig` rolls all watched fields into one binding so a
+    // change to any of them fires a single onSigChanged.
+    Instantiator {
+        model: Bluez.Bluetooth.devices
+        delegate: QtObject {
+            required property var modelData
+            readonly property string sig: [
+                modelData.connected, modelData.paired, modelData.trusted,
+                modelData.deviceName, modelData.name, modelData.state
+            ].join("|")
+            onSigChanged: recompute.restart()
+            Component.onCompleted: recompute.restart()
+            Component.onDestruction: recompute.restart()
+        }
+    }
+
+    // Debounce bursts of device-property changes into one recompute.
     Timer {
-        interval: 3000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: btShowProc.running = true
+        id: recompute
+        interval: 50
+        onTriggered: root._recompute()
     }
 
-    Process {
-        id: btShowProc
-        command: ["bash", "-c", "command -v bluetoothctl >/dev/null 2>&1 && bluetoothctl show || echo 'unavailable'"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.enabled = text.indexOf("Powered: yes") >= 0;
-                if (root.enabled) {
-                    btInfoProc.running = true;
-                } else {
-                    root.connected = false;
-                    root.device = "";
-                    root.connectedAddresses = [];
-                    root.connectingAddress = "";
-                    root.pairedAddresses = [];
-                }
+    Component.onCompleted: root._recompute()
+
+    function _deviceName(d): string {
+        if (d.deviceName && d.deviceName.length)
+            return d.deviceName;
+        return d.name || "";
+    }
+
+    function _recompute() {
+        let list = Bluez.Bluetooth.devices ? Bluez.Bluetooth.devices.values : [];
+        let addrs = [];
+        let names = [];
+        let paired = [];
+        let devs = [];
+        for (let d of list) {
+            if (!d)
+                continue;
+            let addr = d.address || "";
+            let nm = _deviceName(d);
+            devs.push({ address: addr, name: nm });
+            if (d.paired)
+                paired.push(addr);
+            if (d.connected) {
+                addrs.push(addr);
+                names.push(nm);
             }
+        }
+        connectedAddresses = addrs;
+        connectedNames = names;
+        connected = addrs.length > 0;
+        device = names.length ? names[0] : "";
+        pairedAddresses = paired;
+        devices = _sortSavedFirst(devs);
+
+        // Clear the in-flight hint once the device settles (connected or idle).
+        if (connectingAddress.length) {
+            let d = _findByAddress(connectingAddress);
+            if (!d || (d.state !== Bluez.BluetoothDeviceState.Connecting && !d.pairing))
+                connectingAddress = "";
         }
     }
 
-    /// Resolves active connection name from `bluetoothctl devices Connected` (info requires a MAC).
-    Process {
-        id: btInfoProc
-        command: ["bash", "-c", "command -v bluetoothctl >/dev/null 2>&1 && bluetoothctl devices Connected || true"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                let lines = text.trim().split("\n").filter(function (l) {
-                    return l.length;
-                });
-                let addrs = [];
-                let firstName = "";
-                for (let line of lines) {
-                    let m = line.match(/^Device\s+([0-9A-Fa-f:]{17})\s+(.+)$/);
-                    if (m) {
-                        addrs.push(m[1]);
-                        if (!firstName.length)
-                            firstName = m[2].trim();
-                    }
-                }
-                root.connectedAddresses = addrs;
-                root.connected = addrs.length > 0;
-                root.device = firstName;
-            }
+    function _findByAddress(address: string): var {
+        if (!address.length)
+            return null;
+        let list = Bluez.Bluetooth.devices ? Bluez.Bluetooth.devices.values : [];
+        for (let d of list) {
+            if (d && _addressMatch(d.address || "", address))
+                return d;
         }
+        return null;
     }
 
     function setEnabled(on: bool) {
-        btToggleProc.command = ["bash", "-c", "command -v bluetoothctl >/dev/null 2>&1 && bluetoothctl power " + (on ? "on" : "off")];
-        btToggleProc.running = true;
+        if (adapter)
+            adapter.enabled = on;
     }
 
-    Process {
-        id: btToggleProc
-        onExited: btShowProc.running = true
-    }
-
+    /// Native bindings stay current on their own; kept for API compatibility.
     function refresh() {
-        btListProc.running = true;
+        recompute.restart();
     }
 
-    /// Discovery scan (lists populate via `devices` after scan ends).
+    /// Discovery scan; lists populate via `devices` as peers are found.
     function startScan() {
-        if (scanning)
+        if (!adapter || adapter.discovering)
             return;
-        scanning = true;
-        btScanProc.running = true;
+        adapter.discovering = true;
+        scanTimer.restart();
     }
 
-    Process {
-        id: btScanProc
-        command: ["bash", "-c", "command -v bluetoothctl >/dev/null 2>&1 && bluetoothctl --timeout 15 scan on"]
-        onExited: {
-            root.scanning = false;
-            btListProc.running = true;
-        }
+    Timer {
+        id: scanTimer
+        interval: 15000
+        onTriggered: if (root.adapter) root.adapter.discovering = false
     }
 
-    Process {
-        id: btListProc
-        command: ["bash", "-c",
-            "command -v bluetoothctl >/dev/null 2>&1 || exit 0\n" +
-            "echo '__QS_PAIRED__'\n" +
-            "bluetoothctl devices Paired 2>/dev/null || true\n" +
-            "echo '__QS_ALL__'\n" +
-            "bluetoothctl devices 2>/dev/null || true"]
-        stdout: StdioCollector {
-            onStreamFinished: root._parseBtDevices(text)
-        }
+    /// Pair if needed, trust, then connect (same tap for new and known devices).
+    function connectTo(address: string) {
+        let d = _findByAddress(address);
+        if (!d)
+            return;
+        root.connectingAddress = address;
+        if (!d.paired)
+            d.pair();
+        d.trusted = true;
+        d.connect();
     }
 
-    /// Snapshot for merging `btEnrichProc` results (only addresses needing Alias/Name from `info`).
-    property var _enrichPending: null
-
-    Process {
-        id: btEnrichProc
-        stdout: StdioCollector {
-            onStreamFinished: {
-                let pending = root._enrichPending;
-                root._enrichPending = null;
-                if (!pending || !pending.length)
-                    return;
-                let map = {};
-                for (let line of text.trim().split("\n")) {
-                    if (!line.length)
-                        continue;
-                    let i = line.indexOf("|");
-                    if (i <= 0)
-                        continue;
-                    let addr = line.substring(0, i);
-                    let nm = line.substring(i + 1).trim();
-                    if (nm.length)
-                        map[addr] = nm;
-                }
-                let merged = [];
-                for (let d of pending) {
-                    let enriched = map[d.address];
-                    if (enriched && enriched.length && !root._looksLikeUnresolvedName(enriched, d.address))
-                        merged.push({ address: d.address, name: enriched });
-                    else
-                        merged.push(d);
-                }
-                devices = root._sortSavedFirst(merged);
-            }
-        }
-    }
-
-    /// BlueZ often echoes the MAC as the label until Alias is known; `bluetoothctl info` resolves it.
-    function _looksLikeUnresolvedName(name: string, address: string): bool {
-        let n = name.trim();
-        if (!n.length)
-            return true;
-        if (n === address)
-            return true;
-        if (/^[0-9A-Fa-f:]{17}$/.test(n))
-            return true;
-        // Windows-style MAC in BlueZ Alias when no real name (distinct from colon form in `address`)
-        if (/^([0-9A-Fa-f]{2}-){5}[0-9A-Fa-f]{2}$/.test(n))
-            return true;
-        let compact = n.replace(/[:-]/g, "").toUpperCase();
-        let addrCompact = address.replace(/:/g, "").toUpperCase();
-        return compact.length === 12 && compact === addrCompact;
+    function disconnectFrom(address: string) {
+        let d = _findByAddress(address);
+        if (d)
+            d.disconnect();
     }
 
     function _addressMatch(a: string, b: string): bool {
@@ -182,14 +161,14 @@ Singleton {
 
     /// Secondary label for device rows: "Connecting", "Connected", or empty.
     function connectionStatusFor(address: string): string {
-        if (!address.length)
+        let d = _findByAddress(address);
+        if (!d)
             return "";
-        if (_addressMatch(root.connectingAddress, address))
+        if (d.pairing || d.state === Bluez.BluetoothDeviceState.Connecting
+                || _addressMatch(root.connectingAddress, address))
             return "Connecting";
-        for (let ca of root.connectedAddresses) {
-            if (_addressMatch(ca, address))
-                return "Connected";
-        }
+        if (d.connected || d.state === Bluez.BluetoothDeviceState.Connected)
+            return "Connected";
         return "";
     }
 
@@ -216,81 +195,28 @@ Singleton {
         return copy;
     }
 
+    /// BlueZ may echo the MAC as the label until an Alias is known.
+    function _looksLikeUnresolvedName(name: string, address: string): bool {
+        let n = name.trim();
+        if (!n.length)
+            return true;
+        if (n === address)
+            return true;
+        if (/^[0-9A-Fa-f:]{17}$/.test(n))
+            return true;
+        // Windows-style MAC in BlueZ Alias when no real name (distinct from colon form in `address`)
+        if (/^([0-9A-Fa-f]{2}-){5}[0-9A-Fa-f]{2}$/.test(n))
+            return true;
+        let compact = n.replace(/[:-]/g, "").toUpperCase();
+        let addrCompact = address.replace(/:/g, "").toUpperCase();
+        return compact.length === 12 && compact === addrCompact;
+    }
+
     /// Primary label for UI: avoid showing MAC-as-name when `address` is already shown separately.
     function displayName(name: string, address: string): string {
         if (_looksLikeUnresolvedName(name, address))
             return "Unknown device";
         return name.trim();
-    }
-
-    function _parseBtDevices(data: string) {
-        let paired = [];
-        let allBlock = data;
-        let i = data.indexOf("__QS_PAIRED__");
-        let j = data.indexOf("__QS_ALL__");
-        let mkP = "__QS_PAIRED__";
-        let mkA = "__QS_ALL__";
-        if (i >= 0 && j > i) {
-            let pairedBlock = data.substring(i + mkP.length, j).trim();
-            for (let line of pairedBlock.split("\n")) {
-                let m = line.match(/^Device\s+([0-9A-Fa-f:]{17})\s+/);
-                if (m)
-                    paired.push(m[1]);
-            }
-            allBlock = data.substring(j + mkA.length);
-        }
-        root.pairedAddresses = paired;
-
-        let out = [];
-        for (let line of allBlock.trim().split("\n")) {
-            let m = line.match(/^Device\s+([0-9A-Fa-f:]{17})\s+(.+)$/);
-            if (m) out.push({ address: m[1], name: m[2].trim() });
-        }
-        out = root._sortSavedFirst(out);
-        let need = [];
-        for (let d of out) {
-            if (_looksLikeUnresolvedName(d.name, d.address))
-                need.push(d.address);
-        }
-        devices = out;
-        if (!need.length)
-            return;
-        root._enrichPending = out;
-        let quoted = need.map(function (a) {
-            return "'" + a.replace(/'/g, "'\\''") + "'";
-        }).join(" ");
-        btEnrichProc.command = ["bash", "-c",
-            "command -v bluetoothctl >/dev/null 2>&1 || exit 0\n" +
-            "for a in " + quoted + "; do\n" +
-            "  info=$(bluetoothctl info \"$a\" 2>/dev/null) || continue\n" +
-            "  alias=$(printf '%s\\n' \"$info\" | grep -iE '^[[:space:]]*Alias:' | head -1 | sed 's/.*Alias:[[:space:]]*//')\n" +
-            "  name=$(printf '%s\\n' \"$info\" | grep -iE '^[[:space:]]*Name:' | head -1 | sed 's/.*Name:[[:space:]]*//')\n" +
-            "  resolved=${alias:-$name}\n" +
-            "  [ -n \"$resolved\" ] && printf '%s|%s\\n' \"$a\" \"$resolved\"\n" +
-            "done"];
-        btEnrichProc.running = true;
-    }
-
-    /// Pair if needed, trust, then connect (same tap for new and known devices).
-    function connectTo(address: string) {
-        if (!address.length) return;
-        root.connectingAddress = address;
-        let a = address.replace(/'/g, "'\\''");
-        btConnectProc.command = ["bash", "-c",
-            "command -v bluetoothctl >/dev/null 2>&1 && " +
-            "(bluetoothctl pair '" + a + "' 2>/dev/null || true) && " +
-            "bluetoothctl trust '" + a + "' && " +
-            "bluetoothctl connect '" + a + "'"];
-        btConnectProc.running = true;
-    }
-
-    Process {
-        id: btConnectProc
-        onExited: {
-            root.connectingAddress = "";
-            btInfoProc.running = true;
-            btListProc.running = true;
-        }
     }
 
     function openSettings() {

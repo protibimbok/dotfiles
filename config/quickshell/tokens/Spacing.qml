@@ -19,7 +19,7 @@ Singleton {
     readonly property int panelMaxHeightInset: 64
 
     readonly property int barHorizontal: 5
-    readonly property int barTopInset: 5
+    readonly property int barTopInset: 0
     readonly property int barBottomInset: 0
     readonly property int pillPadding: 9
     readonly property int pillGap: 8

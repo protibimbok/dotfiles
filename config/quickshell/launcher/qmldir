@@ -1,6 +1,0 @@
-module qs.launcher
-LauncherWrapper 1.0 LauncherWrapper.qml
-LauncherContent 1.0 LauncherContent.qml
-LauncherContentList 1.0 LauncherContentList.qml
-LauncherAppList 1.0 LauncherAppList.qml
-LauncherWallpaperList 1.0 LauncherWallpaperList.qml

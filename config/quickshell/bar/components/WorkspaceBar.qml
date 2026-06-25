@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
 import qs.theme
 import qs.tokens
@@ -11,6 +10,21 @@ Item {
     id: root
     implicitWidth: shell.implicitWidth
     implicitHeight: parent ? parent.height : Metrics.tileHeight
+
+    // Re-resolve app icons a few times right after startup. DesktopEntries and
+    // the icon provider may not be ready on the first binding pass, which would
+    // otherwise leave some icons blank until a workspace switch re-evaluates them.
+    property int iconTick: 0
+    property int _iconResolvePasses: 0
+    Timer {
+        interval: 1000
+        repeat: true
+        running: root._iconResolvePasses < 3
+        onTriggered: {
+            root.iconTick++;
+            root._iconResolvePasses++;
+        }
+    }
 
     function appsForWorkspace(wsId) {
         let toplevels = Hyprland.toplevels.values
@@ -192,69 +206,59 @@ Item {
                     // --- 1. Main Workspace Background (apps only) ---
                     Rectangle {
                         id: wsBg
-                        visible: false // Hidden so MultiEffect can draw it
+                        visible: hasApps
+                        z: 1
                         anchors.fill: parent
                         radius: Metrics.listRadius
-                        color: active ? Theme.pillBackgroundHighlight : Theme.pillBackground
+                        color: active ? Theme.workspaceAppBgActive : Theme.workspaceAppBg
                         border.width: active && hasApps ? 1 : 0
-                        border.color: Theme.pillAccent
+                        border.color: Theme.workspaceAppBorder
 
                         Behavior on color { ColorAnimation { duration: Durations.hoverSlow } }
                         Behavior on border.width { NumberAnimation { duration: Durations.hoverSlow } }
                     }
 
-                    MultiEffect {
-                        visible: hasApps
-                        source: wsBg
-                        anchors.fill: wsBg
-                        z: 1
-                        shadowEnabled: true
-                        shadowColor: Qt.rgba(Theme.shadow.r, Theme.shadow.g, Theme.shadow.b, 0.2)
-                        shadowBlur: 0.6
-                        shadowVerticalOffset: 2
-                    }
-
                     // --- 2. Workspace Number Background ---
                     Rectangle {
                         id: wsNumBg
-                        visible: false // Hidden so MultiEffect can draw it
+                        z: 3
                         width: Metrics.workspaceDotSize
                         height: Metrics.workspaceDotSize
                         radius: width / 2
                         anchors.verticalCenter: parent.verticalCenter
                         x: aloneEmpty ? (wsSeg.width - width) / 2 : -(width / 2)
-                        
-                        color: active ? Theme.pillAccent : Theme.pillBackground
 
+                        color: active ? Theme.workspaceDotBgActive : Theme.workspaceDotBg
                         border.width: active ? 0 : 1
-                        border.color: active ? "transparent" : Theme.pillBorder
-                        
+                        border.color: active ? "transparent" : Theme.workspaceDotBorder
+
                         Behavior on color { ColorAnimation { duration: Durations.hoverSlow } }
                     }
 
-                    MultiEffect {
-                        source: wsNumBg
-                        anchors.fill: wsNumBg
-                        z: 3
-                        shadowEnabled: true
-                        shadowColor: Qt.rgba(Theme.shadow.r, Theme.shadow.g, Theme.shadow.b, 0.25)
-                        shadowBlur: 0.6
-                        shadowVerticalOffset: 2
-                    }
-
                     // --- 3. Workspace Number Text ---
-                    // Separated from the background so it sits clearly on top of the shadow effects
                     Text {
                         z: 4
                         anchors.centerIn: wsNumBg
                         text: wsSeg.wsId
-                        color: active
-                            ? Theme.pillBackground
-                            : Theme.pillTextMuted
+                        color: active ? Theme.workspaceTextActive : Theme.workspaceText
                         font.family: Typography.fontFamily
                         font.pixelSize: Typography.body
                         font.bold: active
                         Behavior on color { ColorAnimation { duration: Durations.fade } }
+                    }
+
+                    // Click target for the number itself — the circle protrudes
+                    // left of the segment, so the segment-wide MouseArea above
+                    // doesn't cover all of it.
+                    MouseArea {
+                        z: 5
+                        anchors.verticalCenter: parent.verticalCenter
+                        x: wsNumBg.x
+                        width: wsNumBg.width
+                        height: wsNumBg.height
+                        cursorShape: Qt.PointingHandCursor
+                        acceptedButtons: Qt.LeftButton
+                        onClicked: Hyprland.dispatch("workspace " + wsSeg.wsId)
                     }
 
                     // --- 4. Application Icons ---
@@ -300,19 +304,39 @@ Item {
                                 HoverHandler { id: gHover; cursorShape: Qt.PointingHandCursor }
 
                                 Image {
+                                    id: agIcon
                                     anchors.fill: parent
-                                    source: Icons.forWindowClass(ag.iconClass)
+                                    source: {
+                                        void root.iconTick;   // re-resolve after startup
+                                        return Icons.forWindowClass(ag.iconClass);
+                                    }
                                     sourceSize: Qt.size(Metrics.iconApp, Metrics.iconApp)
+                                    asynchronous: true
+                                    cache: true
                                     smooth: true
                                     opacity: ag.gActive ? 1.0 : (gHover.hovered ? 0.88 : 0.5)
                                     Behavior on opacity { NumberAnimation { duration: Durations.press } }
+                                }
+
+                                // Drawn placeholder tile, shown only when no icon resolves
+                                // (empty source or failed load). Never gates the icon itself,
+                                // so the Image always paints once the async load completes.
+                                Rectangle {
+                                    anchors.fill: parent
+                                    anchors.margins: 1
+                                    visible: agIcon.status === Image.Null || agIcon.status === Image.Error
+                                    radius: Metrics.rowRadiusSm
+                                    color: "transparent"
+                                    border.width: 1.5
+                                    border.color: Theme.workspaceText
+                                    opacity: ag.gActive ? 0.9 : (gHover.hovered ? 0.8 : 0.45)
                                 }
                                 Rectangle {
                                     z: 2
                                     visible: ag.ninst > 1
                                     width: Metrics.workspaceMiniDot; height: Metrics.workspaceMiniDot
                                     radius: width * 0.5
-                                    color: Theme.pillAccent
+                                    color: Theme.workspaceBadge
                                     anchors {
                                         bottom: parent.top
                                         bottomMargin: -1

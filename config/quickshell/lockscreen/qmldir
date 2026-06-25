@@ -1,3 +1,0 @@
-module qs.lockscreen
-LockContext 1.0 LockContext.qml
-LockSurface 1.0 LockSurface.qml

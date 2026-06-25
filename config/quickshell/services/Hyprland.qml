@@ -26,7 +26,7 @@ Singleton {
         return key.length > 0 && key !== "org.quickshell";
     }
 
-    readonly property bool singleWindowBarMode: {
+    readonly property bool plainBarMode: {
         void toplevels;
         void focusedWorkspace;
         if (!focusedWorkspace)
@@ -36,7 +36,6 @@ Singleton {
         if (!vals)
             return false;
 
-        let count = 0;
         for (let i = 0; i < vals.length; i++) {
             const c = vals[i];
             if (!c.workspace || c.workspace.id !== focusedWorkspace.id)
@@ -44,18 +43,36 @@ Singleton {
             if (!isBarToplevel(c))
                 continue;
 
-            count++;
-            if (count > 1)
-                return false;
+            return true
         }
-        return count === 1;
+        return false;
+    }
+
+    // Under a NATIVE LUA Hyprland config, the IPC `dispatch` argument is no longer
+    // a conf-style dispatcher string — it is evaluated as Lua (`hl.dispatch(<arg>)`).
+    // So "workspace 3" / "focuswindow address:0x.." are Lua syntax errors and do
+    // nothing. Translate the dispatchers this shell uses into hl.dsp.* expressions.
+    // (Args already starting with "hl." are passed through untouched; an unrecognized
+    // dispatcher is sent as-is.) Verified forms:
+    //   workspace N            -> hl.dsp.focus({workspace="N"})
+    //   focuswindow address:X  -> hl.dsp.focus({window="address:X"})
+    function _toLua(cmd: string): string {
+        if (cmd.startsWith("hl."))
+            return cmd;
+        let m = cmd.match(/^workspace\s+(.+)$/);
+        if (m)
+            return 'hl.dsp.focus({workspace="' + m[1].trim() + '"})';
+        m = cmd.match(/^focuswindow\s+address:(.+)$/);
+        if (m)
+            return 'hl.dsp.focus({window="address:' + m[1].trim() + '"})';
+        return cmd;
     }
 
     function dispatch(cmd: string) {
-        HL.Hyprland.dispatch(cmd);
+        HL.Hyprland.dispatch(root._toLua(cmd));
     }
 
     function switchWorkspace(id: int) {
-        HL.Hyprland.dispatch("workspace " + id);
+        root.dispatch("workspace " + id);
     }
 }

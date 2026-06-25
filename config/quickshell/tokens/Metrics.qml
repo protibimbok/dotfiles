@@ -3,9 +3,9 @@ import Quickshell
 import QtQuick
 
 Singleton {
-    // Bar — reserved layer height matches pill + vertical inset
-    readonly property int barHeight: barPillHeight + Spacing.barTopInset + Spacing.barBottomInset
+    // Bar — layer height matches pill + vertical inset
     readonly property int barPillHeight: 36
+    readonly property int barLayoutHeight: barPillHeight + Spacing.barTopInset + Spacing.barBottomInset
     readonly property int barPillRadius: 20
     readonly property int barHideOffset: -barHeight
     readonly property int barMediaHeight: 22
@@ -95,7 +95,12 @@ Singleton {
     readonly property int workspaceDotSize: 14
     readonly property int workspaceMiniDot: 3
     readonly property int osdBottomMargin: 80
-    readonly property real barUnifiedFillOpacity: 0.78
+    readonly property real barUnifiedFillOpacity: 0.96
+    readonly property real barStripFillOpacity: 0.9
+    // Bar surface SDF shader (strip + pills smooth-unioned)
+    readonly property real barSurfaceSmoothing: 9
+    readonly property real barSurfaceEdgeSoftness: 1.5
+    readonly property int barHeight: barLayoutHeight
     readonly property real panelFillOpacityDefault: 0.92
     readonly property real panelFillOpacityNotif: 0.88
     readonly property real panelBorderOpacity: 0.25

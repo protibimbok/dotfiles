@@ -1,86 +1,32 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Io
+import Quickshell
 import qs.theme
 import qs.tokens
 import qs.services
 import qs.services.network
 
+// Right-side status glyphs mirroring the Waybar modules:
+//   bluetooth · input language · network · pulseaudio · cpu · battery
+// Click actions and tooltips reuse the same helpers/format Waybar uses.
 Item {
     id: root
-
-    property string section: "all"
 
     implicitWidth: row.implicitWidth
     implicitHeight: Metrics.barWidgetHeight
 
-    signal hoverEntered()
-    signal hoverExited()
-
-    function _showConnectivity(): bool {
-        return section === "all" || section === "connectivity"
-    }
-
-    function _showSystem(): bool {
-        return section === "all" || section === "system"
+    function _run(cmd: string) {
+        Quickshell.execDetached(["bash", "-c", cmd]);
     }
 
     RowLayout {
         id: row
         anchors.centerIn: parent
-        spacing: Spacing.xs
+        spacing: Spacing.sm
 
+        // bluetooth — on-click: omarchy-launch-bluetooth
         Item {
-            visible: _showConnectivity() && Wifi.enabled
-                && (Wifi.connected
-                    || Wifi.busyMessage.length > 0
-                    || Wifi.nmConnecting)
-            Layout.preferredWidth: Metrics.iconSys
-            Layout.preferredHeight: Metrics.iconSys
-            Layout.alignment: Qt.AlignVCenter
-
-            Text {
-                anchors.centerIn: parent
-                text: Wifi.strength > 0.75 ? "\u{f0928}" : (Wifi.strength > 0.4 ? "\u{f0925}" : "\u{f0922}")
-                color: Wifi.connected ? Theme.pillText : Theme.pillAccent
-                font.family: Typography.fontFamily
-                font.pixelSize: Typography.iconSm
-            }
-        }
-
-        Item {
-            visible: _showConnectivity() && Ethernet.connected
-            Layout.preferredWidth: Metrics.iconSys
-            Layout.preferredHeight: Metrics.iconSys
-            Layout.alignment: Qt.AlignVCenter
-
-            Text {
-                anchors.centerIn: parent
-                text: "\u{ef44}"
-                color: Theme.pillGreen
-                font.family: Typography.fontFamily
-                font.pixelSize: Typography.iconSm
-            }
-        }
-
-        Item {
-            visible: _showConnectivity() && Bluetooth.enabled
-            Layout.preferredWidth: Metrics.iconSys
-            Layout.preferredHeight: Metrics.iconSys
-            Layout.alignment: Qt.AlignVCenter
-
-            Text {
-                anchors.centerIn: parent
-                text: "\uf294"
-                color: Bluetooth.connected ? Theme.pillCyan : Theme.pillTextMuted
-                font.family: Typography.fontFamily
-                font.pixelSize: Typography.iconSm
-                Behavior on color { ColorAnimation { duration: Durations.fade } }
-            }
-        }
-
-        Item {
-            visible: _showSystem()
+            id: btItem
             Layout.preferredWidth: Metrics.iconSys
             Layout.preferredHeight: Metrics.iconSys
             Layout.alignment: Qt.AlignVCenter
@@ -88,28 +34,186 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: {
-                    if (Audio.muted) return "\u{eee8}";
-                    if (Audio.volume > 70) return "\uf028";
-                    if (Audio.volume > 20) return "\uf027";
-                    return "\uf026";
+                    if (!Bluetooth.enabled) return "\u{f00b2}";   // 󰂲 off
+                    if (Bluetooth.connected) return "\u{f00b1}";   // 󰂱 connected
+                    return "\u{f00af}";                            // 󰂯 on
+                }
+                color: Bluetooth.connected ? Theme.pillCyan : Theme.pillTextMuted
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.iconSm - 2
+                Behavior on color { ColorAnimation { duration: Durations.fade } }
+            }
+
+            HoverHandler { id: btHover; cursorShape: Qt.PointingHandCursor }
+            TapHandler { onTapped: root._run("omarchy-launch-bluetooth") }
+
+            BarTooltip {
+                target: btItem
+                shown: btHover.hovered
+                text: root._bluetoothTooltip()
+            }
+        }
+
+        // input language (fcitx5) — on-click: toggle IME
+        Item {
+            id: langItem
+            visible: SystemStats.inputMethodRunning
+            Layout.preferredWidth: langLabel.implicitWidth
+            Layout.preferredHeight: Metrics.iconSys
+            Layout.alignment: Qt.AlignVCenter
+
+            Text {
+                id: langLabel
+                anchors.centerIn: parent
+                text: SystemStats.inputLocale
+                color: SystemStats.inputMethodActive ? Theme.pillCyan : Theme.pillTextMuted
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.label
+                font.weight: SystemStats.inputMethodActive ? Font.DemiBold : Font.Normal
+                Behavior on color { ColorAnimation { duration: Durations.fade } }
+            }
+
+            HoverHandler { id: langHover; cursorShape: Qt.PointingHandCursor }
+            TapHandler { onTapped: SystemStats.toggleInputMethod() }
+
+            BarTooltip {
+                target: langItem
+                shown: langHover.hovered
+                text: SystemStats.inputMethodLabel
+                    + (SystemStats.inputMethodActive ? "" : "\n(inactive)")
+            }
+        }
+
+        // network — on-click: omarchy-launch-wifi
+        Item {
+            id: netItem
+            Layout.preferredWidth: Metrics.iconSys
+            Layout.preferredHeight: Metrics.iconSys
+            Layout.alignment: Qt.AlignVCenter
+
+            Text {
+                anchors.centerIn: parent
+                text: {
+                    if (Ethernet.connected) return "\u{f0002}";            // 󰀂 ethernet
+                    if (!Wifi.enabled) return "\u{f092e}";                 // 󰤮 disconnected
+                    if (!Wifi.connected) return "\u{f092f}";               // 󰤯 no signal
+                    if (Wifi.strength > 0.75) return "\u{f0928}";          // 󰤨
+                    if (Wifi.strength > 0.5) return "\u{f0925}";           // 󰤥
+                    if (Wifi.strength > 0.25) return "\u{f0922}";          // 󰤢
+                    if (Wifi.strength > 0) return "\u{f091f}";             // 󰤟
+                    return "\u{f092f}";                                    // 󰤯
+                }
+                color: (Ethernet.connected || Wifi.connected) ? Theme.pillText : Theme.pillTextMuted
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.iconSm - 3
+                Behavior on color { ColorAnimation { duration: Durations.fade } }
+            }
+
+            HoverHandler { id: netHover; cursorShape: Qt.PointingHandCursor }
+            TapHandler { onTapped: root._run("omarchy-launch-wifi") }
+
+            BarTooltip {
+                target: netItem
+                shown: netHover.hovered
+                text: root._networkTooltip()
+            }
+        }
+
+        // pulseaudio — on-click: omarchy-launch-audio, right: mute, scroll: volume
+        Item {
+            id: audioItem
+            Layout.preferredWidth: Metrics.iconSys
+            Layout.preferredHeight: Metrics.iconSys
+            Layout.alignment: Qt.AlignVCenter
+
+            Text {
+                anchors.centerIn: parent
+                text: {
+                    if (Audio.muted) return "\u{f0581}";        // 󰖁 volume-off
+                    if (Audio.volume > 70) return "\u{f057e}";   // 󰕾 volume-high
+                    if (Audio.volume > 20) return "\u{f0580}";   // 󰖀 volume-medium
+                    return "\u{f057f}";                          // 󰕿 volume-low
                 }
                 color: Audio.muted ? Theme.pillTextMuted : Theme.pillText
                 font.family: Typography.fontFamily
                 font.pixelSize: Typography.iconSm
                 Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
             }
+
+            HoverHandler { id: audioHover; cursorShape: Qt.PointingHandCursor }
+            TapHandler {
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onTapped: (point, button) => {
+                    if (button === Qt.RightButton)
+                        Audio.muted = !Audio.muted;
+                    else
+                        root._run("omarchy-launch-audio");
+                }
+            }
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: (event) => {
+                    Audio.setVolume(Audio.volume + (event.angleDelta.y > 0 ? 5 : -5));
+                }
+            }
+
+            BarTooltip {
+                target: audioItem
+                shown: audioHover.hovered
+                text: Audio.muted ? "Muted" : ("Playing at " + Audio.volume + "%")
+            }
         }
 
+        // cpu — on-click: btop, right: terminal
         Item {
-            visible: _showSystem() && SystemStats.batteryPresent
+            id: cpuItem
             Layout.preferredWidth: Metrics.iconSys
             Layout.preferredHeight: Metrics.iconSys
             Layout.alignment: Qt.AlignVCenter
 
             Text {
                 anchors.centerIn: parent
+                text: "\u{f035b}"   // 󰍛
+                color: SystemStats.cpuAverage > 0.8 ? Theme.pillRed : Theme.pillText
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.iconSm
+                Behavior on color { ColorAnimation { duration: Durations.fade } }
+            }
+
+            HoverHandler { id: cpuHover; cursorShape: Qt.PointingHandCursor }
+            TapHandler {
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onTapped: (point, button) => {
+                    if (button === Qt.RightButton)
+                        root._run("alacritty");
+                    else
+                        root._run("omarchy-launch-or-focus-tui btop");
+                }
+            }
+
+            BarTooltip {
+                target: cpuItem
+                shown: cpuHover.hovered
+                text: Math.round(SystemStats.cpuAverage * 100) + "%"
+            }
+        }
+
+        // battery — on-click: omarchy-menu power
+        Item {
+            id: battItem
+            visible: SystemStats.batteryPresent
+            Layout.preferredWidth: Metrics.iconSys
+            Layout.preferredHeight: Metrics.iconSys
+            Layout.alignment: Qt.AlignVCenter
+
+            readonly property bool battPlugged: SystemStats.batteryStatus === "Charging"
+                || SystemStats.batteryStatus === "Full"
+                || SystemStats.batteryStatus === "Not charging"
+
+            Text {
+                id: battGlyph
+                anchors.centerIn: parent
                 text: {
-                    if (SystemStats.batteryCharging) return "\u{f0084}";
                     if (SystemStats.batteryLevel > 80) return "\u{f0079}";
                     if (SystemStats.batteryLevel > 60) return "\u{f007f}";
                     if (SystemStats.batteryLevel > 40) return "\u{f007e}";
@@ -125,56 +229,60 @@ Item {
                 font.pixelSize: Typography.iconSm
                 Behavior on color { ColorAnimation { duration: Durations.fade } }
             }
-        }
 
-        Item {
-            visible: _showSystem()
-            Layout.preferredWidth: langText.implicitWidth + 4
-            Layout.preferredHeight: Metrics.langIndicatorHeight
-            Layout.alignment: Qt.AlignVCenter
-
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: -4
-                radius: Metrics.rowRadiusSm
-                color: Theme.colors.surface
-                opacity: langHover.hovered ? 0.5 : 0
-                Behavior on opacity { NumberAnimation { duration: Durations.hoverMedium } }
-            }
-
+            // charging / plugged indicator (fa-bolt, reliably present)
             Text {
-                id: langText
+                visible: battItem.battPlugged
                 anchors.centerIn: parent
-                text: SystemStats.inputLocale
-                color: Theme.pillTextMuted
+                text: "\uf0e7"   // fa-bolt
+                color: SystemStats.batteryCharging ? Theme.pillGreen : Theme.pillTextMuted
+                style: Text.Outline
+                styleColor: Theme.pillBackground
                 font.family: Typography.fontFamily
-                font.pixelSize: Typography.body
+                font.pixelSize: Typography.caption
             }
 
-            HoverHandler { id: langHover; cursorShape: Qt.PointingHandCursor }
-            TapHandler {
-                onTapped: langToggle.running = true
-            }
+            HoverHandler { id: battHover; cursorShape: Qt.PointingHandCursor }
+            TapHandler { onTapped: root._run("omarchy-menu power") }
 
-            Process {
-                id: langToggle
-                command: ["bash", "-c", "command -v fcitx5-remote >/dev/null 2>&1 && fcitx5-remote -t"]
-                onExited: SystemStats.refreshInputLocale()
+            BarTooltip {
+                target: battItem
+                shown: battHover.hovered
+                text: root._batteryTooltip()
             }
         }
     }
 
-    HoverHandler {
-        id: containerHover
-        enabled: section === "all" || section === "system"
-        cursorShape: Qt.PointingHandCursor
-        onHoveredChanged: {
-            if (!enabled)
-                return
-            if (hovered)
-                root.hoverEntered()
-            else
-                root.hoverExited()
+    function _bluetoothTooltip(): string {
+        if (!Bluetooth.enabled)
+            return "Bluetooth off";
+        if (!Bluetooth.connected)
+            return "No devices connected";
+        let names = Bluetooth.connectedNames;
+        if (names.length === 1)
+            return Bluetooth.displayName(names[0], Bluetooth.connectedAddresses[0]);
+        let head = "Devices connected: " + Bluetooth.connectedAddresses.length;
+        let labeled = [];
+        for (let i = 0; i < names.length; ++i)
+            labeled.push(Bluetooth.displayName(names[i], Bluetooth.connectedAddresses[i]));
+        return head + "\n" + labeled.join("\n");
+    }
+
+    function _networkTooltip(): string {
+        if (Ethernet.connected)
+            return "⇣ " + SystemStats.netDown + "  ⇡ " + SystemStats.netUp;
+        if (Wifi.connected) {
+            let head = (Wifi.ssid.length ? Wifi.ssid : "Wi-Fi")
+                + (Wifi.frequency > 0 ? " (" + Wifi.frequency + " GHz)" : "");
+            return head + "\n⇣ " + SystemStats.netDown + "  ⇡ " + SystemStats.netUp;
         }
+        return "Disconnected";
+    }
+
+    function _batteryTooltip(): string {
+        let w = Math.round(SystemStats.batteryPower);
+        let arrow = SystemStats.batteryCharging ? "↑" : "↓";
+        let power = w > 0 ? (w + "W" + arrow + " ") : "";
+        return power + SystemStats.batteryLevel + "%";
     }
 }

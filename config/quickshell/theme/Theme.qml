@@ -35,6 +35,17 @@ Singleton {
     readonly property color outlineVariant: colors.outline
     readonly property color shadow: "#000000"
 
+    // Workspace indicators on the black bar surface
+    readonly property color workspaceAppBg: Qt.rgba(1, 1, 1, 0.07)
+    readonly property color workspaceAppBgActive: Qt.rgba(1, 1, 1, 0.13)
+    readonly property color workspaceAppBorder: Qt.rgba(1, 1, 1, 0.22)
+    readonly property color workspaceDotBg: Qt.rgba(1, 1, 1, 0.1)
+    readonly property color workspaceDotBgActive: Qt.rgba(1, 1, 1, 0.95)
+    readonly property color workspaceDotBorder: Qt.rgba(1, 1, 1, 0.32)
+    readonly property color workspaceText: Qt.rgba(1, 1, 1, 0.52)
+    readonly property color workspaceTextActive: "#1a1a1a"
+    readonly property color workspaceBadge: Qt.rgba(1, 1, 1, 0.88)
+
     property string currentWallpaper: ""
     property string extractedForWallpaper: ""
     property bool colorExtracting: false
@@ -53,6 +64,7 @@ Singleton {
         id: savedWallFile
         path: root._wallpaperCache
         preload: true
+        printErrors: false
         onLoaded: {
             let p = text().trim();
             if (p.length > 0)
@@ -70,6 +82,7 @@ Singleton {
         id: themeCacheFile
         path: root._themeCache
         preload: true
+        printErrors: false
         onLoaded: root._cacheFileReady()
     }
 
@@ -105,6 +118,7 @@ Singleton {
         id: colorFile
         path: PathUtils.home() + "/.cache/wal/colors.json"
         preload: true
+        printErrors: false
         watchChanges: true
         onLoaded: root._cacheFileReady()
         onFileChanged: root._parseColors()

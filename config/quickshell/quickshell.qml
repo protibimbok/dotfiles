@@ -1,0 +1,1 @@
+/mnt/c/Others/dotfiles/config/quickshell/quickshell.qml

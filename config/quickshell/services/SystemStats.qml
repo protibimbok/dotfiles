@@ -21,8 +21,14 @@ Singleton {
     property bool batteryPresent: false
     property int batteryLevel: 0
     property bool batteryCharging: false
+    property string batteryStatus: ""   // Charging | Discharging | Full | Not charging
+    property real batteryPower: 0.0   // Watts
 
     property string inputLocale: "EN"
+    property string inputMethod: "keyboard-us"
+    property string inputMethodLabel: "Keyboard"
+    property bool inputMethodActive: false
+    property bool inputMethodRunning: false
 
     property string perfMode: "balanced"
 
@@ -90,7 +96,14 @@ Singleton {
 
     Process {
         id: battProc
-        command: ["bash", "-c", "for d in /sys/class/power_supply/BAT*; do [ -d \"$d\" ] && echo \"$(cat $d/capacity) $(cat $d/status)\" && exit 0; done; echo 'none'"]
+        command: ["bash", "-c",
+            "for d in /sys/class/power_supply/BAT*; do\n" +
+            "  [ -d \"$d\" ] || continue\n" +
+            "  if [ -r \"$d/power_now\" ]; then p=$(cat \"$d/power_now\" 2>/dev/null)\n" +
+            "  elif [ -r \"$d/current_now\" ] && [ -r \"$d/voltage_now\" ]; then p=$(( $(cat \"$d/current_now\") * $(cat \"$d/voltage_now\") / 1000000 ))\n" +
+            "  else p=0; fi\n" +
+            "  echo \"$(cat $d/capacity)|$(cat $d/status)|$p\"; exit 0\n" +
+            "done; echo 'none'"]
         stdout: StdioCollector {
             onStreamFinished: root._parseBatt(text)
         }
@@ -98,7 +111,12 @@ Singleton {
 
     Process {
         id: langProc
-        command: ["bash", "-c", "command -v fcitx5-remote >/dev/null 2>&1 && fcitx5-remote -n || echo 'keyboard-us'"]
+        command: ["bash", "-c",
+            "command -v fcitx5-remote >/dev/null 2>&1 || { echo 'keyboard-us|0|Keyboard'; exit 0; }\n" +
+            "im=$(fcitx5-remote -n 2>/dev/null)\n" +
+            "st=$(fcitx5-remote 2>/dev/null)\n" +
+            "label=$(dbus-send --session --print-reply --dest=org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1.CurrentInputMethodInfo 2>/dev/null | awk -F'\"' '/string/ {print $2}' | sed -n '2p')\n" +
+            "printf '%s|%s|%s\\n' \"${im:-keyboard-us}\" \"${st:-0}\" \"${label:-${im:-keyboard-us}}\""]
         stdout: StdioCollector {
             onStreamFinished: root._parseLang(text)
         }
@@ -223,13 +241,16 @@ Singleton {
             batteryPresent = false;
             return;
         }
-        let parts = d.split(" ");
+        let parts = d.split("|");
         batteryPresent = true;
         let newLevel = parseInt(parts[0]) || 0;
-        let newCharging = (parts[1] || "").toLowerCase().indexOf("charging") >= 0 && parts[1] !== "Discharging";
+        let status = (parts[1] || "").trim();
+        let newCharging = status.toLowerCase() === "charging";
 
         batteryLevel = newLevel;
+        batteryStatus = status;
         batteryCharging = newCharging;
+        batteryPower = (parseInt(parts[2]) || 0) / 1000000;   // µW -> W
 
         if (newCharging) {
             _warnedLevels = [];
@@ -248,6 +269,10 @@ Singleton {
         langProc.running = true;
     }
 
+    function toggleInputMethod() {
+        toggleImProc.running = true;
+    }
+
     function _localeFromKeyboardLayout(code: string): string {
         const map = {
             us: "EN", gb: "EN", ca: "EN", au: "EN",
@@ -262,7 +287,18 @@ Singleton {
     }
 
     function _parseLang(data: string) {
-        let d = data.trim().toLowerCase();
+        let raw = data.trim();
+        let parts = raw.split("|");
+        let method = (parts[0] || "keyboard-us").trim();
+        let state = parseInt(parts[1], 10);
+        let label = (parts[2] || method).trim();
+
+        inputMethod = method;
+        inputMethodLabel = label.length ? label : method;
+        inputMethodRunning = !isNaN(state) && state > 0;
+        inputMethodActive = state === 2;
+
+        let d = method.toLowerCase();
         if (!d) {
             inputLocale = "EN";
             return;
@@ -320,4 +356,10 @@ Singleton {
     }
 
     Process { id: setBrightProc }
+
+    Process {
+        id: toggleImProc
+        command: ["bash", "-c", "command -v fcitx5-remote >/dev/null 2>&1 && fcitx5-remote -T"]
+        onExited: langProc.running = true
+    }
 }

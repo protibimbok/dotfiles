@@ -14,7 +14,5 @@ BarPill {
     ClockNotifWidget {
         id: clockWidget
         anchors.centerIn: parent
-        onHoverEntered: root.shellRoot.notifTriggerHovered = true
-        onHoverExited: root.shellRoot.notifTriggerHovered = false
     }
 }

@@ -1,7 +1,0 @@
-hl.on("hyprland.start", function()
-    hl.exec_cmd("awww-daemon")
-    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
-    hl.exec_cmd("fcitx5 -d")
-    -- hl.exec_cmd("quickshell")
-    -- hl.exec_cmd("bash -c 'command -v hypridle >/dev/null && hypridle'")
-end)

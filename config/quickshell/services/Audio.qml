@@ -1,272 +1,146 @@
 pragma Singleton
 import Quickshell
-import Quickshell.Io
+import Quickshell.Services.Pipewire
 import QtQuick
 
+// Audio status/control backed by Quickshell's native PipeWire bindings — no
+// wpctl/pactl polling or status-tree parsing. Volume/mute and the device lists
+// update reactively from PipeWire itself (the audio server already running).
 Singleton {
     id: root
 
-    property int volume: 50
+    property int volume: (activeSink && activeSink.audio) ? Math.round(activeSink.audio.volume * 100) : 0
     property bool muted: false
+
     property var sinks: []
     property var sources: []
+    property string defaultSinkName: ""
+    property string defaultSourceName: ""
+
+    readonly property var activeSink: Pipewire.defaultAudioSink
+    readonly property var activeSource: Pipewire.defaultAudioSource
+
+    // PipeWire binds object properties lazily; tracking keeps the active devices'
+    // `audio` (volume/mute) live so the bindings above stay current.
+    PwObjectTracker {
+        objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource]
+    }
+
+    // --- mute: two-way sync (consumers do `Audio.muted = !Audio.muted`) ---
+    onMutedChanged: {
+        let a = activeSink && activeSink.audio ? activeSink.audio : null;
+        if (a && a.muted !== muted)
+            a.muted = muted;
+    }
+    onActiveSinkChanged: _syncMutedFromNative()
+    function _syncMutedFromNative() {
+        let a = activeSink && activeSink.audio ? activeSink.audio : null;
+        if (a && a.muted !== muted)
+            muted = a.muted;
+    }
+    Connections {
+        target: root.activeSink && root.activeSink.audio ? root.activeSink.audio : null
+        function onMutedChanged() { root._syncMutedFromNative(); }
+    }
+
+    // --- device lists: recompute on node membership / default-device changes ---
+    Instantiator {
+        model: Pipewire.nodes
+        delegate: QtObject {
+            required property var modelData
+            readonly property string sig: [
+                modelData.id, modelData.name, modelData.description,
+                modelData.nickname, modelData.type, modelData.isStream
+            ].join("|")
+            onSigChanged: recompute.restart()
+            Component.onCompleted: recompute.restart()
+            Component.onDestruction: recompute.restart()
+        }
+    }
+    Connections {
+        target: Pipewire
+        function onDefaultAudioSinkChanged() { recompute.restart(); }
+        function onDefaultAudioSourceChanged() { recompute.restart(); }
+    }
 
     Timer {
-        interval: 1500
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            volProc.running = true;
-            statusProc.running = true;
-        }
+        id: recompute
+        interval: 50
+        onTriggered: root._recompute()
     }
+    Component.onCompleted: { root._syncMutedFromNative(); root._recompute(); }
 
-    Process {
-        id: volProc
-        command: ["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                let m = text.match(/Volume:\s+([\d.]+)/);
-                if (m) root.volume = Math.round(parseFloat(m[1]) * 100);
-                root.muted = text.indexOf("[MUTED]") >= 0;
+    function _recompute() {
+        let nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        let defSink = Pipewire.defaultAudioSink;
+        let defSource = Pipewire.defaultAudioSource;
+        let sinksOut = [];
+        let sourcesOut = [];
+        for (let n of nodes) {
+            if (!n || n.isStream)
+                continue;
+            if (!(n.type & PwNodeType.Audio))
+                continue;
+            let desc = n.description || n.nickname || n.name || ("Device " + n.id);
+            let item = {
+                id: n.id,
+                name: n.name || String(n.id),
+                description: String(desc).replace(/\s+/g, " ").trim(),
+                isDefault: false
+            };
+            if (n.type & PwNodeType.Sink) {
+                item.isDefault = !!defSink && n.id === defSink.id;
+                sinksOut.push(item);
+            } else if (n.type & PwNodeType.Source) {
+                if ((n.name || "").match(/\.monitor$/))
+                    continue;
+                item.isDefault = !!defSource && n.id === defSource.id;
+                sourcesOut.push(item);
             }
         }
+        sinks = sinksOut;
+        sources = sourcesOut;
+        defaultSinkName = defSink ? (defSink.name || "") : "";
+        defaultSourceName = defSource ? (defSource.name || "") : "";
     }
 
-    Process {
-        id: statusProc
-        command: ["wpctl", "status"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                let parsed = root._parseWpctlStatus(text);
-                root.sinks = parsed.sinks;
-                root.sources = parsed.sources;
-                if (parsed.sinks.length === 0) sinksFallbackProc.running = true;
-                if (parsed.sources.length === 0) sourcesFallbackProc.running = true;
-            }
-        }
-    }
-
-    function _parseWpctlNodeLine(line: string): var {
-        let s = String(line).replace(/^[│├└\s]+/, "").replace(/^\s+/, "");
-        if (!s.length) return null;
-        let m = s.match(/^\*\s+(\d+)\.\s+(.+)$/);
-        if (m) {
-            let tail = String(m[2]).replace(/\s+\[.*$/, "").replace(/ +$/g, "").replace(/^\s+|\s+$/g, "");
-            return { id: parseInt(m[1], 10), description: tail, isDefault: true };
-        }
-        m = s.match(/^(\d+)\.\s+(.+)$/);
-        if (m) {
-            let tail = String(m[2]).replace(/\s+\[.*$/, "").replace(/ +$/g, "").replace(/^\s+|\s+$/g, "");
-            return { id: parseInt(m[1], 10), description: tail, isDefault: false };
+    function _findNode(nameOrId: string, wantSink: bool): var {
+        let s = String(nameOrId).trim();
+        let byId = /^\d+$/.test(s) ? parseInt(s, 10) : -1;
+        let nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        for (let n of nodes) {
+            if (!n || n.isStream || !(n.type & PwNodeType.Audio))
+                continue;
+            let isSink = !!(n.type & PwNodeType.Sink);
+            if (isSink !== wantSink)
+                continue;
+            if (byId >= 0 ? n.id === byId : n.name === s)
+                return n;
         }
         return null;
     }
 
-    function _parseWpctlStatus(data: string): var {
-        let sinksOut = [];
-        let sourcesOut = [];
-        let section = null;
-        let inAudio = false;
-        let text = String(data);
-        for (let raw of text.split("\n")) {
-            let line = String(raw).replace(/\s+$/, "");
-            let t = line.trim();
-            if (t === "Audio") {
-                inAudio = true;
-                section = null;
-                continue;
-            }
-            if (t.indexOf("Video") === 0 || t.indexOf("Settings") === 0) {
-                inAudio = false;
-                section = null;
-                continue;
-            }
-            if (!inAudio) continue;
-
-            if (t.indexOf("├─ Sinks:") >= 0) {
-                section = "sinks";
-                continue;
-            }
-            if (t.indexOf("├─ Sources:") >= 0) {
-                section = "sources";
-                continue;
-            }
-            if (t.indexOf("├─") === 0 && section) {
-                if (section === "sinks" && t.indexOf("Sinks:") < 0) section = null;
-                else if (section === "sources" && t.indexOf("Sources:") < 0) section = null;
-                continue;
-            }
-            if (!section) continue;
-            let node = root._parseWpctlNodeLine(line);
-            if (!node) continue;
-            let item = {
-                id: node.id,
-                name: String(node.id),
-                description: node.description.length ? node.description : ("Device " + node.id),
-                isDefault: node.isDefault
-            };
-            if (section === "sinks") sinksOut.push(item);
-            else sourcesOut.push(item);
-        }
-        return { sinks: sinksOut, sources: sourcesOut };
-    }
-
-    Process {
-        id: sinksFallbackProc
-        command: ["pactl", "-f", "json", "list", "sinks"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    let arr = JSON.parse(text);
-                    if (!Array.isArray(arr)) return;
-                    root.sinks = arr.map(s => root._sinkFromPactlJson(s));
-                    defaultSinkProc.running = true;
-                } catch (e) {}
-            }
-        }
-    }
-
-    Process {
-        id: sourcesFallbackProc
-        command: ["pactl", "-f", "json", "list", "sources"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    let arr = JSON.parse(text);
-                    if (!Array.isArray(arr)) return;
-                    root.sources = arr
-                        .filter(s => !(s.name || "").match(/\.monitor$/))
-                        .map(s => root._sourceFromPactlJson(s));
-                    defaultSourceProc.running = true;
-                } catch (e) {}
-            }
-        }
-    }
-
-    function _sinkFromPactlJson(s: var): var {
-        let desc = s.description || "";
-        if (!desc && s.properties) {
-            let p = s.properties;
-            desc = p["node.description"] || p["device.description"] || "";
-        }
-        let name = s.name || "";
-        return {
-            id: -1,
-            name: name,
-            description: (desc || name).replace(/\s+/g, " ").trim(),
-            isDefault: false
-        };
-    }
-
-    function _sourceFromPactlJson(s: var): var {
-        return root._sinkFromPactlJson(s);
-    }
-
-    property string defaultSinkName: ""
-    property string defaultSourceName: ""
-
-    Process {
-        id: defaultSinkProc
-        command: ["pactl", "get-default-sink"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.defaultSinkName = text.trim();
-                root.sinks = root.sinks.map(s => {
-                    s.isDefault = s.name === root.defaultSinkName;
-                    return s;
-                });
-            }
-        }
-    }
-
-    Process {
-        id: defaultSourceProc
-        command: ["pactl", "get-default-source"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.defaultSourceName = text.trim();
-                root.sources = root.sources.map(s => {
-                    s.isDefault = s.name === root.defaultSourceName;
-                    return s;
-                });
-            }
-        }
-    }
-
     function setVolume(vol: int) {
         let v = Math.max(0, Math.min(100, vol)) / 100;
-        setVolProc.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", v.toFixed(2)];
-        setVolProc.running = true;
-        volume = vol;
+        let a = activeSink && activeSink.audio ? activeSink.audio : null;
+        if (a)
+            a.volume = v;
     }
-
-    Process { id: setVolProc }
-
-    onMutedChanged: {
-        muteProc.command = ["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", muted ? "1" : "0"];
-        muteProc.running = true;
-    }
-
-    Process { id: muteProc }
 
     function setDefaultSink(nameOrId: string) {
-        let s = String(nameOrId).trim();
-        if (/^\d+$/.test(s)) {
-            let id = parseInt(s, 10);
-            if (id > 0 && id < 2147483647) {
-                setSinkWpProc.command = ["wpctl", "set-default", s];
-                setSinkWpProc.running = true;
-                return;
-            }
-        }
-        setSinkProc.command = ["pactl", "set-default-sink", s];
-        setSinkProc.running = true;
-    }
-
-    Process {
-        id: setSinkWpProc
-        onExited: statusProc.running = true
-    }
-
-    Process {
-        id: setSinkProc
-        onExited: {
-            statusProc.running = true;
-            sinksFallbackProc.running = true;
-        }
+        let n = _findNode(nameOrId, true);
+        if (n)
+            Pipewire.preferredDefaultAudioSink = n;
     }
 
     function setDefaultSource(nameOrId: string) {
-        let s = String(nameOrId).trim();
-        if (/^\d+$/.test(s)) {
-            let id = parseInt(s, 10);
-            if (id > 0 && id < 2147483647) {
-                setSourceWpProc.command = ["wpctl", "set-default", s];
-                setSourceWpProc.running = true;
-                return;
-            }
-        }
-        setSourceProc.command = ["pactl", "set-default-source", s];
-        setSourceProc.running = true;
+        let n = _findNode(nameOrId, false);
+        if (n)
+            Pipewire.preferredDefaultAudioSource = n;
     }
 
-    Process {
-        id: setSourceWpProc
-        onExited: statusProc.running = true
-    }
-
-    Process {
-        id: setSourceProc
-        onExited: {
-            statusProc.running = true;
-            sourcesFallbackProc.running = true;
-        }
-    }
-
+    /// Native bindings stay current on their own; kept for API compatibility.
     function refresh() {
-        volProc.running = true;
-        statusProc.running = true;
+        recompute.restart();
     }
 }
