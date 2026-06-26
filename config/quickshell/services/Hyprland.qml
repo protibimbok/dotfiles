@@ -25,10 +25,6 @@ Singleton {
         const key = String(rawClass).trim();
         if (key === "org.quickshell" || key === "quickshell")
             return false;
-        // The floating-overlay backdrop is a Quickshell window; keep it out of the bar.
-        const title = c.title || (c.lastIpcObject ? c.lastIpcObject.title : "") || "";
-        if (title === "omarchy-float-scrim")
-            return false;
         return key.length > 0;
     }
 

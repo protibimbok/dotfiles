@@ -6,9 +6,15 @@
 # while hyprland.lua exists), so uninstalling is a clean revert.
 #
 # Usage:
-#   ./install.sh            Link the Lua config into ~/.config/hypr
-#   ./install.sh --uninstall  Remove the links (falls back to hyprland.conf)
+#   ./install.sh            Link the Lua config + build the hyprdesktop plugin
+#   ./install.sh --uninstall  Remove the links + plugin (falls back to hyprland.conf)
 #   ./install.sh --sync-theme  Refresh border color from the current Omarchy theme
+#   ./install.sh --plugin      Rebuild + reinstall just the hyprdesktop plugin
+#
+# The hyprdesktop plugin (desktop-mode floating overlay) is compiled against the
+# installed Hyprland headers and copied to ~/.config/hypr/plugins/hyprdesktop.so;
+# autostart.lua loads it at session start. REBUILD AFTER EVERY HYPRLAND UPGRADE
+# (the plugin ABI is tied to the exact Hyprland commit).
 #
 # After install OR uninstall you must RESTART Hyprland (not `hyprctl reload`) --
 # the config format is chosen only at startup.
@@ -48,6 +54,33 @@ unlink_one() {
     fi
 }
 
+build_plugin() {
+    local psrc
+    psrc="$(cd "$SRC/../../plugins/hyprdesktop" 2>/dev/null && pwd)" || {
+        echo "  plugin source not found at repo plugins/hyprdesktop — skipping"; return 0; }
+
+    if ! command -v cmake >/dev/null 2>&1; then
+        echo "  cmake not found — cannot build hyprdesktop plugin (install cmake)"; return 1
+    fi
+    if ! pkg-config --exists hyprland 2>/dev/null; then
+        echo "  hyprland headers (pkg-config hyprland) not found — install hyprland devel headers"; return 1
+    fi
+
+    echo "Building hyprdesktop plugin..."
+    cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE=Release -B "$psrc/build" -S "$psrc" >/dev/null
+    cmake --build "$psrc/build" --config Release --target hyprdesktop -j
+    mkdir -p "$DEST/plugins"
+    cp "$psrc/build/hyprdesktop.so" "$DEST/plugins/hyprdesktop.so"
+    echo "  installed hyprdesktop.so -> $DEST/plugins/"
+
+    # If Hyprland is already running, (re)load it now so changes apply without a restart.
+    if command -v hyprctl >/dev/null 2>&1 && hyprctl version >/dev/null 2>&1; then
+        hyprctl plugin unload "$DEST/plugins/hyprdesktop.so" >/dev/null 2>&1 || true
+        hyprctl plugin load "$DEST/plugins/hyprdesktop.so" >/dev/null 2>&1 \
+            && echo "  (re)loaded hyprdesktop into the running session" || true
+    fi
+}
+
 sync_theme() {
     local theme="$DEST/../omarchy/current/theme/hyprland.conf"
     theme="$(readlink -f "$theme" 2>/dev/null || echo "$theme")"
@@ -64,16 +97,25 @@ case "${1:-install}" in
         echo "Uninstalling Lua Hyprland config from $DEST:"
         unlink_one hyprland.lua
         unlink_one lua
+        if [[ -f "$DEST/plugins/hyprdesktop.so" ]]; then
+            hyprctl plugin unload "$DEST/plugins/hyprdesktop.so" >/dev/null 2>&1 || true
+            rm -f "$DEST/plugins/hyprdesktop.so"
+            echo "  removed hyprdesktop.so"
+        fi
         echo "Done. Restart Hyprland to fall back to hyprland.conf."
         ;;
     --sync-theme)
         sync_theme
+        ;;
+    --plugin)
+        build_plugin
         ;;
     install|"")
         echo "Installing Lua Hyprland config into $DEST:"
         mkdir -p "$DEST"
         link_one hyprland.lua
         link_one lua
+        build_plugin
         cat <<EOF
 Done.
 
@@ -86,7 +128,7 @@ EOF
         ;;
     *)
         echo "Unknown option: $1" >&2
-        echo "Use: install | --uninstall | --sync-theme" >&2
+        echo "Use: install | --uninstall | --sync-theme | --plugin" >&2
         exit 1
         ;;
 esac

@@ -1,0 +1,11 @@
+[repository]
+name = "hyprdesktop"
+authors = ["Saad"]
+
+[hyprdesktop]
+output = "hyprdesktop.so"
+authors = ["Saad"]
+build = [
+    "cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE=Release -B build -S .",
+    "cmake --build build --config Release --target hyprdesktop -j",
+]

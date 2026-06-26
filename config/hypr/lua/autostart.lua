@@ -3,6 +3,12 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Autostart/
 
 hl.on("hyprland.start", function()
+    -- Desktop-mode floating overlay (native C++ plugin; replaces the old lua/floating.lua
+    -- + Quickshell scrim). Built and installed by install.sh into ~/.config/hypr/plugins/.
+    -- Loaded here at startup; its keybinds resolve hl.plugin.hyprdesktop.* lazily so load
+    -- order doesn't matter. No-op if the plugin isn't built yet.
+    hl.exec_cmd("hyprctl plugin load " .. os.getenv("HOME") .. "/.config/hypr/plugins/hyprdesktop.so")
+
     hl.exec_cmd("uwsm-app -- hypridle")
     hl.exec_cmd("uwsm-app -- mako")
     hl.exec_cmd("uwsm-app -- qs")

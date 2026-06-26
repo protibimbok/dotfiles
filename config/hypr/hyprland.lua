@@ -1,8 +1,9 @@
 -- Hyprland 0.55+ native Lua configuration.
--- A Lua port of the user's Omarchy .conf setup with two custom behaviors:
+-- A Lua port of the user's Omarchy .conf setup with custom behaviors:
 --   1. No border on the focused window when it is the only tiled window (focus.lua)
---   2. Floating windows behave like a desktop overlay: raise on click, hide when a
---      tile is focused, restore with a keybind (floating.lua)
+--   2. Floating windows behave like a desktop overlay (raise on click, hide on tile
+--      focus / backdrop click, SSD titlebars). This now lives in the native C++ plugin
+--      plugins/hyprdesktop (loaded from autostart.lua); binds are in binds.lua.
 --
 -- Hyprland loads hyprland.lua INSTEAD OF hyprland.conf when present, and only one
 -- format is active per session (switching requires a full Hyprland restart).
@@ -27,6 +28,7 @@ require("apps")
 require("binds")
 require("autostart")
 
--- Custom behavior (the two requested changes)
+-- Custom behavior
 require("focus")
-require("floating")
+-- Floating "desktop mode" is now the plugins/hyprdesktop C++ plugin (loaded in
+-- autostart.lua), not Lua.

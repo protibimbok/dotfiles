@@ -112,9 +112,23 @@ bind("CTRL + ALT + DELETE",  exec("omarchy-hyprland-window-close-all"), { descri
 
 bind(SUPER .. " + J",        hl.dsp.layout("togglesplit"),           { description = "Toggle window split" })
 bind(SUPER .. " + P",        hl.dsp.window.pseudo(),                 { description = "Pseudo window" })
--- SUPER + T (toggle floating/tiling) is bound in floating.lua: it toggles first
--- (so the toggle never fails), then on tiled -> float shrinks any full-size axis
--- to 80% of the monitor and centres the window.
+
+-- Desktop-mode floating overlay (plugins/hyprdesktop C++ plugin). The plugin loads
+-- AFTER this config is evaluated (autostart.lua), so we resolve its Lua callbacks
+-- lazily at key-press time rather than binding the function object directly.
+local function hyprdesktop(name)
+    return function()
+        local p = hl.plugin and hl.plugin.hyprdesktop
+        if p and p[name] then
+            return p[name]()
+        end
+    end
+end
+-- SUPER + T: smart float/tile toggle — on float, shrinks any full-size axis to 80%
+-- of the monitor and centres the window below the bar.
+bind(SUPER .. " + T",        hyprdesktop("smartfloat"),              { description = "Toggle floating/tiling (smart size, bar-aware)" })
+-- SUPER + A: toggle the floating layer visible <-> hidden (ghosted).
+bind(SUPER .. " + A",        hyprdesktop("toggle"),                  { description = "Toggle desktop floating layer" })
 bind(SUPER .. " + F",        dispatch("fullscreen 0"),               { description = "Full screen" })
 bind(SUPER .. " + CTRL + F", dispatch("fullscreenstate 0 2"),        { description = "Tiled full screen" })
 -- `fullscreen 1` (positional) becomes real fullscreen and covers the bar; the
@@ -178,10 +192,10 @@ bind(SUPER .. " + SHIFT + equal", dispatch("resizeactive 0 100"),  { description
 bind(SUPER .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }), { description = "Scroll workspace forward" })
 bind(SUPER .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }), { description = "Scroll workspace backward" })
 
--- SUPER + LMB / RMB drag (move / resize floats) is bound in floating.lua,
--- alongside the rest of the floating behavior (using { mouse = true }, the form
--- from the shipped example). SUPER + LMB moves, SUPER + RMB resizes; border-edge
--- drag (resize_on_border) also resizes without a modifier.
+-- Float move: drag the plugin's SSD titlebar (no modifier needed) — this replaces
+-- the old SUPER + LMB move bind. SUPER + RMB still resizes; border-edge drag
+-- (resize_on_border) also resizes without a modifier.
+bind(SUPER .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, description = "Resize window" })
 
 -- Groups
 bind(SUPER .. " + G",       dispatch("togglegroup"),    { description = "Toggle window grouping" })

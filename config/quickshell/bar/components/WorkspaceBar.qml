@@ -91,8 +91,7 @@ Item {
             
         const ids = []
         for (let i = 0; i < wss.length; i++) {
-            // Special workspaces (e.g. the floatstash overlay used to hide floating
-            // windows) have negative ids — never list them or their stashed windows.
+            // Special workspaces (scratchpad, etc.) have negative ids — never list them.
             if (wss[i].id < 0)
                 continue
             ids.push(wss[i].id)
