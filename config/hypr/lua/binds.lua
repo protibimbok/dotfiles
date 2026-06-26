@@ -195,10 +195,11 @@ bind(SUPER .. " + SHIFT + equal", dispatch("resizeactive 0 100"),  { description
 bind(SUPER .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }), { description = "Scroll workspace forward" })
 bind(SUPER .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }), { description = "Scroll workspace backward" })
 
--- Float move: drag the plugin's SSD titlebar (no modifier needed) — this replaces
--- the old SUPER + LMB move bind. SUPER + RMB still resizes; border-edge drag
--- (resize_on_border) also resizes without a modifier.
-bind(SUPER .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, description = "Resize window" })
+-- Move / tiled swap: SUPER + LMB drag. Floating managed windows are handled by the
+-- hyprdesktop plugin (it cancels the event before this bind fires); tiled windows
+-- fall through to the native movewindow dispatcher, which swaps them on drop.
+-- RMB is intentionally left unbound; border-edge drag (resize_on_border) resizes.
+bind(SUPER .. " + mouse:272", hl.dsp.window.drag(), { mouse = true, description = "Move window (tiled: swap on drop)" })
 
 -- Groups
 bind(SUPER .. " + G",       dispatch("togglegroup"),    { description = "Toggle window grouping" })

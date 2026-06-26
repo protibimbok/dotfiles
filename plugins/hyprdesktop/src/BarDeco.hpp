@@ -7,6 +7,8 @@
 #include <hyprland/src/event/EventBus.hpp>
 #include <hyprland/src/devices/IPointer.hpp>
 
+#include <optional>
+
 namespace Hyprdesktop {
 
     class CBarDeco : public IHyprWindowDecoration {
@@ -29,7 +31,10 @@ namespace Hyprdesktop {
         PHLWINDOWREF m_window;
 
         CHyprSignalListener m_mouseButton;
+        CHyprSignalListener m_mouseMove;
         bool                m_dragging = false;
+        Vector2D            m_grabOffset;
+        std::optional<std::pair<Vector2D, Vector2D>> m_savedGeom;
 
         struct SButtons {
             CBox minimize, fullscreen, close;
@@ -38,12 +43,18 @@ namespace Hyprdesktop {
         CBox     barLayoutBox() const;
         SButtons buttonBoxes(const CBox& barBox) const;
         bool     inputIsValid() const;
+        bool     isActionButton(const Vector2D& coords) const;
         void     onMouseButton(Event::SCallbackInfo& info, IPointer::SButtonEvent e);
-        void     handleDown(Event::SCallbackInfo& info, const Vector2D& coords);
-        void     handleUp(Event::SCallbackInfo& info);
+        void     onMouseMove(Event::SCallbackInfo& info);
+        void     startDrag(Event::SCallbackInfo& info);
+        void     endDrag(Event::SCallbackInfo& info);
+        void     toggleMaximize(const PHLWINDOW& w);
+        void     applyDragPosition(const PHLWINDOW& w, const Vector2D& pos);
     };
 
     namespace BarDeco {
+        int  buttonSize();
+        int  titlebarHeight();
         int  barHeight();
         void reconsider(const PHLWINDOW& w);
         void cleanup();

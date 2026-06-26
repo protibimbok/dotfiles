@@ -46,7 +46,7 @@ static void registerConfig() {
     add(g_config.barsWhenHidden);
 
     g_config.barHeight = makeShared<Config::Values::CIntValue>("plugin:hyprdesktop:bar_height",
-                                                              "Height (px) of the server-side titlebar", 24);
+                                                              "Diameter (px) of titlebar window-control buttons", 12);
     add(g_config.barHeight);
 
     g_config.csdBlacklist = makeShared<Config::Values::CStringValue>("plugin:hyprdesktop:csd_blacklist",

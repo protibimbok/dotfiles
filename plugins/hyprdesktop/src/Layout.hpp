@@ -18,4 +18,16 @@ namespace Hyprdesktop::Layout {
     // hyprdesktop:smartfloat (SUPER+T parity): toggle float/tile, and on float apply
     // bar-aware geometry using the pre-toggle size.
     void smartFloat();
+
+    // Keep the window frame (including titlebar) below the top bar / reserved area.
+    Vector2D clampFloatPosition(const PHLWINDOW& w, const Vector2D& pos);
+
+    // Push the plugin's float geometry into Hyprland's layout record so native input
+    // (e.g. resize_on_border) never begins a drag from a stale position and jumps.
+    void commitFloatGeom(const PHLWINDOW& w);
+
+    // Expand a managed float to the monitor work area (below the top bar).
+    void fillWorkArea(const PHLWINDOW& w);
+
+    void stabilizeManagedFloat(const PHLWINDOW& w);
 }
