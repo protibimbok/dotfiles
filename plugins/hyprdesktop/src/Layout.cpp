@@ -1,9 +1,12 @@
 #include "Layout.hpp"
 #include "BarDeco.hpp"
+#include "CsdPolicy.hpp"
+#include "DesktopMode.hpp"
 
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/view/Window.hpp>
 #include <hyprland/src/desktop/state/FocusState.hpp>
+#include <hyprland/src/desktop/reserved/ReservedArea.hpp>
 #include <hyprland/src/helpers/Monitor.hpp>
 #include <hyprland/src/managers/KeybindManager.hpp>
 
@@ -17,8 +20,24 @@ namespace Hyprdesktop::Layout {
     static double shrinkFraction() {
         return g_config.shrinkFraction ? g_config.shrinkFraction->value() : 0.80;
     }
-    static int topReserved() {
+    static int configTopReserved() {
         return g_config.topReservedPx ? g_config.topReservedPx->value() : 36;
+    }
+
+    // Prefer the live layer-shell exclusive zone (Quickshell bar); fall back to config.
+    static CBox workArea(const PHLMONITOR& mon) {
+        const Vector2D mPos  = mon->m_position;
+        const Vector2D mSize = mon->m_size;
+        const CBox     monBox{mPos.x, mPos.y, mSize.x, mSize.y};
+
+        if (mon->m_reservedArea.ok()) {
+            const CBox work = mon->m_reservedArea.apply(monBox);
+            if (work.w > 0 && work.h > 0)
+                return work;
+        }
+
+        const int top = configTopReserved();
+        return {mPos.x, mPos.y + top, mSize.x, mSize.y - top};
     }
 
     static void applyGeometry(const PHLWINDOW& w, const Vector2D& pos, const Vector2D& size) {
@@ -37,23 +56,21 @@ namespace Hyprdesktop::Layout {
         if (!mon)
             return;
 
-        // Monitor m_size/m_position are already in logical (scaled) coordinates.
-        const Vector2D mSize = mon->m_size;
-        const Vector2D mPos  = mon->m_position;
-        const int      bar   = topReserved();
+        // Monitor coords are logical. workArea() reflects the Quickshell bar via layer-shell
+        // reserved area; SSD titlebar height is reserved inside that box.
+        const CBox   work     = workArea(mon);
+        const double ssdBar   = (DesktopMode::isManaged(w) && CsdPolicy::wantsServerBar(w)) ? BarDeco::barHeight() : 0.0;
+        const double uw       = work.w;
+        const double uh       = work.h - ssdBar;
 
-        // Shrink any axis that fills the monitor.
-        double tw = (refSize.x >= mSize.x * fullFraction()) ? std::floor(mSize.x * shrinkFraction()) : refSize.x;
-        double th = (refSize.y >= mSize.y * fullFraction()) ? std::floor(mSize.y * shrinkFraction()) : refSize.y;
+        // Shrink any axis that fills the work area.
+        double tw = (refSize.x >= work.w * fullFraction()) ? std::floor(work.w * shrinkFraction()) : refSize.x;
+        double th = (refSize.y >= work.h * fullFraction()) ? std::floor(work.h * shrinkFraction()) : refSize.y;
+        tw        = std::min(tw, uw);
+        th        = std::min(th, uh);
 
-        // Usable area is full width but excludes the top bar.
-        const double uw = mSize.x;
-        const double uh = mSize.y - bar;
-        tw              = std::min(tw, uw);
-        th              = std::min(th, uh);
-
-        const double x = std::floor(mPos.x + (uw - tw) / 2.0);
-        const double y = std::floor(mPos.y + bar + (uh - th) / 2.0);
+        const double x = std::floor(work.x + (uw - tw) / 2.0);
+        const double y = std::floor(work.y + ssdBar + (uh - th) / 2.0);
 
         applyGeometry(w, {x, y}, {tw, th});
     }
@@ -81,8 +98,8 @@ namespace Hyprdesktop::Layout {
             return;
         }
 
+        BarDeco::reconsider(w); // attach titlebar before place so SSD inset is applied
         place(w, refSize);
-        BarDeco::reconsider(w); // became floating -> attach the titlebar
     }
 
 }

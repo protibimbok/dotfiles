@@ -23,16 +23,24 @@ namespace Hyprdesktop::InputBackdrop {
         if (!DesktopMode::anyVisibleManaged(ws))
             return;
 
-        // Is the press over a real window (incl. its input/reserved extents)? If so, let it
-        // through — tile clicks hide via the focus handler, float clicks raise.
         const auto coords = g_pInputManager->getMouseCoordsInternal();
         const auto under  = g_pCompositor->vectorToWindowUnified(
             coords, Desktop::View::RESERVED_EXTENTS | Desktop::View::INPUT_EXTENTS | Desktop::View::ALLOW_FLOATING);
-        if (under)
-            return;
 
-        // Empty space: dismiss the desktop layer and swallow the click so nothing else
-        // reacts to it.
+        if (under) {
+            // Visible managed float: let it handle the click (raise / titlebar).
+            if (!under->isHidden() && under->m_isFloating && DesktopMode::isManaged(under))
+                return;
+            // Tiled window under cursor: hide floats even when the tile is already focused
+            // (window.active won't fire again, so the focus handler can't dismiss).
+            if (!under->m_isFloating) {
+                Ghosting::hideAllOn(ws);
+                return;
+            }
+            return;
+        }
+
+        // Empty space: dismiss and swallow so nothing underneath reacts.
         Ghosting::hideAllOn(ws);
         info.cancelled = true;
     }

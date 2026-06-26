@@ -3,15 +3,15 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Autostart/
 
 hl.on("hyprland.start", function()
-    -- Desktop-mode floating overlay (native C++ plugin; replaces the old lua/floating.lua
-    -- + Quickshell scrim). Built and installed by install.sh into ~/.config/hypr/plugins/.
-    -- Loaded here at startup; its keybinds resolve hl.plugin.hyprdesktop.* lazily so load
-    -- order doesn't matter. No-op if the plugin isn't built yet.
-    hl.exec_cmd("hyprctl plugin load " .. os.getenv("HOME") .. "/.config/hypr/plugins/hyprdesktop.so")
-
     hl.exec_cmd("uwsm-app -- hypridle")
     hl.exec_cmd("uwsm-app -- mako")
     hl.exec_cmd("uwsm-app -- qs")
+
+    -- Desktop-mode floating overlay (native C++ plugin; replaces the old lua/floating.lua
+    -- + Quickshell scrim). Load after Quickshell so the bar's layer-shell exclusive zone
+    -- is registered before layout reads monitor reserved area. Defer to avoid racing
+    -- compositor startup (early plugin load has crashed Hyprland on reboot).
+    hl.exec_cmd("sleep 2 && hyprctl plugin load " .. os.getenv("HOME") .. "/.config/hypr/plugins/hyprdesktop.so")
     hl.exec_cmd("uwsm-app -- fcitx5 --disable notificationitem")
     hl.exec_cmd("uwsm-app -- swaybg -i ~/.config/omarchy/current/background -m fill")
     hl.exec_cmd("/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1")
