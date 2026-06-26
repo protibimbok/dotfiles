@@ -27,6 +27,8 @@ namespace Hyprdesktop::DesktopMode {
 
     // The workspace the user is currently on (focused monitor's active workspace).
     WORKSPACEID focusedWorkspaceID();
+    // Workspace under the cursor (for pointer-driven dismiss; differs on multi-monitor).
+    WORKSPACEID workspaceAtCursor();
 
     bool pluginEnabled();
 }

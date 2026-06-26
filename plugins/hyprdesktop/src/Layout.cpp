@@ -9,6 +9,7 @@
 #include <hyprland/src/desktop/reserved/ReservedArea.hpp>
 #include <hyprland/src/helpers/Monitor.hpp>
 #include <hyprland/src/managers/KeybindManager.hpp>
+#include <hyprland/src/render/decorations/DecorationPositioner.hpp>
 
 #include <cmath>
 
@@ -24,20 +25,30 @@ namespace Hyprdesktop::Layout {
         return g_config.topReservedPx ? g_config.topReservedPx->value() : 36;
     }
 
-    // Prefer the live layer-shell exclusive zone (Quickshell bar); fall back to config.
+    // Prefer layer-shell reserved area (Quickshell bar). Guarantee at least the config
+    // fallback so layout is correct even if QS hasn't registered its exclusive zone yet.
     static CBox workArea(const PHLMONITOR& mon) {
         const Vector2D mPos  = mon->m_position;
         const Vector2D mSize = mon->m_size;
         const CBox     monBox{mPos.x, mPos.y, mSize.x, mSize.y};
+        const double   minTop = mPos.y + configTopReserved();
 
         if (mon->m_reservedArea.ok()) {
             const CBox work = mon->m_reservedArea.apply(monBox);
-            if (work.w > 0 && work.h > 0)
+            if (work.w > 0 && work.h > 0) {
+                if (work.y < minTop) {
+                    const double delta = minTop - work.y;
+                    return {work.x, minTop, work.w, work.h - delta};
+                }
                 return work;
+            }
         }
 
-        const int top = configTopReserved();
-        return {mPos.x, mPos.y + top, mSize.x, mSize.y - top};
+        return {mPos.x, minTop, mSize.x, mSize.y - configTopReserved()};
+    }
+
+    static bool fillsWorkArea(const Vector2D& size, const CBox& work) {
+        return size.x >= work.w * fullFraction() || size.y >= work.h * fullFraction();
     }
 
     static void applyGeometry(const PHLWINDOW& w, const Vector2D& pos, const Vector2D& size) {
@@ -46,39 +57,46 @@ namespace Hyprdesktop::Layout {
         w->m_position = pos;
         w->m_size     = size;
         w->sendWindowSize(true);
+        g_pDecorationPositioner->forceRecalcFor(w);
         w->updateWindowDecos();
     }
 
     void place(const PHLWINDOW& w, const Vector2D& refSize) {
-        if (!w || !w->m_monitor)
+        if (!w || !w->m_isFloating || !w->m_monitor)
             return;
         const auto mon = w->m_monitor.lock();
         if (!mon)
             return;
 
-        // Monitor coords are logical. workArea() reflects the Quickshell bar via layer-shell
-        // reserved area; SSD titlebar height is reserved inside that box.
-        const CBox   work     = workArea(mon);
-        const double ssdBar   = (DesktopMode::isManaged(w) && CsdPolicy::wantsServerBar(w)) ? BarDeco::barHeight() : 0.0;
-        const double uw       = work.w;
-        const double uh       = work.h - ssdBar;
+        // Center in the monitor work area (below the Quickshell bar). Do NOT manually
+        // inset for the SSD titlebar — reserved decoration extents are applied by the
+        // positioner when updateWindowDecos() runs (avoids a fixed drag offset).
+        const CBox   work = workArea(mon);
+        const double uw   = work.w;
+        const double uh   = work.h;
 
-        // Shrink any axis that fills the work area.
         double tw = (refSize.x >= work.w * fullFraction()) ? std::floor(work.w * shrinkFraction()) : refSize.x;
         double th = (refSize.y >= work.h * fullFraction()) ? std::floor(work.h * shrinkFraction()) : refSize.y;
         tw        = std::min(tw, uw);
         th        = std::min(th, uh);
 
         const double x = std::floor(work.x + (uw - tw) / 2.0);
-        const double y = std::floor(work.y + ssdBar + (uh - th) / 2.0);
+        const double y = std::floor(work.y + (uh - th) / 2.0);
 
         applyGeometry(w, {x, y}, {tw, th});
     }
 
     void placeNewFloat(const PHLWINDOW& w) {
-        if (!w)
+        if (!w || !w->m_monitor)
             return;
-        place(w, w->m_realSize->goal());
+        const auto mon = w->m_monitor.lock();
+        if (!mon)
+            return;
+        const CBox     work = workArea(mon);
+        const Vector2D sz   = w->m_realSize->value();
+        // Only reshape floats that fill the monitor — leave app-sized floats alone.
+        if (fillsWorkArea(sz, work))
+            place(w, sz);
     }
 
     void smartFloat() {
@@ -87,18 +105,20 @@ namespace Hyprdesktop::Layout {
             return;
 
         const bool     wasFloating = w->m_isFloating;
-        const Vector2D refSize     = w->m_realSize->value(); // pre-toggle size
+        const Vector2D refSize     = w->m_realSize->value();
 
-        // Reuse the built-in dispatcher so float/tile toggling matches Hyprland exactly.
         if (const auto it = g_pKeybindManager->m_dispatchers.find("togglefloating"); it != g_pKeybindManager->m_dispatchers.end())
             it->second("");
 
         if (wasFloating) {
-            BarDeco::reconsider(w); // became tiled -> drop the titlebar
+            BarDeco::reconsider(w);
             return;
         }
 
-        BarDeco::reconsider(w); // attach titlebar before place so SSD inset is applied
+        if (!w->m_isFloating)
+            return;
+
+        BarDeco::reconsider(w);
         place(w, refSize);
     }
 

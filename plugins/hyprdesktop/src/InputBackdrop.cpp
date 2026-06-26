@@ -12,13 +12,20 @@ namespace Hyprdesktop::InputBackdrop {
 
     static CHyprSignalListener g_buttonListener;
 
+    static bool isVisibleWindowUnderCursor(const PHLWINDOW& w) {
+        return w && w->m_isMapped && !w->isHidden();
+    }
+
     static void onMouseButton(IPointer::SButtonEvent e, Event::SCallbackInfo& info) {
         if (!DesktopMode::pluginEnabled())
             return;
         if (e.state != WL_POINTER_BUTTON_STATE_PRESSED)
             return;
 
-        const auto ws = DesktopMode::focusedWorkspaceID();
+        const auto ws = DesktopMode::workspaceAtCursor();
+        if (ws == WORKSPACE_INVALID)
+            return;
+
         // Only intercept when there's actually a visible float layer to dismiss.
         if (!DesktopMode::anyVisibleManaged(ws))
             return;
@@ -27,9 +34,9 @@ namespace Hyprdesktop::InputBackdrop {
         const auto under  = g_pCompositor->vectorToWindowUnified(
             coords, Desktop::View::RESERVED_EXTENTS | Desktop::View::INPUT_EXTENTS | Desktop::View::ALLOW_FLOATING);
 
-        if (under) {
+        if (isVisibleWindowUnderCursor(under)) {
             // Visible managed float: let it handle the click (raise / titlebar).
-            if (!under->isHidden() && under->m_isFloating && DesktopMode::isManaged(under))
+            if (under->m_isFloating && DesktopMode::isManaged(under))
                 return;
             // Tiled window under cursor: hide floats even when the tile is already focused
             // (window.active won't fire again, so the focus handler can't dismiss).
@@ -40,7 +47,7 @@ namespace Hyprdesktop::InputBackdrop {
             return;
         }
 
-        // Empty space: dismiss and swallow so nothing underneath reacts.
+        // Empty space (or only hidden windows): dismiss and swallow the click.
         Ghosting::hideAllOn(ws);
         info.cancelled = true;
     }

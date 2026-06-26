@@ -26,10 +26,8 @@ namespace Hyprdesktop {
     }
 
     CBarDeco::CBarDeco(PHLWINDOW w) : IHyprWindowDecoration(w), m_window(w) {
-        // hyprbars 0.55+ handles bar input via the event bus, not onInputOnDeco drag events.
         m_mouseButton = Event::bus()->m_events.input.mouse.button.listen(
             [this](IPointer::SButtonEvent e, Event::SCallbackInfo& info) { onMouseButton(info, e); });
-        m_mouseMove = Event::bus()->m_events.input.mouse.move.listen([this](Vector2D c, Event::SCallbackInfo&) { onMouseMove(c); });
     }
 
     SDecorationPositioningInfo CBarDeco::getPositioningInfo() {
@@ -42,9 +40,7 @@ namespace Hyprdesktop {
         return info;
     }
 
-    void CBarDeco::onPositioningReply(const SDecorationPositioningReply&) {
-        // Geometry is queried live from the positioner in barLayoutBox().
-    }
+    void CBarDeco::onPositioningReply(const SDecorationPositioningReply&) {}
 
     eDecorationType  CBarDeco::getDecorationType() {
         return DECORATION_CUSTOM;
@@ -88,28 +84,24 @@ namespace Hyprdesktop {
     }
 
     void CBarDeco::onMouseButton(Event::SCallbackInfo& info, IPointer::SButtonEvent e) {
+        // End drag on release even when the cursor left this window (otherwise LMB-up
+        // is missed and move mode stays active until another click).
+        if (m_dragging) {
+            if (e.state == WL_POINTER_BUTTON_STATE_RELEASED)
+                handleUp(info);
+            return;
+        }
+
         if (!inputIsValid())
             return;
 
         const auto bar    = barLayoutBox();
         const auto coords = g_pInputManager->getMouseCoordsInternal();
-        if (!bar.containsPoint(coords)) {
-            if (m_dragging)
-                handleUp(info);
+        if (!bar.containsPoint(coords))
             return;
-        }
 
         if (e.state == WL_POINTER_BUTTON_STATE_PRESSED)
             handleDown(info, coords);
-        else
-            handleUp(info);
-    }
-
-    void CBarDeco::onMouseMove(Vector2D) {
-        if (!m_dragPending || m_dragging || !inputIsValid())
-            return;
-        m_dragPending = false;
-        handleMovement();
     }
 
     void CBarDeco::handleDown(Event::SCallbackInfo& info, const Vector2D& coords) {
@@ -140,25 +132,18 @@ namespace Hyprdesktop {
         Desktop::focusState()->fullWindowFocus(w, Desktop::FOCUS_REASON_CLICK);
         if (w->m_isFloating)
             g_pCompositor->changeWindowZOrder(w, true);
-        info.cancelled = true;
-        m_dragPending  = true;
-    }
 
-    void CBarDeco::handleMovement() {
-        const auto w = m_window.lock();
-        if (!w)
-            return;
-        Desktop::focusState()->fullWindowFocus(w, Desktop::FOCUS_REASON_CLICK);
+        // Start Hyprland move mode immediately on press so the grab offset matches the
+        // click point (deferred start on mouse-move caused a fixed titlebar offset).
         CKeybindManager::changeMouseBindMode(MBIND_MOVE);
-        m_dragging = true;
+        m_dragging     = true;
+        info.cancelled = true;
     }
 
     void CBarDeco::handleUp(Event::SCallbackInfo& info) {
-        if (m_dragging) {
+        if (m_dragging)
             CKeybindManager::changeMouseBindMode(MBIND_INVALID);
-            m_dragging = false;
-        }
-        m_dragPending = false;
+        m_dragging     = false;
         info.cancelled = true;
     }
 

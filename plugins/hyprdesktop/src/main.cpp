@@ -117,8 +117,6 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     DesktopMode::init();
     InputBackdrop::init();
 
-    HyprlandAPI::reloadConfig();
-
     return {"hyprdesktop", "Desktop-mode floating overlay (state engine, ghosting, backdrop, SSD titlebars)", "Saad", "0.1.0"};
 }
 

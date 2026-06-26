@@ -13,21 +13,34 @@ namespace Hyprdesktop::Ghosting {
             if (!m || !m->m_activeWorkspace || m->m_activeWorkspace->m_id != ws)
                 continue;
             g_pHyprRenderer->damageMonitor(m);
+            m->m_scheduledRecalc = true;
         }
+    }
+
+    static void damageWindow(const PHLWINDOW& w) {
+        if (!w)
+            return;
+        g_pHyprRenderer->damageWindow(w, true);
+        w->updateWindowDecos();
     }
 
     void hide(const PHLWINDOW& w) {
         if (!w || w->isHidden())
             return;
+        damageWindow(w);
         w->setHidden(true);
-        w->updateWindowDecos();
+        damageWindow(w);
+        if (w->m_workspace)
+            damageWorkspace(w->m_workspace->m_id);
     }
 
     void restore(const PHLWINDOW& w) {
         if (!w || !w->isHidden())
             return;
         w->setHidden(false);
-        w->updateWindowDecos();
+        damageWindow(w);
+        if (w->m_workspace)
+            damageWorkspace(w->m_workspace->m_id);
     }
 
     void hideAllOn(WORKSPACEID ws) {

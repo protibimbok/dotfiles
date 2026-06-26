@@ -94,7 +94,13 @@ namespace Hyprdesktop::DesktopMode {
     WORKSPACEID focusedWorkspaceID() {
         if (const auto m = Desktop::focusState()->monitor(); m && m->m_activeWorkspace)
             return m->m_activeWorkspace->m_id;
+        return workspaceAtCursor();
+    }
+
+    WORKSPACEID workspaceAtCursor() {
         if (const auto m = g_pCompositor->getMonitorFromCursor(); m && m->m_activeWorkspace)
+            return m->m_activeWorkspace->m_id;
+        if (const auto m = Desktop::focusState()->monitor(); m && m->m_activeWorkspace)
             return m->m_activeWorkspace->m_id;
         return WORKSPACE_INVALID;
     }
@@ -105,8 +111,8 @@ namespace Hyprdesktop::DesktopMode {
         // A new float reactivates the layer: restore any previously-hidden siblings so the
         // whole desktop comes back (state-machine: Hidden -> Active on new float).
         Ghosting::restoreAllOn(w->m_workspace->m_id);
-        Layout::placeNewFloat(w);
         BarDeco::reconsider(w);
+        Layout::placeNewFloat(w);
     }
 
     static void onWindowActive(const PHLWINDOW& w, Desktop::eFocusReason reason) {
