@@ -23,7 +23,13 @@ Singleton {
             || c.initialClass
             || "";
         const key = String(rawClass).trim();
-        return key.length > 0 && key !== "org.quickshell";
+        if (key === "org.quickshell" || key === "quickshell")
+            return false;
+        // The floating-overlay backdrop is a Quickshell window; keep it out of the bar.
+        const title = c.title || (c.lastIpcObject ? c.lastIpcObject.title : "") || "";
+        if (title === "omarchy-float-scrim")
+            return false;
+        return key.length > 0;
     }
 
     readonly property bool plainBarMode: {

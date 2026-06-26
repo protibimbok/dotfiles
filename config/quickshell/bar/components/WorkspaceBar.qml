@@ -91,11 +91,15 @@ Item {
             
         const ids = []
         for (let i = 0; i < wss.length; i++) {
+            // Special workspaces (e.g. the floatstash overlay used to hide floating
+            // windows) have negative ids — never list them or their stashed windows.
+            if (wss[i].id < 0)
+                continue
             ids.push(wss[i].id)
         }
         if (Hyprland.focusedWorkspace) {
             const fid = Hyprland.focusedWorkspace.id
-            if (ids.indexOf(fid) === -1) {
+            if (fid >= 0 && ids.indexOf(fid) === -1) {
                 ids.push(fid)
             }
         }

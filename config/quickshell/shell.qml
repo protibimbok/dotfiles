@@ -2,9 +2,32 @@ import Quickshell
 import QtQuick
 import qs.bar
 import qs.tokens
+import qs.services
 
 ShellRoot {
     id: shell
+
+    // Click-catching backdrop for the floating overlay: a transparent fullscreen
+    // window that sits above the tiles and below the floating windows (Hyprland's
+    // lua/floating.lua sizes, positions and z-orders it). Moving the cursor onto it
+    // can't focus a tile, so a focused float keeps focus; clicking it dismisses the
+    // whole floating layer. Shown only while a real float is visible.
+    FloatingWindow {
+        id: floatScrim
+        title: "omarchy-float-scrim"
+        color: "transparent"
+        // Always mapped; Hyprland (lua/floating.lua) parks it off-screen when there
+        // is nothing to dismiss and stretches it over the monitor when floats appear.
+        visible: true
+        implicitWidth: 1920
+        implicitHeight: 1080
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+            onPressed: Hyprland.dispatch("omarchy_float_dismiss()")
+        }
+    }
 
     // Bar — per screen, with auto-hide on hover
     Variants {

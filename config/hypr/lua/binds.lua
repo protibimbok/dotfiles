@@ -117,7 +117,10 @@ bind(SUPER .. " + P",        hl.dsp.window.pseudo(),                 { descripti
 -- to 80% of the monitor and centres the window.
 bind(SUPER .. " + F",        dispatch("fullscreen 0"),               { description = "Full screen" })
 bind(SUPER .. " + CTRL + F", dispatch("fullscreenstate 0 2"),        { description = "Tiled full screen" })
-bind(SUPER .. " + ALT + F",  dispatch("fullscreen 1"),               { description = "Full width" })
+-- `fullscreen 1` (positional) becomes real fullscreen and covers the bar; the
+-- table form `fullscreen({mode=1})` is the maximize that respects the reserved area
+-- (it fills the monitor *below* the bar). Verified in the hyprctl Lua REPL.
+bind(SUPER .. " + ALT + F",  hl.dsp.window.fullscreen({ mode = 1 }), { description = "Full width (respect bar)" })
 bind(SUPER .. " + O",        exec("omarchy-hyprland-window-pop"),    { description = "Pop window out (float & pin)" })
 bind(SUPER .. " + L",        exec("omarchy-hyprland-workspace-layout-toggle"), { description = "Toggle workspace layout" })
 
