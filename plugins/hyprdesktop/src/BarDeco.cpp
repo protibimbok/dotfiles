@@ -14,7 +14,6 @@
 #include <hyprland/src/render/decorations/DecorationPositioner.hpp>
 #include <hyprland/src/managers/KeybindManager.hpp>
 #include <hyprland/src/managers/input/InputManager.hpp>
-#include <hyprland/src/devices/IPointer.hpp>
 
 namespace Hyprdesktop {
 
@@ -26,7 +25,12 @@ namespace Hyprdesktop {
         return g_config.barsWhenHidden && g_config.barsWhenHidden->value();
     }
 
-    CBarDeco::CBarDeco(PHLWINDOW w) : IHyprWindowDecoration(w), m_window(w) {}
+    CBarDeco::CBarDeco(PHLWINDOW w) : IHyprWindowDecoration(w), m_window(w) {
+        // hyprbars 0.55+ handles bar input via the event bus, not onInputOnDeco drag events.
+        m_mouseButton = Event::bus()->m_events.input.mouse.button.listen(
+            [this](IPointer::SButtonEvent e, Event::SCallbackInfo& info) { onMouseButton(info, e); });
+        m_mouseMove = Event::bus()->m_events.input.mouse.move.listen([this](Vector2D c, Event::SCallbackInfo&) { onMouseMove(c); });
+    }
 
     SDecorationPositioningInfo CBarDeco::getPositioningInfo() {
         SDecorationPositioningInfo info;
@@ -46,10 +50,10 @@ namespace Hyprdesktop {
         return DECORATION_CUSTOM;
     }
     eDecorationLayer CBarDeco::getDecorationLayer() {
-        return DECORATION_LAYER_OVER;
+        return DECORATION_LAYER_UNDER;
     }
     uint64_t CBarDeco::getDecorationFlags() {
-        return DECORATION_ALLOWS_MOUSE_INPUT;
+        return DECORATION_ALLOWS_MOUSE_INPUT | DECORATION_PART_OF_MAIN_WINDOW;
     }
     std::string CBarDeco::getDisplayName() {
         return "Hyprdesktop Titlebar";
@@ -61,15 +65,101 @@ namespace Hyprdesktop {
 
     CBarDeco::SButtons CBarDeco::buttonBoxes(const CBox& box) const {
         SButtons      b;
-        const double  bs    = box.h * 0.45; // button diameter
+        const double  bs    = box.h * 0.45;
         const double  pad   = (box.h - bs) / 2.0;
         double        right = box.x + box.w - pad - bs;
-        b.close      = {right, box.y + pad, bs, bs};
+        b.close            = {right, box.y + pad, bs, bs};
         right -= (bs + pad);
         b.fullscreen = {right, box.y + pad, bs, bs};
         right -= (bs + pad);
-        b.minimize   = {right, box.y + pad, bs, bs};
+        b.minimize = {right, box.y + pad, bs, bs};
         return b;
+    }
+
+    bool CBarDeco::inputIsValid() const {
+        const auto w = m_window.lock();
+        if (!w || !DesktopMode::pluginEnabled() || !w->m_isMapped)
+            return false;
+
+        const auto atCursor = g_pCompositor->vectorToWindowUnified(g_pInputManager->getMouseCoordsInternal(),
+                                                                   Desktop::View::RESERVED_EXTENTS | Desktop::View::INPUT_EXTENTS |
+                                                                       Desktop::View::ALLOW_FLOATING);
+        return atCursor == w;
+    }
+
+    void CBarDeco::onMouseButton(Event::SCallbackInfo& info, IPointer::SButtonEvent e) {
+        if (!inputIsValid())
+            return;
+
+        const auto bar    = barLayoutBox();
+        const auto coords = g_pInputManager->getMouseCoordsInternal();
+        if (!bar.containsPoint(coords)) {
+            if (m_dragging)
+                handleUp(info);
+            return;
+        }
+
+        if (e.state == WL_POINTER_BUTTON_STATE_PRESSED)
+            handleDown(info, coords);
+        else
+            handleUp(info);
+    }
+
+    void CBarDeco::onMouseMove(Vector2D) {
+        if (!m_dragPending || m_dragging || !inputIsValid())
+            return;
+        m_dragPending = false;
+        handleMovement();
+    }
+
+    void CBarDeco::handleDown(Event::SCallbackInfo& info, const Vector2D& coords) {
+        const auto w = m_window.lock();
+        if (!w)
+            return;
+
+        const CBox     bar  = barLayoutBox();
+        const SButtons btns = buttonBoxes(bar);
+
+        if (btns.close.containsPoint(coords)) {
+            w->sendClose();
+            info.cancelled = true;
+            return;
+        }
+        if (btns.fullscreen.containsPoint(coords)) {
+            const auto cur = w->m_fullscreenState.internal;
+            g_pCompositor->setWindowFullscreenInternal(w, cur == FSMODE_FULLSCREEN ? FSMODE_NONE : FSMODE_FULLSCREEN);
+            info.cancelled = true;
+            return;
+        }
+        if (btns.minimize.containsPoint(coords)) {
+            Ghosting::hide(w);
+            info.cancelled = true;
+            return;
+        }
+
+        Desktop::focusState()->fullWindowFocus(w, Desktop::FOCUS_REASON_CLICK);
+        if (w->m_isFloating)
+            g_pCompositor->changeWindowZOrder(w, true);
+        info.cancelled = true;
+        m_dragPending  = true;
+    }
+
+    void CBarDeco::handleMovement() {
+        const auto w = m_window.lock();
+        if (!w)
+            return;
+        Desktop::focusState()->fullWindowFocus(w, Desktop::FOCUS_REASON_CLICK);
+        CKeybindManager::changeMouseBindMode(MBIND_MOVE);
+        m_dragging = true;
+    }
+
+    void CBarDeco::handleUp(Event::SCallbackInfo& info) {
+        if (m_dragging) {
+            CKeybindManager::changeMouseBindMode(MBIND_INVALID);
+            m_dragging = false;
+        }
+        m_dragPending = false;
+        info.cancelled = true;
     }
 
     void CBarDeco::draw(PHLMONITOR pMonitor, float const& a) {
@@ -79,8 +169,8 @@ namespace Hyprdesktop {
         if (w->isHidden() && !barsWhenHidden())
             return;
 
-        const CBox    layoutBox = barLayoutBox();
-        const SButtons btns     = buttonBoxes(layoutBox);
+        const CBox     layoutBox = barLayoutBox();
+        const SButtons btns      = buttonBoxes(layoutBox);
 
         auto toScaled = [&](CBox b) {
             b.translate(-pMonitor->m_position).scale(pMonitor->m_scale).round();
@@ -107,62 +197,10 @@ namespace Hyprdesktop {
     }
 
     void CBarDeco::damageEntire() {
-        const auto w = m_window.lock();
-        if (!w)
-            return;
-        CBox b = barLayoutBox();
-        g_pHyprRenderer->damageBox(b);
+        g_pHyprRenderer->damageBox(barLayoutBox());
     }
 
-    bool CBarDeco::onInputOnDeco(const eInputType type, const Vector2D& coords, std::any data) {
-        const auto w = m_window.lock();
-        if (!w)
-            return false;
-
-        const CBox     bar  = barLayoutBox();
-        const SButtons btns = buttonBoxes(bar);
-
-        if (type == INPUT_TYPE_BUTTON) {
-            IPointer::SButtonEvent e;
-            try {
-                e = std::any_cast<IPointer::SButtonEvent>(data);
-            } catch (const std::bad_any_cast&) {
-                return false;
-            }
-            if (e.state != WL_POINTER_BUTTON_STATE_PRESSED)
-                return true; // swallow the release too
-
-            if (btns.close.containsPoint(coords)) {
-                w->sendClose();
-                return true;
-            }
-            if (btns.fullscreen.containsPoint(coords)) {
-                const auto cur = w->m_fullscreenState.internal;
-                g_pCompositor->setWindowFullscreenInternal(w, cur == FSMODE_FULLSCREEN ? FSMODE_NONE : FSMODE_FULLSCREEN);
-                return true;
-            }
-            if (btns.minimize.containsPoint(coords)) {
-                Ghosting::hide(w);
-                return true;
-            }
-            return true;
-        }
-
-        if (type == INPUT_TYPE_DRAG_START) {
-            // Pressing a control starts no drag.
-            if (btns.close.containsPoint(coords) || btns.fullscreen.containsPoint(coords) || btns.minimize.containsPoint(coords))
-                return true;
-            // Drag the titlebar body to move — no SUPER needed (replaces SUPER+LMB drag).
-            Desktop::focusState()->fullWindowFocus(w, Desktop::FOCUS_REASON_CLICK);
-            CKeybindManager::changeMouseBindMode(MBIND_MOVE);
-            return true;
-        }
-
-        if (type == INPUT_TYPE_DRAG_END) {
-            CKeybindManager::changeMouseBindMode(MBIND_INVALID);
-            return true;
-        }
-
+    bool CBarDeco::onInputOnDeco(const eInputType, const Vector2D&, std::any) {
         return false;
     }
 
@@ -179,13 +217,30 @@ namespace Hyprdesktop {
         void reconsider(const PHLWINDOW& w) {
             if (!w)
                 return;
-            const bool should = DesktopMode::pluginEnabled() && w->m_isFloating && DesktopMode::isManaged(w) && CsdPolicy::wantsServerBar(w);
+            const bool should   = DesktopMode::pluginEnabled() && w->m_isFloating && DesktopMode::isManaged(w) && CsdPolicy::wantsServerBar(w);
             auto*      existing = findOurDeco(w);
 
             if (should && !existing)
                 HyprlandAPI::addWindowDecoration(PHANDLE, w, makeUnique<CBarDeco>(w));
             else if (!should && existing)
                 HyprlandAPI::removeWindowDecoration(PHANDLE, existing);
+        }
+
+        void cleanup() {
+            std::vector<IHyprWindowDecoration*> decos;
+            for (const auto& w : g_pCompositor->m_windows) {
+                if (!w)
+                    continue;
+                for (auto& d : w->m_windowDecorations) {
+                    if (dynamic_cast<CBarDeco*>(d.get()))
+                        decos.push_back(d.get());
+                }
+            }
+            for (auto* d : decos)
+                HyprlandAPI::removeWindowDecoration(PHANDLE, d);
+
+            for (auto& m : g_pCompositor->m_monitors)
+                m->m_scheduledRecalc = true;
         }
 
     }

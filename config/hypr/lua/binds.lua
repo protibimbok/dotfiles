@@ -113,22 +113,25 @@ bind("CTRL + ALT + DELETE",  exec("omarchy-hyprland-window-close-all"), { descri
 bind(SUPER .. " + J",        hl.dsp.layout("togglesplit"),           { description = "Toggle window split" })
 bind(SUPER .. " + P",        hl.dsp.window.pseudo(),                 { description = "Pseudo window" })
 
--- Desktop-mode floating overlay (plugins/hyprdesktop C++ plugin). The plugin loads
--- AFTER this config is evaluated (autostart.lua), so we resolve its Lua callbacks
--- lazily at key-press time rather than binding the function object directly.
-local function hyprdesktop(name)
+-- Desktop-mode floating overlay (plugins/hyprdesktop C++ plugin). Call hl.plugin.*
+-- functions directly — custom dispatchers like hyprdesktop:smartfloat cannot go through
+-- the dispatch() helper (hyprctl evaluates unmapped args as Lua and silently no-ops).
+local function hyprdesktop(name, fallback)
     return function()
         local p = hl.plugin and hl.plugin.hyprdesktop
         if p and p[name] then
             return p[name]()
         end
+        if fallback then
+            return fallback()
+        end
     end
 end
 -- SUPER + T: smart float/tile toggle — on float, shrinks any full-size axis to 80%
 -- of the monitor and centres the window below the bar.
-bind(SUPER .. " + T",        hyprdesktop("smartfloat"),              { description = "Toggle floating/tiling (smart size, bar-aware)" })
+bind(SUPER .. " + T",        hyprdesktop("smartfloat", hl.dsp.window.float), { description = "Toggle floating/tiling (smart size, bar-aware)" })
 -- SUPER + A: toggle the floating layer visible <-> hidden (ghosted).
-bind(SUPER .. " + A",        hyprdesktop("toggle"),                  { description = "Toggle desktop floating layer" })
+bind(SUPER .. " + A",        hyprdesktop("toggle"),    { description = "Toggle desktop floating layer" })
 bind(SUPER .. " + F",        dispatch("fullscreen 0"),               { description = "Full screen" })
 bind(SUPER .. " + CTRL + F", dispatch("fullscreenstate 0 2"),        { description = "Tiled full screen" })
 -- `fullscreen 1` (positional) becomes real fullscreen and covers the bar; the

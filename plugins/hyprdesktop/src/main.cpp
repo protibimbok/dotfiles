@@ -5,6 +5,7 @@
 #include "Ghosting.hpp"
 #include "InputBackdrop.hpp"
 #include "Layout.hpp"
+#include "BarDeco.hpp"
 
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/helpers/Color.hpp>
@@ -100,11 +101,12 @@ static void registerDispatchers() {
 APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     PHANDLE = handle;
 
-    // Refuse to load against a Hyprland built from a different commit — the C++ ABI
-    // is not stable across versions, so a mismatch would crash the compositor.
-    const std::string HASH = __hyprland_api_get_hash();
-    if (HASH != std::string(GIT_COMMIT_HASH)) {
-        HyprlandAPI::addNotification(PHANDLE, "[hyprdesktop] Mismatched Hyprland version — rebuild the plugin.",
+    // Refuse to load when plugin headers don't match the running compositor ABI.
+    const std::string COMPOSITOR_HASH = __hyprland_api_get_hash();
+    const std::string CLIENT_HASH     = __hyprland_api_get_client_hash();
+    if (COMPOSITOR_HASH != CLIENT_HASH) {
+        HyprlandAPI::addNotification(PHANDLE,
+                                     "[hyprdesktop] Mismatched headers — rebuild the plugin against your running Hyprland.",
                                      CHyprColor{1.0, 0.2, 0.2, 1.0}, 8000);
         throw std::runtime_error("[hyprdesktop] version mismatch");
     }
@@ -123,5 +125,6 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 APICALL EXPORT void PLUGIN_EXIT() {
     InputBackdrop::cleanup();
     DesktopMode::cleanup();
+    BarDeco::cleanup();
     // Decorations, dispatchers, and config values are torn down by Hyprland on unload.
 }

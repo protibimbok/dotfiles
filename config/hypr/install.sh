@@ -54,6 +54,25 @@ unlink_one() {
     fi
 }
 
+# After a Hyprland crash/restart, shells often keep a stale HYPRLAND_INSTANCE_SIGNATURE.
+# Probe each runtime socket and export the one that actually responds.
+resolve_hyprland_instance() {
+  local rt="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/hypr"
+  [[ -d "$rt" ]] || return 1
+  local sig sock
+  for sig in "$rt"/*/; do
+    sig="${sig%/}"
+    sig="${sig##*/}"
+    sock="$rt/$sig/.socket.sock"
+    [[ -S "$sock" ]] || continue
+    if HYPRLAND_INSTANCE_SIGNATURE="$sig" hyprctl version >/dev/null 2>&1; then
+      export HYPRLAND_INSTANCE_SIGNATURE="$sig"
+      return 0
+    fi
+  done
+  return 1
+}
+
 build_plugin() {
     local psrc
     psrc="$(cd "$SRC/../../plugins/hyprdesktop" 2>/dev/null && pwd)" || {
@@ -74,10 +93,31 @@ build_plugin() {
     echo "  installed hyprdesktop.so -> $DEST/plugins/"
 
     # If Hyprland is already running, (re)load it now so changes apply without a restart.
-    if command -v hyprctl >/dev/null 2>&1 && hyprctl version >/dev/null 2>&1; then
-        hyprctl plugin unload "$DEST/plugins/hyprdesktop.so" >/dev/null 2>&1 || true
-        hyprctl plugin load "$DEST/plugins/hyprdesktop.so" >/dev/null 2>&1 \
-            && echo "  (re)loaded hyprdesktop into the running session" || true
+    if command -v hyprctl >/dev/null 2>&1; then
+        if ! hyprctl version >/dev/null 2>&1; then
+            resolve_hyprland_instance || true
+        fi
+        if hyprctl version >/dev/null 2>&1; then
+            local unload_out="" load_out=""
+            if hyprctl plugin list 2>/dev/null | rg -q "Plugin hyprdesktop"; then
+                if ! unload_out="$(hyprctl plugin unload "$DEST/plugins/hyprdesktop.so" 2>&1)"; then
+                    echo "  WARNING: plugin unload failed (Hyprland may need a full restart):" >&2
+                    echo "  $unload_out" >&2
+                    echo "  Skipping hot-reload — restart Hyprland to pick up the new .so." >&2
+                    return 0
+                fi
+            fi
+            if load_out="$(hyprctl plugin load "$DEST/plugins/hyprdesktop.so" 2>&1)"; then
+                echo "  (re)loaded hyprdesktop into the running session"
+            else
+                echo "  WARNING: failed to load hyprdesktop into the running session:" >&2
+                echo "  $load_out" >&2
+            fi
+        else
+            echo "  Hyprland not reachable (stale socket?) — restart the session or run:" >&2
+            echo "    export HYPRLAND_INSTANCE_SIGNATURE=<sig>  # see ls \$XDG_RUNTIME_DIR/hypr/" >&2
+            echo "    hyprctl plugin load $DEST/plugins/hyprdesktop.so" >&2
+        fi
     fi
 }
 
