@@ -14,6 +14,10 @@ ShellRoot {
     // Transient notification toasts (top-right, below the bar).
     NotificationToasts {}
 
+    // Unread-notifications dropdown, centered under the bar's clock. Hover-triggered
+    // via the clock badge (NotificationsPanelState); shares the toast surface.
+    NotificationsPanel {}
+
     // Hover-triggered per-device volume panel (top-right, below the bar),
     // sharing the toast surface/animation.
     VolumePanel {}

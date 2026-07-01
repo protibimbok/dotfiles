@@ -66,8 +66,9 @@ Singleton {
             root.notifications = list;
             root._syncUnreadCount();
 
-            // Surface a transient toast (unless Do Not Disturb is silencing).
-            if (root.dndMode !== 0)
+            // Surface a transient toast, unless Do Not Disturb is silencing or the
+            // unread-notifications panel is already open (it shows this notification).
+            if (root.dndMode !== 0 && !NotificationsPanelState.panelOpen)
                 root._pushPopup(notif, timeout);
         }
     }
@@ -152,6 +153,34 @@ Singleton {
         let popup = popups[idx];
         if (popup._notifObj)
             Hyprland.focusNotificationSender(popup._notifObj);
+    }
+
+    function focusNotificationApp(id) {
+        let idx = notifications.findIndex(n => n.id === id);
+        if (idx < 0)
+            return;
+        let notif = notifications[idx];
+        if (notif._notifObj)
+            Hyprland.focusNotificationSender(notif._notifObj);
+    }
+
+    function activateNotification(id) {
+        let idx = notifications.findIndex(n => n.id === id);
+        if (idx < 0)
+            return;
+
+        let notif = notifications[idx];
+        if (!notif._notifObj)
+            return;
+
+        let defaultAction = root._findDefaultAction(notif._notifObj);
+        if (defaultAction) {
+            root.invokeAction(id, defaultAction);
+            return;
+        }
+
+        if (Hyprland.focusNotificationSender(notif._notifObj))
+            root.dismiss(id);
     }
 
     function activatePopup(id) {

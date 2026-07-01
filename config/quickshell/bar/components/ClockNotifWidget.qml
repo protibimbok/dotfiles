@@ -95,6 +95,20 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             visible: Notifications.unreadCount > 0
 
+            // Full bar-height hover target so the cursor can move down into the
+            // dropdown without crossing a dead strip.
+            Item {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width + Spacing.sm * 2
+                height: Metrics.barHeight
+
+                HoverHandler {
+                    cursorShape: Qt.PointingHandCursor
+                    onHoveredChanged: NotificationsPanelState.iconHovered = hovered
+                }
+            }
+
             Text {
                 anchors.centerIn: parent
                 text: "\uf0f3"

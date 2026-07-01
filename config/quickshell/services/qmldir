@@ -4,6 +4,7 @@ singleton BluetoothPanelState 1.0 BluetoothPanelState.qml
 singleton Hyprland 1.0 Hyprland.qml
 singleton Mpris 1.0 Mpris.qml
 singleton Notifications 1.0 Notifications.qml
+singleton NotificationsPanelState 1.0 NotificationsPanelState.qml
 singleton SystemStats 1.0 SystemStats.qml
 singleton VolumePanelState 1.0 VolumePanelState.qml
 singleton WifiPanelState 1.0 WifiPanelState.qml
