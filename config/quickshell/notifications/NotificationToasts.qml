@@ -30,19 +30,23 @@ PanelWindow {
         right: 0
     }
 
+    readonly property bool _hasPopups: Notifications.popups.length > 0
+
     exclusiveZone: 0
     color: "transparent"
-    visible: Notifications.popups.length > 0
+    visible: root._hasPopups
 
     implicitWidth: Metrics.toastColumnWidth + root._edgeRoom
-    implicitHeight: Math.max(1, loader.implicitHeight + root._edgeRoom)
+    implicitHeight: root._hasPopups
+        ? Math.max(1, loader.implicitHeight + root._edgeRoom)
+        : 1
 
     Loader {
         id: loader
         anchors.right: parent.right
         anchors.top: parent.top
         width: Metrics.toastColumnWidth
-        active: Notifications.popups.length > 0
+        active: root._hasPopups
 
         // Pause toast expiry while the cursor is over the stack (so a notification
         // can be read and clicked without it timing out from under the pointer).

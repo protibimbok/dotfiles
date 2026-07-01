@@ -4,7 +4,7 @@ import Quickshell.Io
 import QtQuick
 
 // Read-only Wi-Fi status, backend-agnostic (works with iwd or NetworkManager).
-// Sourced from /sys/class/net, /proc/net/wireless and `iw` â€” no nmcli dependency.
+// Sourced from /sys/class/net, /proc/net/wireless and `iw`  no nmcli dependency.
 Singleton {
     id: root
 
@@ -18,6 +18,11 @@ Singleton {
     /// Each entry: { ssid, security, open, strength (0..1), known, connected }.
     property var networks: []
     property bool scanning: false
+
+    /// SSID passed to `connectNetwork` while a connection attempt is in flight.
+    property string connectingSsid: ""
+    /// SSID passed to `disconnect` while a disconnect attempt is in flight.
+    property string disconnectingSsid: ""
 
     // Shared bash prefix that resolves the first wireless interface into $ifc
     // (exiting 0 if there is none). Reused by every iwctl command below.
@@ -78,6 +83,7 @@ Singleton {
         ssid = info["ssid"] || "";
         let f = parseFloat(info["freq"] || "0");
         frequency = f > 0 ? Math.round(f / 100) / 10 : 0;   // MHz -> GHz, 1 decimal
+        root._clearOperationHints();
     }
 
     // --- network list (scan) + connect, via iwd's iwctl -------------------------
@@ -100,7 +106,24 @@ Singleton {
         }
     }
 
-    Process { id: ctlProc }
+    Process {
+        id: ctlProc
+        onRunningChanged: {
+            if (!running) {
+                pollProc.running = true;
+                root.scan();
+            }
+        }
+    }
+
+    Timer {
+        id: operationTimer
+        interval: 20000
+        onTriggered: {
+            root.connectingSsid = "";
+            root.disconnectingSsid = "";
+        }
+    }
 
     function scan() {
         if (scanProc.running)
@@ -121,15 +144,44 @@ Singleton {
                 "rfkill unblock wifi; omarchy-launch-or-focus-tui impala"]);
             return;
         }
+        root.connectingSsid = ssid;
+        root.disconnectingSsid = "";
+        operationTimer.restart();
         ctlProc.command = ["bash", "-c",
             root._findIface + "iwctl station \"$ifc\" connect " + root._shq(ssid)];
         ctlProc.running = true;
     }
 
-    function disconnect() {
+    function disconnect(ssid) {
+        let target = (ssid && ssid.length) ? ssid : root.ssid;
+        root.disconnectingSsid = target;
+        root.connectingSsid = "";
+        operationTimer.restart();
         ctlProc.command = ["bash", "-c",
             root._findIface + "iwctl station \"$ifc\" disconnect"];
         ctlProc.running = true;
+    }
+
+    /// Secondary label for network rows: "Connecting", "Disconnecting", or empty.
+    function connectionStatusFor(ssid: string): string {
+        if (!ssid.length)
+            return "";
+        if (root.connectingSsid === ssid)
+            return "Connecting";
+        if (root.disconnectingSsid === ssid)
+            return "Disconnecting";
+        return "";
+    }
+
+    function _clearOperationHints() {
+        if (connectingSsid.length && connected && ssid === connectingSsid) {
+            connectingSsid = "";
+            operationTimer.stop();
+        }
+        if (disconnectingSsid.length && (!connected || ssid !== disconnectingSsid)) {
+            disconnectingSsid = "";
+            operationTimer.stop();
+        }
     }
 
     function _shq(s: string): string {
@@ -193,6 +245,29 @@ Singleton {
             if (a.known !== b.known) return a.known ? -1 : 1;
             return b.strength - a.strength;
         });
+        for (let n of out) {
+            if (connectingSsid.length && n.ssid === connectingSsid && n.connected) {
+                connectingSsid = "";
+                operationTimer.stop();
+            }
+            if (disconnectingSsid.length && n.ssid === disconnectingSsid && !n.connected) {
+                disconnectingSsid = "";
+                operationTimer.stop();
+            }
+        }
+        if (disconnectingSsid.length) {
+            let stillConnected = false;
+            for (let n of out) {
+                if (n.ssid === disconnectingSsid && n.connected) {
+                    stillConnected = true;
+                    break;
+                }
+            }
+            if (!stillConnected) {
+                disconnectingSsid = "";
+                operationTimer.stop();
+            }
+        }
         root.networks = out;
     }
 }

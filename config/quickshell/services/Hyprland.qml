@@ -28,6 +28,97 @@ Singleton {
         return key.length > 0;
     }
 
+    function toplevelClassKey(c) {
+        if (!c)
+            return "";
+        const appId = c.wayland && c.wayland.appId;
+        const ipc = c.lastIpcObject ? c.lastIpcObject["class"] : "";
+        return String(appId || ipc || c["class"] || c.initialClass || "").trim();
+    }
+
+    function _norm(s) {
+        return String(s || "").trim().toLowerCase();
+    }
+
+    function _classMatch(a, b) {
+        const x = root._norm(a);
+        const y = root._norm(b);
+        if (!x || !y)
+            return false;
+        if (x === y)
+            return true;
+        return x.includes(y) || y.includes(x);
+    }
+
+    function _notificationMatchKeys(notifObj) {
+        if (!notifObj)
+            return [];
+        const keys = [];
+        const seen = {};
+        function add(v) {
+            const n = root._norm(v);
+            if (!n || seen[n])
+                return;
+            seen[n] = true;
+            keys.push(n);
+        }
+        add(notifObj.desktopEntry);
+        add(notifObj.appName);
+        add(notifObj.appIcon);
+        return keys;
+    }
+
+    function findToplevelForNotification(notifObj) {
+        const vals = root.toplevels.values;
+        if (!vals || !notifObj)
+            return null;
+
+        const keys = root._notificationMatchKeys(notifObj);
+        if (!keys.length)
+            return null;
+
+        for (let i = 0; i < vals.length; i++) {
+            const c = vals[i];
+            if (!c || !c.workspace || !root.isBarToplevel(c))
+                continue;
+
+            const tk = root._norm(root.toplevelClassKey(c));
+            for (let j = 0; j < keys.length; j++) {
+                if (root._classMatch(tk, keys[j]))
+                    return c;
+            }
+
+            const entry = DesktopEntries.heuristicLookup(root.toplevelClassKey(c));
+            if (entry) {
+                const entryId = root._norm(entry.id || "");
+                for (let k = 0; k < keys.length; k++) {
+                    if (entryId && root._classMatch(entryId, keys[k]))
+                        return c;
+                }
+            }
+
+            for (let k = 0; k < keys.length; k++) {
+                const notifEntry = DesktopEntries.heuristicLookup(keys[k]);
+                if (!notifEntry)
+                    continue;
+                const wm = root._norm(notifEntry.startupClass || notifEntry.id || "");
+                if (wm && root._classMatch(tk, wm))
+                    return c;
+            }
+        }
+        return null;
+    }
+
+    function focusNotificationSender(notifObj) {
+        const t = root.findToplevelForNotification(notifObj);
+        if (!t || !t.address)
+            return false;
+        if (t.workspace)
+            root.dispatch("workspace " + t.workspace.id);
+        root.dispatch("focuswindow address:" + t.address);
+        return true;
+    }
+
     readonly property bool plainBarMode: {
         void toplevels;
         void focusedWorkspace;

@@ -24,6 +24,36 @@ Item {
         anchors.centerIn: parent
         spacing: Spacing.sm
 
+        // input language (fcitx5) — on-click: toggle IME
+        Item {
+            id: langItem
+            visible: SystemStats.inputMethodRunning
+            Layout.preferredWidth: langLabel.implicitWidth
+            Layout.preferredHeight: Metrics.iconSys
+            Layout.alignment: Qt.AlignVCenter
+
+            Text {
+                id: langLabel
+                anchors.centerIn: parent
+                text: SystemStats.inputLocale
+                color: SystemStats.inputMethodActive ? Theme.pillCyan : Theme.pillTextMuted
+                font.family: Typography.fontFamily
+                font.pixelSize: Typography.label
+                font.weight: SystemStats.inputMethodActive ? Font.DemiBold : Font.Normal
+                Behavior on color { ColorAnimation { duration: Durations.fade } }
+            }
+
+            HoverHandler { id: langHover; cursorShape: Qt.PointingHandCursor }
+            TapHandler { onTapped: SystemStats.toggleInputMethod() }
+
+            BarTooltip {
+                target: langItem
+                shown: langHover.hovered
+                text: SystemStats.inputMethodLabel
+                    + (SystemStats.inputMethodActive ? "" : "\n(inactive)")
+            }
+        }
+
         // bluetooth — on-click: omarchy-launch-bluetooth
         Item {
             id: btItem
@@ -61,35 +91,6 @@ Item {
             }
         }
 
-        // input language (fcitx5) — on-click: toggle IME
-        Item {
-            id: langItem
-            visible: SystemStats.inputMethodRunning
-            Layout.preferredWidth: langLabel.implicitWidth
-            Layout.preferredHeight: Metrics.iconSys
-            Layout.alignment: Qt.AlignVCenter
-
-            Text {
-                id: langLabel
-                anchors.centerIn: parent
-                text: SystemStats.inputLocale
-                color: SystemStats.inputMethodActive ? Theme.pillCyan : Theme.pillTextMuted
-                font.family: Typography.fontFamily
-                font.pixelSize: Typography.label
-                font.weight: SystemStats.inputMethodActive ? Font.DemiBold : Font.Normal
-                Behavior on color { ColorAnimation { duration: Durations.fade } }
-            }
-
-            HoverHandler { id: langHover; cursorShape: Qt.PointingHandCursor }
-            TapHandler { onTapped: SystemStats.toggleInputMethod() }
-
-            BarTooltip {
-                target: langItem
-                shown: langHover.hovered
-                text: SystemStats.inputMethodLabel
-                    + (SystemStats.inputMethodActive ? "" : "\n(inactive)")
-            }
-        }
 
         // network — on-click: omarchy-launch-wifi
         Item {

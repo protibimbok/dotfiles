@@ -15,6 +15,17 @@ Item {
 
     implicitHeight: Metrics.listRowHeight
 
+    readonly property string _status: {
+        let transient = Wifi.connectionStatusFor(root.modelData.ssid);
+        if (transient.length)
+            return transient;
+        if (root.modelData.connected)
+            return "Connected";
+        if (root.modelData.known)
+            return "Saved";
+        return "";
+    }
+
     readonly property string _signalGlyph: {
         if (modelData.strength > 0.75) return "\u{f0928}"; // 󰤨
         if (modelData.strength > 0.5) return "\u{f0925}";  // 󰤥
@@ -26,7 +37,7 @@ Item {
     TapHandler {
         onTapped: {
             if (root.modelData.connected)
-                Wifi.disconnect();
+                Wifi.disconnect(root.modelData.ssid);
             else
                 Wifi.connectNetwork(root.modelData.ssid);
         }
@@ -71,8 +82,8 @@ Item {
         }
 
         Text {
-            visible: root.modelData.connected || root.modelData.known
-            text: root.modelData.connected ? "Connected" : "Saved"
+            visible: root._status.length > 0
+            text: root._status
             color: Theme.pillTextMuted
             font.family: Typography.fontFamily
             font.pixelSize: Typography.bodySm

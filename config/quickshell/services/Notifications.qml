@@ -26,7 +26,7 @@ Singleton {
         bodySupported: true
         bodyMarkupSupported: true
         imageSupported: true
-        actionsSupported: false
+        actionsSupported: true
 
         onNotification: notification => {
             notification.tracked = true;
@@ -89,6 +89,14 @@ Singleton {
         }
     }
 
+    function formatTimeAgo(ts) {
+        let diff = Date.now() - ts;
+        if (diff < 60000) return "now";
+        if (diff < 3600000) return Math.floor(diff / 60000) + "m ago";
+        if (diff < 86400000) return Math.floor(diff / 3600000) + "h ago";
+        return Math.floor(diff / 86400000) + "d ago";
+    }
+
     function _pushPopup(notif: var, timeout: int) {
         // Toasts live for the app-supplied timeout, falling back to a default.
         let life = timeout > 0 ? timeout : Durations.toastLife;
@@ -98,7 +106,10 @@ Singleton {
             appIcon: notif.appIcon,
             summary: notif.summary,
             body: notif.body,
-            expiresAt: Date.now() + life
+            ts: notif.ts,
+            timeAgo: root.formatTimeAgo(notif.ts),
+            expiresAt: Date.now() + life,
+            _notifObj: notif._notifObj
         };
 
         let list = root.popups.slice();
@@ -110,6 +121,56 @@ Singleton {
 
         if (list.length > maxPopups) list = list.slice(0, maxPopups);
         root.popups = list;
+    }
+
+    function refreshPopupTime(id) {
+        let list = popups.slice();
+        let idx = list.findIndex(p => p.id === id);
+        if (idx < 0)
+            return;
+        let newAgo = root.formatTimeAgo(list[idx].ts);
+        if (list[idx].timeAgo === newAgo)
+            return;
+        list[idx].timeAgo = newAgo;
+        popups = list;
+    }
+
+    function _findDefaultAction(notifObj) {
+        if (!notifObj || !notifObj.actions)
+            return null;
+        for (let i = 0; i < notifObj.actions.length; i++) {
+            if (notifObj.actions[i].identifier === "default")
+                return notifObj.actions[i];
+        }
+        return null;
+    }
+
+    function focusPopupApp(id) {
+        let idx = popups.findIndex(p => p.id === id);
+        if (idx < 0)
+            return;
+        let popup = popups[idx];
+        if (popup._notifObj)
+            Hyprland.focusNotificationSender(popup._notifObj);
+    }
+
+    function activatePopup(id) {
+        let idx = popups.findIndex(p => p.id === id);
+        if (idx < 0)
+            return;
+
+        let popup = popups[idx];
+        if (!popup._notifObj)
+            return;
+
+        let defaultAction = root._findDefaultAction(popup._notifObj);
+        if (defaultAction) {
+            root.invokeAction(id, defaultAction);
+            return;
+        }
+
+        if (Hyprland.focusNotificationSender(popup._notifObj))
+            root.dismissPopup(id);
     }
 
     // Freeze the countdown while hovered; on release, push every toast's expiry out
@@ -153,6 +214,27 @@ Singleton {
         }
     }
 
+    function invokeAction(id: int, action: var) {
+        dismissPopup(id);
+        if (action)
+            action.invoke();
+
+        let list = notifications.slice();
+        let idx = list.findIndex(n => n.id === id);
+        if (idx < 0)
+            return;
+
+        let notif = list[idx];
+        if (notif._notifObj && notif._notifObj.resident) {
+            list[idx].read = true;
+            notifications = list;
+        } else {
+            list.splice(idx, 1);
+            notifications = list;
+        }
+        _syncUnreadCount();
+    }
+
     function _syncUnreadCount() {
         let n = 0;
         for (let i = 0; i < notifications.length; i++) {
@@ -183,18 +265,24 @@ Singleton {
         let list = notifications.slice();
         let changed = false;
         for (let i = 0; i < list.length; i++) {
-            let diff = now - list[i].ts;
-            let newAgo;
-            if (diff < 60000) newAgo = "now";
-            else if (diff < 3600000) newAgo = Math.floor(diff / 60000) + "m ago";
-            else if (diff < 86400000) newAgo = Math.floor(diff / 3600000) + "h ago";
-            else newAgo = Math.floor(diff / 86400000) + "d ago";
+            let newAgo = root.formatTimeAgo(list[i].ts);
             if (list[i].timeAgo !== newAgo) {
                 list[i].timeAgo = newAgo;
                 changed = true;
             }
         }
         if (changed) notifications = list;
+
+        let popList = popups.slice();
+        let popChanged = false;
+        for (let j = 0; j < popList.length; j++) {
+            let popAgo = root.formatTimeAgo(popList[j].ts);
+            if (popList[j].timeAgo !== popAgo) {
+                popList[j].timeAgo = popAgo;
+                popChanged = true;
+            }
+        }
+        if (popChanged) popups = popList;
     }
 
     function dismiss(id: int) {
