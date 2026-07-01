@@ -86,7 +86,9 @@ Singleton {
                 id: n.id,
                 name: n.name || String(n.id),
                 description: String(desc).replace(/\s+/g, " ").trim(),
-                isDefault: false
+                nickname: String(n.nickname || "").replace(/\s+/g, " ").trim(),
+                isDefault: false,
+                node: n
             };
             if (n.type & PwNodeType.Sink) {
                 item.isDefault = !!defSink && n.id === defSink.id;

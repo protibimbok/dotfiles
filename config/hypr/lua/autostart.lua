@@ -4,7 +4,8 @@
 
 hl.on("hyprland.start", function()
     hl.exec_cmd("uwsm-app -- hypridle")
-    hl.exec_cmd("uwsm-app -- mako")
+    -- mako disabled: Quickshell (qs) now owns org.freedesktop.Notifications
+    -- and renders notification toasts itself.
     hl.exec_cmd("uwsm-app -- qs")
 
     -- Defer until Quickshell registers its layer-shell exclusive zone (bar offset).

@@ -4,3 +4,4 @@ singleton Hyprland 1.0 Hyprland.qml
 singleton Mpris 1.0 Mpris.qml
 singleton Notifications 1.0 Notifications.qml
 singleton SystemStats 1.0 SystemStats.qml
+singleton VolumePanelState 1.0 VolumePanelState.qml

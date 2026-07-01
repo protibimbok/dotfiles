@@ -2,11 +2,15 @@ pragma Singleton
 import Quickshell
 import Quickshell.Services.Notifications
 import QtQuick
+import qs.tokens
 
 Singleton {
     id: root
 
     property var notifications: []
+    /// Notifications currently shown as on-screen toasts (newest first).
+    property var popups: []
+    readonly property int maxPopups: 5
     property int unreadCount: 0
     /// 0 = silent (block all), 1 = normal, 2 = priority (all alerts)
     property int dndMode: 1
@@ -57,6 +61,10 @@ Singleton {
             if (list.length > 50) list = list.slice(0, 50);
             root.notifications = list;
             root._syncUnreadCount();
+
+            // Surface a transient toast (unless Do Not Disturb is silencing).
+            if (root.dndMode !== 0)
+                root._pushPopup(notif, timeout);
         }
     }
 
@@ -71,7 +79,55 @@ Singleton {
         interval: 500
         running: true
         repeat: true
-        onTriggered: root._pruneExpired()
+        onTriggered: {
+            root._pruneExpired();
+            root._prunePopups();
+        }
+    }
+
+    function _pushPopup(notif: var, timeout: int) {
+        // Toasts live for the app-supplied timeout, falling back to a default.
+        let life = timeout > 0 ? timeout : Durations.toastLife;
+        let entry = {
+            id: notif.id,
+            appName: notif.appName,
+            appIcon: notif.appIcon,
+            summary: notif.summary,
+            body: notif.body,
+            expiresAt: Date.now() + life
+        };
+
+        let list = root.popups.slice();
+        let existing = list.findIndex(p => p.id === entry.id);
+        if (existing >= 0)
+            list[existing] = entry;
+        else
+            list.unshift(entry);
+
+        if (list.length > maxPopups) list = list.slice(0, maxPopups);
+        root.popups = list;
+    }
+
+    function _prunePopups() {
+        let now = Date.now();
+        let list = popups.slice();
+        let changed = false;
+        for (let i = list.length - 1; i >= 0; i--) {
+            if (now >= list[i].expiresAt) {
+                list.splice(i, 1);
+                changed = true;
+            }
+        }
+        if (changed) popups = list;
+    }
+
+    function dismissPopup(id: int) {
+        let list = popups.slice();
+        let idx = list.findIndex(p => p.id === id);
+        if (idx >= 0) {
+            list.splice(idx, 1);
+            popups = list;
+        }
     }
 
     function _syncUnreadCount() {
@@ -127,6 +183,7 @@ Singleton {
             list.splice(idx, 1);
             root.notifications = list;
             _syncUnreadCount();
+            dismissPopup(id);
         }
     }
 
@@ -136,6 +193,7 @@ Singleton {
             if (n._notifObj) n._notifObj.dismiss();
         }
         notifications = [];
+        popups = [];
         unreadCount = 0;
     }
 

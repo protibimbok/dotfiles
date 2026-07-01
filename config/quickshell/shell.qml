@@ -3,9 +3,18 @@ import QtQuick
 import qs.bar
 import qs.tokens
 import qs.services
+import qs.notifications
+import qs.volume
 
 ShellRoot {
     id: shell
+
+    // Transient notification toasts (top-right, below the bar).
+    NotificationToasts {}
+
+    // Hover-triggered per-device volume panel (top-right, below the bar),
+    // sharing the toast surface/animation.
+    VolumePanel {}
 
     // The floating-overlay backdrop is now handled compositor-side by the
     // plugins/hyprdesktop plugin (empty-space clicks dismiss the layer), so the old

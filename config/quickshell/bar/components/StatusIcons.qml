@@ -140,7 +140,13 @@ Item {
                 Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
             }
 
-            HoverHandler { id: audioHover; cursorShape: Qt.PointingHandCursor }
+            HoverHandler {
+                id: audioHover
+                cursorShape: Qt.PointingHandCursor
+                // Publish hover so the flush-right VolumePanel (a separate window)
+                // can open while the cursor is over this icon.
+                onHoveredChanged: VolumePanelState.iconHovered = hovered
+            }
             TapHandler {
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onTapped: (point, button) => {
@@ -155,12 +161,6 @@ Item {
                 onWheel: (event) => {
                     Audio.setVolume(Audio.volume + (event.angleDelta.y > 0 ? 5 : -5));
                 }
-            }
-
-            BarTooltip {
-                target: audioItem
-                shown: audioHover.hovered
-                text: Audio.muted ? "Muted" : ("Playing at " + Audio.volume + "%")
             }
         }
 

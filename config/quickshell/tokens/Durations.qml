@@ -17,7 +17,8 @@ Singleton {
     readonly property int fadeSlow: 300
     readonly property int spin: 900
     readonly property int toastDismiss: 2000
-    readonly property int toastLife: 3000
+    readonly property int toastLife: 5000
+    readonly property int toastSlide: 320
     readonly property int osdHide: 1500
     readonly property int readyDelay: 3000
 }

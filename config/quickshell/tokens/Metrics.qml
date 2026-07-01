@@ -59,6 +59,7 @@ Singleton {
     readonly property int iconMuteBtn: 28
     readonly property int iconNotif: 20
     readonly property int iconNotifBadge: 7
+    readonly property int toastIcon: 36
     readonly property int iconOsd: 18
 
     // Row / tile heights
