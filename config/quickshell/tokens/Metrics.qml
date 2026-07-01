@@ -97,10 +97,6 @@ Singleton {
     readonly property int workspaceMiniDot: 3
     readonly property int osdBottomMargin: 80
     readonly property real barUnifiedFillOpacity: 0.96
-    readonly property real barStripFillOpacity: 0.9
-    // Bar surface SDF shader (strip + pills smooth-unioned)
-    readonly property real barSurfaceSmoothing: 9
-    readonly property real barSurfaceEdgeSoftness: 1.5
     readonly property int barHeight: barLayoutHeight
     readonly property real panelFillOpacityDefault: 0.92
     readonly property real panelFillOpacityNotif: 0.88
