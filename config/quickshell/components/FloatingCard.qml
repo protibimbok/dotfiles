@@ -31,7 +31,10 @@ Item {
     // Cove radius, capped so it never exceeds half the height.
     readonly property real _k: Math.min(root.invertedRadius, root.height / 2)
 
-    // Entrance: slide the fully-formed card down out from behind the bar.
+    // Drives the slide: true slides the card down into view, false slides it back up
+    // behind the bar. Entrance replays on creation via `_entered`; `shown` then lets
+    // the host slide it away again (a pure slide, no fade).
+    property bool shown: true
     property bool _entered: false
     Component.onCompleted: root._entered = true
 
@@ -54,9 +57,9 @@ Item {
         return p;
     }
 
-    // Slide the whole card (shape + content) down out of the bar on entrance.
+    // Slide the whole card (shape + content) down out of the bar, and back up on hide.
     transform: Translate {
-        y: root._entered ? 0 : -root.height
+        y: (root._entered && root.shown) ? 0 : -root.height
         Behavior on y { NumberAnimation { duration: Durations.toastSlide; easing.type: Easing.OutExpo } }
     }
 

@@ -34,9 +34,9 @@ PanelWindow {
 
     exclusiveZone: 0
     color: "transparent"
-    // Stay mapped through the fade-out so hiding is a smooth dissolve, not a
-    // hard vanish (and brief hover toggles don't destroy/recreate the card).
-    visible: root.open || loader.opacity > 0.01
+    // Stay mapped through the slide-out so the card can retract behind the bar
+    // (and brief hover toggles don't destroy/recreate the card).
+    visible: root.open || slideTimer.running
 
     // Extra room on the left and bottom for the card's coves, which bow past its
     // body (top-left flares left, bottom-right drips down). The card itself stays
@@ -48,6 +48,13 @@ PanelWindow {
         id: hideTimer
         interval: Durations.panelHoverHide
     }
+
+    // Keeps the window mapped while the card slides back up on close.
+    Timer {
+        id: slideTimer
+        interval: Durations.toastSlide
+    }
+    onOpenChanged: if (!open) slideTimer.restart()
 
     function _refreshHide() {
         if (VolumePanelState.iconHovered || root.panelHovered)
@@ -66,9 +73,7 @@ PanelWindow {
         anchors.right: parent.right
         anchors.top: parent.top
         width: Metrics.toastColumnWidth
-        active: root.open || opacity > 0.01
-        opacity: root.open ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: Durations.fade; easing.type: Easing.OutCubic } }
+        active: root.open || slideTimer.running
 
         HoverHandler {
             onHoveredChanged: {
@@ -79,6 +84,7 @@ PanelWindow {
 
         sourceComponent: FloatingCard {
             width: loader.width
+            shown: root.open
 
             Repeater {
                 // Only the current (default) output device.

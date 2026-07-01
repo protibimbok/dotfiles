@@ -39,9 +39,9 @@ PanelWindow {
 
     exclusiveZone: 0
     color: "transparent"
-    // Stay mapped through the fade-out so hiding is a smooth dissolve, not a
-    // hard vanish (and brief hover toggles don't destroy/recreate the card).
-    visible: root.open || loader.opacity > 0.01
+    // Stay mapped through the slide-out so the card can retract behind the bar
+    // (and brief hover toggles don't destroy/recreate the card).
+    visible: root.open || slideTimer.running
 
     implicitWidth: Metrics.toastColumnWidth + root._edgeRoom
     implicitHeight: Math.max(1, loader.implicitHeight + root._edgeRoom)
@@ -50,6 +50,13 @@ PanelWindow {
         id: hideTimer
         interval: Durations.panelHoverHide
     }
+
+    // Keeps the window mapped while the card slides back up on close.
+    Timer {
+        id: slideTimer
+        interval: Durations.toastSlide
+    }
+    onOpenChanged: if (!open) slideTimer.restart()
 
     function _refreshHide() {
         if (BluetoothPanelState.iconHovered || root.panelHovered)
@@ -68,9 +75,7 @@ PanelWindow {
         anchors.right: parent.right
         anchors.top: parent.top
         width: Metrics.toastColumnWidth
-        active: root.open || opacity > 0.01
-        opacity: root.open ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: Durations.fade; easing.type: Easing.OutCubic } }
+        active: root.open || slideTimer.running
 
         HoverHandler {
             onHoveredChanged: {
@@ -81,6 +86,7 @@ PanelWindow {
 
         sourceComponent: FloatingCard {
             width: loader.width
+            shown: root.open
 
             Column {
                 id: column

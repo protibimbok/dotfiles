@@ -45,20 +45,30 @@ PanelWindow {
 
     exclusiveZone: 0
     color: "transparent"
-    // Stay mapped through the fade-out so hiding is a smooth dissolve, not a hard
-    // vanish (and brief hover toggles don't destroy/recreate the card).
-    visible: root.open || loader.opacity > 0.01
+    // Stay mapped through the slide-out so the card can retract behind the bar
+    // (and brief hover toggles don't destroy/recreate the card).
+    visible: root.open || slideTimer.running
 
     // Extra room on both sides for the card's top coves, which bow past its body.
     implicitWidth: Metrics.toastColumnWidth + root._edgeRoom * 2
     implicitHeight: Math.max(1, loader.implicitHeight)
 
-    // Let the toasts fall silent while the panel is already showing the unread list.
-    onOpenChanged: NotificationsPanelState.panelOpen = root.open
+    // Let the toasts fall silent while the panel is already showing the unread list;
+    // on close, keep mapped while the card slides back up.
+    onOpenChanged: {
+        NotificationsPanelState.panelOpen = root.open;
+        if (!root.open) slideTimer.restart();
+    }
 
     Timer {
         id: hideTimer
         interval: Durations.panelHoverHide
+    }
+
+    // Keeps the window mapped while the card slides back up on close.
+    Timer {
+        id: slideTimer
+        interval: Durations.toastSlide
     }
 
     function _refreshHide() {
@@ -78,9 +88,7 @@ PanelWindow {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         width: Metrics.toastColumnWidth
-        active: root.open || opacity > 0.01
-        opacity: root.open ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: Durations.fade; easing.type: Easing.OutCubic } }
+        active: root.open || slideTimer.running
 
         // Pause the hide timer while the cursor is over the panel.
         HoverHandler {
@@ -92,6 +100,7 @@ PanelWindow {
 
         sourceComponent: FloatingCardCenter {
             width: loader.width
+            shown: root.open
 
             Column {
                 id: column

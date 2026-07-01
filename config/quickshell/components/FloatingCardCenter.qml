@@ -21,6 +21,9 @@ Item {
 
     readonly property real _k: Math.min(root.invertedRadius, root.height / 2)
 
+    // Drives the slide: true slides the card down into view, false slides it back up
+    // behind the bar (a pure slide, no fade). Entrance replays on creation.
+    property bool shown: true
     property bool _entered: false
     Component.onCompleted: root._entered = true
 
@@ -40,7 +43,7 @@ Item {
     }
 
     transform: Translate {
-        y: root._entered ? 0 : -root.height
+        y: (root._entered && root.shown) ? 0 : -root.height
         Behavior on y { NumberAnimation { duration: Durations.toastSlide; easing.type: Easing.OutExpo } }
     }
 
