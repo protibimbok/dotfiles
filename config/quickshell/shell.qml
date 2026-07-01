@@ -5,6 +5,8 @@ import qs.tokens
 import qs.services
 import qs.notifications
 import qs.volume
+import qs.wifi
+import qs.bluetooth
 
 ShellRoot {
     id: shell
@@ -15,6 +17,11 @@ ShellRoot {
     // Hover-triggered per-device volume panel (top-right, below the bar),
     // sharing the toast surface/animation.
     VolumePanel {}
+
+    // Hover-triggered Wi-Fi and Bluetooth panels (top-right, below the bar),
+    // sharing the same surface/animation as the volume panel.
+    WifiPanel {}
+    BluetoothPanel {}
 
     // The floating-overlay backdrop is now handled compositor-side by the
     // plugins/hyprdesktop plugin (empty-space clicks dismiss the layer), so the old

@@ -44,13 +44,20 @@ Item {
                 Behavior on color { ColorAnimation { duration: Durations.fade } }
             }
 
-            HoverHandler { id: btHover; cursorShape: Qt.PointingHandCursor }
-            TapHandler { onTapped: root._run("omarchy-launch-bluetooth") }
+            // Enlarged hover target (full bar height) so moving down into the
+            // BluetoothPanel below leaves no dead strip that would flicker it shut.
+            Item {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width
+                height: Metrics.barHeight
 
-            BarTooltip {
-                target: btItem
-                shown: btHover.hovered
-                text: root._bluetoothTooltip()
+                HoverHandler {
+                    id: btHover
+                    cursorShape: Qt.PointingHandCursor
+                    onHoveredChanged: BluetoothPanelState.iconHovered = hovered
+                }
+                TapHandler { onTapped: root._run("omarchy-launch-bluetooth") }
             }
         }
 
@@ -109,13 +116,20 @@ Item {
                 Behavior on color { ColorAnimation { duration: Durations.fade } }
             }
 
-            HoverHandler { id: netHover; cursorShape: Qt.PointingHandCursor }
-            TapHandler { onTapped: root._run("omarchy-launch-wifi") }
+            // Enlarged hover target (full bar height) so moving down into the
+            // WifiPanel below leaves no dead strip that would flicker it shut.
+            Item {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width
+                height: Metrics.barHeight
 
-            BarTooltip {
-                target: netItem
-                shown: netHover.hovered
-                text: root._networkTooltip()
+                HoverHandler {
+                    id: netHover
+                    cursorShape: Qt.PointingHandCursor
+                    onHoveredChanged: WifiPanelState.iconHovered = hovered
+                }
+                TapHandler { onTapped: root._run("omarchy-launch-wifi") }
             }
         }
 
@@ -140,26 +154,38 @@ Item {
                 Behavior on color { ColorAnimation { duration: Durations.hoverMedium } }
             }
 
-            HoverHandler {
-                id: audioHover
-                cursorShape: Qt.PointingHandCursor
-                // Publish hover so the flush-right VolumePanel (a separate window)
-                // can open while the cursor is over this icon.
-                onHoveredChanged: VolumePanelState.iconHovered = hovered
-            }
-            TapHandler {
-                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                onTapped: (point, button) => {
-                    if (button === Qt.RightButton)
-                        Audio.muted = !Audio.muted;
-                    else
-                        root._run("omarchy-launch-audio");
+            // Enlarged hover/click target spanning the full bar height. The icon
+            // itself is only iconSys tall, leaving a dead strip between it and the
+            // bottom of the bar window; the cursor crossing that strip on its way to
+            // the flush-right VolumePanel (a separate window directly below) would
+            // drop the hover and flicker the panel shut. Reaching to the window edge
+            // hands the hover straight to the panel with no gap.
+            Item {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width
+                height: Metrics.barHeight
+
+                HoverHandler {
+                    id: audioHover
+                    cursorShape: Qt.PointingHandCursor
+                    // Publish hover so the VolumePanel can open while the cursor is here.
+                    onHoveredChanged: VolumePanelState.iconHovered = hovered
                 }
-            }
-            WheelHandler {
-                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                onWheel: (event) => {
-                    Audio.setVolume(Audio.volume + (event.angleDelta.y > 0 ? 5 : -5));
+                TapHandler {
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onTapped: (point, button) => {
+                        if (button === Qt.RightButton)
+                            Audio.muted = !Audio.muted;
+                        else
+                            root._run("omarchy-launch-audio");
+                    }
+                }
+                WheelHandler {
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    onWheel: (event) => {
+                        Audio.setVolume(Audio.volume + (event.angleDelta.y > 0 ? 5 : -5));
+                    }
                 }
             }
         }
@@ -251,32 +277,6 @@ Item {
                 text: root._batteryTooltip()
             }
         }
-    }
-
-    function _bluetoothTooltip(): string {
-        if (!Bluetooth.enabled)
-            return "Bluetooth off";
-        if (!Bluetooth.connected)
-            return "No devices connected";
-        let names = Bluetooth.connectedNames;
-        if (names.length === 1)
-            return Bluetooth.displayName(names[0], Bluetooth.connectedAddresses[0]);
-        let head = "Devices connected: " + Bluetooth.connectedAddresses.length;
-        let labeled = [];
-        for (let i = 0; i < names.length; ++i)
-            labeled.push(Bluetooth.displayName(names[i], Bluetooth.connectedAddresses[i]));
-        return head + "\n" + labeled.join("\n");
-    }
-
-    function _networkTooltip(): string {
-        if (Ethernet.connected)
-            return "⇣ " + SystemStats.netDown + "  ⇡ " + SystemStats.netUp;
-        if (Wifi.connected) {
-            let head = (Wifi.ssid.length ? Wifi.ssid : "Wi-Fi")
-                + (Wifi.frequency > 0 ? " (" + Wifi.frequency + " GHz)" : "");
-            return head + "\n⇣ " + SystemStats.netDown + "  ⇡ " + SystemStats.netUp;
-        }
-        return "Disconnected";
     }
 
     function _batteryTooltip(): string {

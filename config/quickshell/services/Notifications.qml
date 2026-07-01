@@ -11,6 +11,10 @@ Singleton {
     /// Notifications currently shown as on-screen toasts (newest first).
     property var popups: []
     readonly property int maxPopups: 5
+    /// True while the cursor is over the toast stack — pauses toast expiry so a
+    /// notification being read (or about to be clicked) never vanishes underneath.
+    property bool popupsHovered: false
+    property double _popupsHoverSince: 0
     property int unreadCount: 0
     /// 0 = silent (block all), 1 = normal, 2 = priority (all alerts)
     property int dndMode: 1
@@ -108,7 +112,26 @@ Singleton {
         root.popups = list;
     }
 
+    // Freeze the countdown while hovered; on release, push every toast's expiry out
+    // by however long the cursor lingered so the remaining lifetime is preserved.
+    onPopupsHoveredChanged: {
+        if (popupsHovered) {
+            _popupsHoverSince = Date.now();
+        } else if (_popupsHoverSince > 0) {
+            let paused = Date.now() - _popupsHoverSince;
+            _popupsHoverSince = 0;
+            if (paused > 0 && popups.length > 0) {
+                let list = popups.slice();
+                for (let i = 0; i < list.length; i++)
+                    list[i].expiresAt += paused;
+                popups = list;
+            }
+        }
+    }
+
     function _prunePopups() {
+        if (root.popupsHovered)
+            return;
         let now = Date.now();
         let list = popups.slice();
         let changed = false;

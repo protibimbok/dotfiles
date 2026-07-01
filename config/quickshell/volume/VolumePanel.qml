@@ -34,7 +34,9 @@ PanelWindow {
 
     exclusiveZone: 0
     color: "transparent"
-    visible: root.open
+    // Stay mapped through the fade-out so hiding is a smooth dissolve, not a
+    // hard vanish (and brief hover toggles don't destroy/recreate the card).
+    visible: root.open || loader.opacity > 0.01
 
     // Extra room on the left and bottom for the card's coves, which bow past its
     // body (top-left flares left, bottom-right drips down). The card itself stays
@@ -64,7 +66,9 @@ PanelWindow {
         anchors.right: parent.right
         anchors.top: parent.top
         width: Metrics.toastColumnWidth
-        active: root.open
+        active: root.open || opacity > 0.01
+        opacity: root.open ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Durations.fade; easing.type: Easing.OutCubic } }
 
         HoverHandler {
             onHoveredChanged: {

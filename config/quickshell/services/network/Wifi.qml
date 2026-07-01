@@ -14,6 +14,17 @@ Singleton {
     property string ssid: ""
     property real frequency: 0.0   // GHz
 
+    /// Saved + currently-available networks, connected/saved first then by signal.
+    /// Each entry: { ssid, security, open, strength (0..1), known, connected }.
+    property var networks: []
+    property bool scanning: false
+
+    // Shared bash prefix that resolves the first wireless interface into $ifc
+    // (exiting 0 if there is none). Reused by every iwctl command below.
+    readonly property string _findIface:
+        "ifc=''; for w in /sys/class/net/*/wireless; do [ -e \"$w\" ] || continue; " +
+        "ifc=$(basename \"$(dirname \"$w\")\"); break; done; [ -z \"$ifc\" ] && exit 0; "
+
     Timer {
         interval: 3000
         running: true
@@ -67,5 +78,121 @@ Singleton {
         ssid = info["ssid"] || "";
         let f = parseFloat(info["freq"] || "0");
         frequency = f > 0 ? Math.round(f / 100) / 10 : 0;   // MHz -> GHz, 1 decimal
+    }
+
+    // --- network list (scan) + connect, via iwd's iwctl -------------------------
+
+    // Rescan, wait for iwd to settle, then dump known + visible networks in one
+    // shot. The raw output (ANSI intact) is parsed in JS: iwd encodes signal
+    // strength as lit vs. dimmed asterisks, which stripping the colours would lose.
+    Process {
+        id: scanProc
+        command: ["bash", "-c",
+            root._findIface +
+            "iwctl station \"$ifc\" scan >/dev/null 2>&1\n" +
+            "sleep 2\n" +
+            "echo '###KNOWN###'\n" +
+            "iwctl known-networks list\n" +
+            "echo '###NETWORKS###'\n" +
+            "iwctl station \"$ifc\" get-networks"]
+        stdout: StdioCollector {
+            onStreamFinished: { root._parseNetworks(text); root.scanning = false; }
+        }
+    }
+
+    Process { id: ctlProc }
+
+    function scan() {
+        if (scanProc.running)
+            return;
+        scanning = true;
+        scanProc.running = true;
+    }
+
+    function connectNetwork(ssid: string) {
+        let net = null;
+        for (let n of networks) {
+            if (n.ssid === ssid) { net = n; break; }
+        }
+        // Known and open networks connect straight away; a new secured network
+        // needs a passphrase we can't prompt for here, so hand off to the Impala TUI.
+        if (net && !net.known && !net.open) {
+            Quickshell.execDetached(["bash", "-c",
+                "rfkill unblock wifi; omarchy-launch-or-focus-tui impala"]);
+            return;
+        }
+        ctlProc.command = ["bash", "-c",
+            root._findIface + "iwctl station \"$ifc\" connect " + root._shq(ssid)];
+        ctlProc.running = true;
+    }
+
+    function disconnect() {
+        ctlProc.command = ["bash", "-c",
+            root._findIface + "iwctl station \"$ifc\" disconnect"];
+        ctlProc.running = true;
+    }
+
+    function _shq(s: string): string {
+        return "'" + String(s).replace(/'/g, "'\\''") + "'";
+    }
+
+    function _stripAnsi(s: string): string {
+        return s.replace(/\[[0-9;]*m/g, "").replace(/\x1b/g, "");
+    }
+
+    function _parseNetworks(raw: string) {
+        let knownText = "";
+        let netText = raw;
+        let ki = raw.indexOf("###KNOWN###");
+        let ni = raw.indexOf("###NETWORKS###");
+        if (ki >= 0 && ni >= 0) {
+            knownText = raw.slice(ki + "###KNOWN###".length, ni);
+            netText = raw.slice(ni + "###NETWORKS###".length);
+        }
+
+        // Saved network names.
+        let known = ({});
+        for (let line of knownText.split("\n")) {
+            let plain = root._stripAnsi(line);
+            if (!plain.trim()) continue;
+            if (/Known Networks|Last connected|^\s*Name\s/.test(plain)) continue;
+            if (/^\s*-+\s*$/.test(plain)) continue;
+            let m = plain.match(/^\s{2}(.+?)\s{2,}\S/);
+            if (m) known[m[1].trim()] = true;
+        }
+
+        // Available (scanned) networks.
+        let out = [];
+        for (let line of netText.split("\n")) {
+            let plain = root._stripAnsi(line);
+            if (!plain.trim()) continue;
+            if (/Available networks|Network name/.test(plain)) continue;
+            if (/^\s*-+\s*$/.test(plain)) continue;
+            // A "> " marker in the leading columns flags the connected network.
+            let connected = plain.slice(0, 6).indexOf(">") >= 0;
+            let m = plain.replace(/^\s*>?\s*/, "").match(/^(.+?)\s{2,}(\S+)\s+\*+\s*$/);
+            if (!m) continue;
+            let ssid = m[1].trim();
+            if (!ssid.length) continue;
+            let security = m[2].trim();
+            // iwd dims the unused signal bars with \e[1;90m, so the first run of
+            // asterisks in the RAW line is the count of lit bars (1..4).
+            let lit = (line.match(/\*+/) || [""])[0].length;
+            out.push({
+                ssid: ssid,
+                security: security,
+                open: security.toLowerCase() === "open",
+                strength: Math.max(0, Math.min(1, lit / 4)),
+                known: known[ssid] === true,
+                connected: connected
+            });
+        }
+
+        out.sort(function (a, b) {
+            if (a.connected !== b.connected) return a.connected ? -1 : 1;
+            if (a.known !== b.known) return a.known ? -1 : 1;
+            return b.strength - a.strength;
+        });
+        root.networks = out;
     }
 }

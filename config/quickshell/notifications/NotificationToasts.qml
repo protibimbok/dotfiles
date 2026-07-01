@@ -44,6 +44,12 @@ PanelWindow {
         width: Metrics.toastColumnWidth
         active: Notifications.popups.length > 0
 
+        // Pause toast expiry while the cursor is over the stack (so a notification
+        // can be read and clicked without it timing out from under the pointer).
+        HoverHandler {
+            onHoveredChanged: Notifications.popupsHovered = hovered
+        }
+
         sourceComponent: FloatingCard {
             width: loader.width
 
