@@ -272,13 +272,34 @@ Singleton {
         unreadCount = n;
     }
 
+    // Stored _notifObj refs can go stale (retained after close/reload), so always
+    // resolve the live object from the server before closing.
+    function _findTrackedNotification(id: int) {
+        let tracked = server.trackedNotifications ? server.trackedNotifications.values : [];
+        for (let i = 0; i < tracked.length; i++) {
+            if (tracked[i] && tracked[i].id === id)
+                return tracked[i];
+        }
+        return null;
+    }
+
+    function _closeNotification(id: int, reason: string) {
+        let obj = _findTrackedNotification(id);
+        if (!obj || !obj.tracked)
+            return;
+        if (reason === "expire")
+            obj.expire();
+        else
+            obj.tracked = false;
+    }
+
     function _pruneExpired() {
         let now = Date.now();
         let list = notifications.slice();
         let changed = false;
         for (let i = list.length - 1; i >= 0; i--) {
             if (list[i].expiresAt > 0 && now >= list[i].expiresAt) {
-                if (list[i]._notifObj) list[i]._notifObj.dismiss();
+                root._closeNotification(list[i].id, "expire");
                 list.splice(i, 1);
                 changed = true;
             }
@@ -315,11 +336,11 @@ Singleton {
     }
 
     function dismiss(id: int) {
+        root._closeNotification(id, "dismiss");
+
         let list = notifications.slice();
         let idx = list.findIndex(n => n.id === id);
         if (idx >= 0) {
-            let notif = list[idx];
-            if (notif._notifObj) notif._notifObj.dismiss();
             list.splice(idx, 1);
             root.notifications = list;
             _syncUnreadCount();
@@ -328,9 +349,11 @@ Singleton {
     }
 
     function clearAll() {
-        for (let i = 0; i < notifications.length; i++) {
-            let n = notifications[i];
-            if (n._notifObj) n._notifObj.dismiss();
+        let tracked = server.trackedNotifications ? server.trackedNotifications.values.slice() : [];
+        for (let i = 0; i < tracked.length; i++) {
+            let n = tracked[i];
+            if (n && n.tracked)
+                n.tracked = false;
         }
         notifications = [];
         popups = [];
